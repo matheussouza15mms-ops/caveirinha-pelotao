@@ -74,6 +74,28 @@ body {
   border-color: transparent;
 }
 
+.menu-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  flex-shrink: 0;
+}
+
+.icon-quadro {
+  background-image: url("assets/icons/quadro.png");
+}
+
+.icon-efetivo {
+  background-image: url("assets/icons/efetivo.png");
+}
+
+.icon-search {
+  background-image: url("assets/icons/pesquisa.png");
+}
+
 .search-toggle {
   width: 100%;
   margin-top: 10px;
@@ -169,6 +191,23 @@ body {
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-brand-logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+  background-image: url("assets/logo-pelotao.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .app-header h1 {
@@ -325,6 +364,11 @@ body {
 
   .sidebar.collapsed .label {
     display: none;
+  }
+
+  .app-brand-logo {
+    width: 50px;
+    height: 50px;
   }
 
   .search-panel {

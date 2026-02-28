@@ -12,16 +12,16 @@
       <button id="toggleSidebar" class="toggle-btn" aria-label="Expandir ou retrair menu">☰</button>
       <nav class="menu">
         <button class="menu-item active" data-screen="quadro">
-          <span class="icon">🏛</span>
+          <span class="menu-icon icon-quadro" aria-hidden="true"></span>
           <span class="label">Quadro Organizacional</span>
         </button>
         <button class="menu-item" data-screen="efetivo">
-          <span class="icon">👥</span>
+          <span class="menu-icon icon-efetivo" aria-hidden="true"></span>
           <span class="label">Efetivo</span>
         </button>
       </nav>
       <button id="searchToggle" class="search-toggle">
-        <span class="icon">🔎</span>
+        <span class="menu-icon icon-search" aria-hidden="true"></span>
         <span class="label">Pesquisar Militar</span>
       </button>
       <div id="searchPanel" class="search-panel" aria-hidden="true">
@@ -38,8 +38,11 @@
     <main class="content">
       <header class="topbar">
         <div class="app-header">
-          <h1>Caveirinha do Pelotão</h1>
-          <p>PELOPES</p>
+          <div class="app-brand-logo" aria-label="Logo do pelotão"></div>
+          <div class="app-brand-text">
+            <h1>Caveirinha do Pelotão</h1>
+            <p>PELOPES</p>
+          </div>
         </div>
         <h2 id="screenTitle">Quadro Organizacional</h2>
       </header>
