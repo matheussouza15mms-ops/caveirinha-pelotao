@@ -6,6 +6,7 @@
   --text: #1d2733;
   --muted: #66778a;
   --border: #d6dde5;
+  --sidebar-collapsed-width: 68px;
 }
 
 * {
@@ -35,7 +36,7 @@ body {
 }
 
 .sidebar.collapsed {
-  width: 84px;
+  width: var(--sidebar-collapsed-width);
 }
 
 .toggle-btn {
@@ -113,6 +114,14 @@ body {
 
 .sidebar.collapsed .label {
   display: none;
+}
+
+.sidebar.collapsed .menu-item,
+.sidebar.collapsed .search-toggle {
+  justify-content: center;
+  gap: 0;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .search-panel {
@@ -354,7 +363,7 @@ body {
   }
 
   .sidebar.collapsed {
-    width: 84px;
+    width: var(--sidebar-collapsed-width);
   }
 
   .menu {
