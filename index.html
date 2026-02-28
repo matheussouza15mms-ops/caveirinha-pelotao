@@ -1,0 +1,67 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caveirinha App</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <button id="toggleSidebar" class="toggle-btn" aria-label="Expandir ou retrair menu">☰</button>
+      <nav class="menu">
+        <button class="menu-item active" data-screen="quadro">
+          <span class="icon">🏛</span>
+          <span class="label">Quadro Organizacional</span>
+        </button>
+        <button class="menu-item" data-screen="efetivo">
+          <span class="icon">👥</span>
+          <span class="label">Efetivo</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div class="app-header">
+          <h1>Caveirinha do Pelotão</h1>
+          <p>PELOPES</p>
+        </div>
+        <h2 id="screenTitle">Quadro Organizacional</h2>
+      </header>
+
+      <section id="quadroScreen" class="screen active">
+        <div class="quadro-layout">
+          <div class="tabs-vertical" id="tabsContainer"></div>
+          <div class="cards-area" id="cardsArea"></div>
+        </div>
+      </section>
+
+      <section id="efetivoScreen" class="screen">
+        <h2>Efetivo</h2>
+        <p>Área reservada para a gestão do efetivo.</p>
+      </section>
+
+      <section id="fichaScreen" class="screen">
+        <button id="backToQuadro" class="back-btn">← Voltar ao Quadro</button>
+        <div class="ficha-header">
+          <img id="fichaFoto" src="" alt="Foto do militar" />
+          <div>
+            <h2 id="fichaNome"></h2>
+            <p id="fichaFuncao"></p>
+          </div>
+        </div>
+        <div class="ficha-actions">
+          <button class="ficha-action">Dados</button>
+          <button class="ficha-action">TAF</button>
+          <button class="ficha-action">TAT</button>
+          <button class="ficha-action">Punições FO</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
