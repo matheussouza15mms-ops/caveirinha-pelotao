@@ -1,8 +1,8 @@
-# Funcionalidades Implementadas
+﻿# Funcionalidades Implementadas
 
 ## Sidebar
 - Toggle retrátil
-- Ícones com background-image
+- Ícones com `background-image`
 - Modo colapsado esconde labels
 
 ## Quadro Organizacional
@@ -24,7 +24,7 @@
 - Foto
 - Nome completo formatado
 - Função
-- Botões de ação (ainda sem lógica interna)
+- Botões de ação (estrutura pronta, sem lógica de negócio completa)
 
 ## Efetivo
 - Checkbox = Em forma
@@ -34,5 +34,22 @@
   - Em forma
   - Destinos
   - Baixados
+- Atualização dinâmica em tempo real
+- Persistência via API layer (`updateEfetivo`)
 
-Atualização dinâmica em tempo real.
+## Integração de Dados (nova base)
+- Inicialização dos militares via `getMilitares()`
+- Inicialização do efetivo via `getEfetivo()`
+- Camada de abstração criada em `services/api.js`
+- Mock local criado em `mock/db.json`
+- Interface sem acesso direto ao JSON
+- Interface sem lógica de persistência direta
+
+## Endpoints lógicos já expostos na API layer
+- `getMilitares`
+- `getEfetivo`
+- `updateEfetivo`
+- `getFO`, `createFO`, `updateFO`
+- `getPunicoes`, `createPunicao`, `updatePunicao`
+- `getTAF`, `createTAF`, `updateTAF`
+- `getTAT`, `createTAT`, `updateTAT`

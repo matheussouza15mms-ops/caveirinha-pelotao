@@ -1,0 +1,138 @@
+{
+  "militares": [
+    {
+      "id": "mil-001",
+      "pg": "Cap",
+      "numero": null,
+      "nomeGuerra": "De Souza",
+      "funcao": "Comandante",
+      "aba": "Comando",
+      "foto": "https://i.pravatar.cc/100?img=11",
+      "lastUpdate": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "id": "mil-002",
+      "pg": "Ten",
+      "numero": null,
+      "nomeGuerra": "Costa",
+      "funcao": "Subcomandante",
+      "aba": "Comando",
+      "foto": "https://i.pravatar.cc/100?img=12",
+      "lastUpdate": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "id": "mil-003",
+      "pg": "Sgt",
+      "numero": null,
+      "nomeGuerra": "Lima",
+      "funcao": "Chefe Administrativo",
+      "aba": "Administracao",
+      "foto": "https://i.pravatar.cc/100?img=13",
+      "lastUpdate": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "id": "mil-004",
+      "pg": "Cb",
+      "numero": null,
+      "nomeGuerra": "Rocha",
+      "funcao": "Auxiliar Administrativo",
+      "aba": "Administracao",
+      "foto": "https://i.pravatar.cc/100?img=14",
+      "lastUpdate": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "id": "mil-005",
+      "pg": "Sgt",
+      "numero": null,
+      "nomeGuerra": "Melo",
+      "funcao": "Chefe de Operacoes",
+      "aba": "Operacoes",
+      "foto": "https://i.pravatar.cc/100?img=15",
+      "lastUpdate": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "id": "mil-006",
+      "pg": "Sd EV",
+      "numero": 135,
+      "nomeGuerra": "Selva",
+      "funcao": "Recruta",
+      "aba": "Operacoes",
+      "foto": "https://i.pravatar.cc/100?img=16",
+      "lastUpdate": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "id": "mil-007",
+      "pg": "Ten",
+      "numero": null,
+      "nomeGuerra": "Prado",
+      "funcao": "Chefe de Logistica",
+      "aba": "Logistica",
+      "foto": "https://i.pravatar.cc/100?img=17",
+      "lastUpdate": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "id": "mil-008",
+      "pg": "Cb",
+      "numero": null,
+      "nomeGuerra": "Silva",
+      "funcao": "Armeiro",
+      "aba": "Logistica",
+      "foto": "https://i.pravatar.cc/100?img=18",
+      "lastUpdate": "2026-02-28T00:00:00.000Z"
+    }
+  ],
+  "efetivo": [
+    {
+      "idMilitar": "mil-001",
+      "emForma": false,
+      "situacao": "",
+      "dataAtualizacao": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "idMilitar": "mil-002",
+      "emForma": false,
+      "situacao": "",
+      "dataAtualizacao": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "idMilitar": "mil-003",
+      "emForma": false,
+      "situacao": "",
+      "dataAtualizacao": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "idMilitar": "mil-004",
+      "emForma": false,
+      "situacao": "",
+      "dataAtualizacao": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "idMilitar": "mil-005",
+      "emForma": false,
+      "situacao": "",
+      "dataAtualizacao": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "idMilitar": "mil-006",
+      "emForma": false,
+      "situacao": "",
+      "dataAtualizacao": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "idMilitar": "mil-007",
+      "emForma": false,
+      "situacao": "",
+      "dataAtualizacao": "2026-02-28T00:00:00.000Z"
+    },
+    {
+      "idMilitar": "mil-008",
+      "emForma": false,
+      "situacao": "",
+      "dataAtualizacao": "2026-02-28T00:00:00.000Z"
+    }
+  ],
+  "fo": [],
+  "punicoes": [],
+  "taf": [],
+  "tat": []
+}

@@ -1,33 +1,6 @@
-const organizacao = [
-  {
-    aba: "Comando",
-    militares: [
-      { pg: "Cap", nomeGuerra: "Silva", funcao: "Comandante", foto: "https://i.pravatar.cc/100?img=11" },
-      { pg: "Ten", nomeGuerra: "Costa", funcao: "Subcomandante", foto: "https://i.pravatar.cc/100?img=12" }
-    ]
-  },
-  {
-    aba: "Administracao",
-    militares: [
-      { pg: "Sgt", nomeGuerra: "Lima", funcao: "Chefe Administrativo", foto: "https://i.pravatar.cc/100?img=13" },
-      { pg: "Cb", nomeGuerra: "Rocha", funcao: "Auxiliar Administrativo", foto: "https://i.pravatar.cc/100?img=14" }
-    ]
-  },
-  {
-    aba: "Operacoes",
-    militares: [
-      { pg: "Sgt", nomeGuerra: "Melo", funcao: "Chefe de Operacoes", foto: "https://i.pravatar.cc/100?img=15" },
-      { pg: "Sd EV", numero: 135, nomeGuerra: "Selva", funcao: "Recruta", foto: "https://i.pravatar.cc/100?img=16" }
-    ]
-  },
-  {
-    aba: "Logistica",
-    militares: [
-      { pg: "Ten", nomeGuerra: "Prado", funcao: "Chefe de Logistica", foto: "https://i.pravatar.cc/100?img=17" },
-      { pg: "Cb", nomeGuerra: "Silva", funcao: "Armeiro", foto: "https://i.pravatar.cc/100?img=18" }
-    ]
-  }
-];
+let organizacao = [];
+let indiceMilitares = [];
+const cardIdToMilitarId = new Map();
 
 const sidebar = document.getElementById("sidebar");
 const toggleSidebar = document.getElementById("toggleSidebar");
@@ -56,20 +29,8 @@ const fichaFuncao = document.getElementById("fichaFuncao");
 let abaAtiva = 0;
 let ultimoCardEncontrado = null;
 
-const indiceMilitares = organizacao.flatMap((grupo, abaIndex) =>
-  grupo.militares.map((militar, militarIndex) => ({
-    ...militar,
-    aba: grupo.aba,
-    abaIndex,
-    militarIndex,
-    cardId: `${abaIndex}-${militarIndex}`
-  }))
-);
-
 const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
-const efetivoState = new Map(
-  indiceMilitares.map((militar) => [militar.cardId, { emForma: false, situacao: "" }])
-);
+const efetivoState = new Map();
 
 function isSdEv(militar) {
   return militar.pg.trim().toUpperCase() === "SD EV";
@@ -82,6 +43,70 @@ function militarNomeBase(militar) {
   }
   partes.push(militar.nomeGuerra);
   return partes.join(" ");
+}
+
+function construirOrganizacao(militares) {
+  const grupos = new Map();
+
+  militares.forEach((militar) => {
+    const aba = militar.aba || "Sem Aba";
+    if (!grupos.has(aba)) {
+      grupos.set(aba, []);
+    }
+    grupos.get(aba).push({
+      id: militar.id,
+      pg: militar.pg,
+      numero: militar.numero,
+      nomeGuerra: militar.nomeGuerra,
+      funcao: militar.funcao,
+      foto: militar.foto,
+      lastUpdate: militar.lastUpdate
+    });
+  });
+
+  return Array.from(grupos.entries()).map(([aba, militaresDaAba]) => ({
+    aba,
+    militares: militaresDaAba
+  }));
+}
+
+function reconstruirIndices() {
+  cardIdToMilitarId.clear();
+  indiceMilitares = organizacao.flatMap((grupo, abaIndex) =>
+    grupo.militares.map((militar, militarIndex) => {
+      const cardId = `${abaIndex}-${militarIndex}`;
+      cardIdToMilitarId.set(cardId, militar.id);
+      return {
+        ...militar,
+        aba: grupo.aba,
+        abaIndex,
+        militarIndex,
+        cardId
+      };
+    })
+  );
+}
+
+function sincronizarEfetivoState(efetivoRegistros) {
+  efetivoState.clear();
+
+  const efetivoPorMilitar = new Map(
+    efetivoRegistros.map((item) => [item.idMilitar, item])
+  );
+
+  indiceMilitares.forEach((militar) => {
+    const registro = efetivoPorMilitar.get(militar.id);
+    if (!registro) {
+      efetivoState.set(militar.cardId, { emForma: false, situacao: "" });
+      return;
+    }
+
+    const emForma = Boolean(registro.emForma) || registro.situacao === "em_forma";
+    efetivoState.set(militar.cardId, {
+      emForma,
+      situacao: emForma ? "em_forma" : registro.situacao || ""
+    });
+  });
 }
 
 function setScreen(screen) {
@@ -108,6 +133,16 @@ function setScreen(screen) {
 function renderTabs() {
   tabsContainer.innerHTML = "";
 
+  if (!organizacao.length) {
+    const empty = document.createElement("div");
+    empty.className = "search-result-empty";
+    empty.textContent = "Nenhuma aba encontrada.";
+    tabsContainer.appendChild(empty);
+    return;
+  }
+
+  abaAtiva = Math.max(0, Math.min(abaAtiva, organizacao.length - 1));
+
   organizacao.forEach((grupo, index) => {
     const btn = document.createElement("button");
     btn.className = `tab-btn ${index === abaAtiva ? "active" : ""}`;
@@ -123,6 +158,11 @@ function renderTabs() {
 
 function renderCards() {
   cardsArea.innerHTML = "";
+
+  if (!organizacao.length || !organizacao[abaAtiva]) {
+    cardsArea.innerHTML = '<div class="search-result-empty">Sem militares para exibir.</div>';
+    return;
+  }
 
   organizacao[abaAtiva].militares.forEach((militar, index) => {
     const card = document.createElement("button");
@@ -306,6 +346,24 @@ function renderEfetivo() {
   atualizarResumoEfetivo();
 }
 
+async function persistirEfetivo(cardId) {
+  const estado = efetivoState.get(cardId);
+  const idMilitar = cardIdToMilitarId.get(cardId);
+  if (!estado || !idMilitar) {
+    return;
+  }
+
+  try {
+    await window.CaveirinhaAPI.updateEfetivo({
+      idMilitar,
+      emForma: estado.emForma,
+      situacao: estado.situacao
+    });
+  } catch (error) {
+    console.error("Falha ao atualizar efetivo na API layer:", error);
+  }
+}
+
 efetivoTableBody.addEventListener("change", (event) => {
   const alvo = event.target;
   if (!(alvo instanceof HTMLElement)) {
@@ -329,6 +387,7 @@ efetivoTableBody.addEventListener("change", (event) => {
 
     atualizarLinhaEfetivo(id);
     atualizarResumoEfetivo();
+    void persistirEfetivo(id);
     return;
   }
 
@@ -343,6 +402,7 @@ efetivoTableBody.addEventListener("change", (event) => {
     estado.emForma = false;
     atualizarLinhaEfetivo(id);
     atualizarResumoEfetivo();
+    void persistirEfetivo(id);
   }
 });
 
@@ -396,10 +456,28 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-if (window.matchMedia("(max-width: 900px)").matches) {
-  sidebar.classList.add("collapsed");
+async function inicializarApp() {
+  try {
+    const militares = await window.CaveirinhaAPI.getMilitares();
+    organizacao = construirOrganizacao(militares);
+    reconstruirIndices();
+
+    const efetivo = await window.CaveirinhaAPI.getEfetivo();
+    sincronizarEfetivoState(efetivo);
+  } catch (error) {
+    console.error("Falha ao inicializar dados via API layer:", error);
+    organizacao = [];
+    indiceMilitares = [];
+    efetivoState.clear();
+  }
+
+  if (window.matchMedia("(max-width: 900px)").matches) {
+    sidebar.classList.add("collapsed");
+  }
+
+  renderTabs();
+  renderCards();
+  renderEfetivo();
 }
 
-renderTabs();
-renderCards();
-renderEfetivo();
+void inicializarApp();

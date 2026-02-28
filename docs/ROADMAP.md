@@ -1,27 +1,30 @@
-# Roadmap de Evolução — Caveirinha App
+﻿# Roadmap de Evolução - Caveirinha App
 
 ## Objetivo Estratégico
+Transformar o Caveirinha App em uma plataforma administrativa conectada, com Google Sheets como base oficial e sincronização bidirecional.
 
-Transformar o Caveirinha App em uma plataforma administrativa conectada,
-com Google Sheets funcionando como banco de dados oficial e sincronização bidirecional.
+## Status Geral (2026-02-28)
+Fase 1 iniciada com base arquitetural pronta no frontend:
+- API layer implementada (`services/api.js`)
+- Função genérica `apiRequest(action, payload)` implementada
+- Mock local em JSON implementado (`mock/db.json`)
+- UI consumindo somente API layer para leitura e escrita de efetivo
 
----
+## Fase 1 - Integração Google Sheets (Bidirecional)
 
-# 🔷 Fase 1 — Integração Google Sheets (Bidirecional)
+### Já concluído
+- Estrutura de coleções compatível com modelo do Sheets
+- Separação entre interface e persistência
+- Ponto único de troca para comunicação remota (`BASE_URL`)
 
-## Objetivo
-Permitir:
+### Pendente
+- Publicação do backend Google Apps Script (WebApp)
+- Implementação de ações remotas reais no Apps Script
+- Sincronização bidirecional completa com controle de conflito
 
-- Ler dados do Sheets ao iniciar o app
-- Atualizar Sheets ao alterar dados no app
-- Sincronização consistente entre interface e banco
-- Controle de conflitos
+## Estrutura de Dados no Sheets (alvo)
 
----
-
-## Estrutura de Dados Recomendada no Sheets
-
-### Aba: MILITARES
+### MILITARES
 - id
 - pg
 - numero
@@ -29,139 +32,80 @@ Permitir:
 - funcao
 - aba
 - foto
+- lastUpdate
 
-### Aba: EFETIVO
+### EFETIVO
 - idMilitar
 - emForma
 - situacao
 - dataAtualizacao
 
-### Aba: TAF
-- idMilitar
-- data
-- tipo
-- resultado
-- observacao
-
-### Aba: TAT
-- idMilitar
-- data
-- armamento
-- pontuacao
-- classificacao
-
-### Aba: FO
+### FO
+- id
 - idMilitar
 - data
 - tipo
 - descricao
 - autor
+- lastUpdate
 
-### Aba: PUNICOES
+### PUNICOES
+- id
 - idMilitar
 - tipo
 - enquadramento
 - dataInicio
 - dataFim
 - status
+- lastUpdate
 
----
+### TAF
+- id
+- idMilitar
+- data
+- tipoTeste
+- resultado
+- observacao
+- lastUpdate
 
-## Arquitetura Técnica
+### TAT
+- id
+- idMilitar
+- data
+- armamento
+- pontuacao
+- classificacao
+- lastUpdate
 
-Frontend:
-HTML + CSS + JS (atual)
+## Próximas Fases
 
-Backend:
-Google Apps Script publicado como WebApp
-
-Comunicação:
-fetch() com JSON
-
-Modelo:
-- GET → Carrega dados
-- POST → Atualiza registros
-- PUT → Atualização específica
-- DELETE → Remoção
-
----
-
-## Controle de Conflitos
-
-Estratégia sugerida:
-
-- Cada registro terá:
-  - lastUpdateTimestamp
-  - updatedBy
-
-Regra:
-Se timestamp remoto > local → atualizar local
-Se local > remoto → enviar atualização
-
----
-
-# 🔷 Fase 2 — Tela FO
-
+### Fase 2 - Tela FO
 - CRUD completo
 - Filtro por período
 - Filtro por tipo
-- Exportação futura PDF
 
----
-
-# 🔷 Fase 3 — Tela Punições
-
+### Fase 3 - Tela Punições
 - CRUD completo
-- Status automático (ativa / cumprida)
-- Integração com relatório disciplinar
+- Status automático (ativa/cumprida)
 
----
-
-# 🔷 Fase 4 — Tela TAF
-
+### Fase 4 - Tela TAF
 - Registro por data
 - Histórico
-- Cálculo automático de média
-- Indicador visual de aptidão
+- Indicadores de desempenho
 
----
-
-# 🔷 Fase 5 — Tela TAT
-
+### Fase 5 - Tela TAT
 - Registro por sessão
 - Classificação automática
 - Histórico comparativo
 
----
+### Fase 6 - Dark Mode
+- Alternância por botão
+- Persistência em `localStorage`
+- Ajustes por CSS variables
 
-# 🔷 Fase 6 — Dark Mode
+## Troca futura para produção
+Quando o Apps Script estiver pronto, trocar em `services/api.js`:
+- de: `const BASE_URL = "mock"`
+- para: `const BASE_URL = "https://script.google.com/macros/s/XXXX/exec"`
 
-- Alternância via botão
-- Persistência localStorage
-- CSS variables
-- Transição suave
-
----
-
-# Ordem Recomendada
-
-1️⃣ Estrutura base Google Sheets  
-2️⃣ Backend Apps Script  
-3️⃣ Integração Efetivo  
-4️⃣ FO  
-5️⃣ Punições  
-6️⃣ TAF  
-7️⃣ TAT  
-8️⃣ Dark Mode  
-
----
-
-# Visão Final
-
-Sistema administrativo completo, online, sincronizado, estruturado,
-com possibilidade futura de:
-
-- Controle de acesso
-- Login por usuário
-- Auditoria de alterações
-- Geração de relatórios oficiais
+Sem alterar a lógica da interface.
