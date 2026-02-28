@@ -55,8 +55,33 @@
       </section>
 
       <section id="efetivoScreen" class="screen">
-        <h2>Efetivo</h2>
-        <p>Área reservada para a gestão do efetivo.</p>
+        <div class="efetivo-summary">
+          <article class="efetivo-kpi">
+            <p>Total no pelotão</p>
+            <strong id="kpiTotalPelotao">0</strong>
+          </article>
+          <article class="efetivo-kpi">
+            <p>Em forma</p>
+            <strong id="kpiEmForma">0</strong>
+          </article>
+          <article class="efetivo-kpi">
+            <p>Na falta ou destinos</p>
+            <strong id="kpiDestinos">0</strong>
+          </article>
+        </div>
+
+        <div class="efetivo-table-wrap">
+          <table class="efetivo-table">
+            <thead>
+              <tr>
+                <th>Check</th>
+                <th>Nome de Guerra</th>
+                <th>Situação</th>
+              </tr>
+            </thead>
+            <tbody id="efetivoTableBody"></tbody>
+          </table>
+        </div>
       </section>
 
       <section id="fichaScreen" class="screen">

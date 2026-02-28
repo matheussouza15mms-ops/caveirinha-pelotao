@@ -43,6 +43,10 @@ const searchToggle = document.getElementById("searchToggle");
 const searchPanel = document.getElementById("searchPanel");
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
+const kpiTotalPelotao = document.getElementById("kpiTotalPelotao");
+const kpiEmForma = document.getElementById("kpiEmForma");
+const kpiDestinos = document.getElementById("kpiDestinos");
+const efetivoTableBody = document.getElementById("efetivoTableBody");
 
 const fichaFoto = document.getElementById("fichaFoto");
 const fichaNome = document.getElementById("fichaNome");
@@ -60,6 +64,16 @@ const indiceMilitares = organizacao.flatMap((grupo, abaIndex) =>
     cardId: `${abaIndex}-${militarIndex}`
   }))
 );
+
+const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
+const efetivoState = new Map(
+  indiceMilitares.map((militar) => [militar.cardId, { emForma: false, situacao: "" }])
+);
+
+function extrairNomeGuerra(nomeCompleto) {
+  const partes = nomeCompleto.trim().split(/\s+/);
+  return partes[partes.length - 1] || nomeCompleto;
+}
 
 function setScreen(screen) {
   quadroScreen.classList.remove("active");
@@ -193,6 +207,124 @@ function fecharBusca() {
   searchPanel.setAttribute("aria-hidden", "true");
 }
 
+function atualizarResumoEfetivo() {
+  const total = indiceMilitares.length;
+  let emForma = 0;
+  let destinos = 0;
+
+  efetivoState.forEach((estado) => {
+    if (estado.emForma) {
+      emForma += 1;
+      return;
+    }
+    if (opcoesSituacao.includes(estado.situacao)) {
+      destinos += 1;
+    }
+  });
+
+  kpiTotalPelotao.textContent = String(total);
+  kpiEmForma.textContent = String(emForma);
+  kpiDestinos.textContent = String(destinos);
+}
+
+function atualizarLinhaEfetivo(cardId) {
+  const estado = efetivoState.get(cardId);
+  const checkbox = efetivoTableBody.querySelector(`.efetivo-check[data-id="${cardId}"]`);
+  const select = efetivoTableBody.querySelector(`.status-select[data-id="${cardId}"]`);
+  if (!estado || !checkbox || !select) {
+    return;
+  }
+
+  if (estado.emForma) {
+    checkbox.checked = true;
+    select.value = "";
+    if (select.options[0]) {
+      select.options[0].textContent = "Em forma";
+    }
+    select.disabled = true;
+    return;
+  }
+
+  checkbox.checked = false;
+  select.disabled = false;
+  if (select.options[0]) {
+    select.options[0].textContent = "Selecionar situação";
+  }
+  select.value = estado.situacao;
+}
+
+function renderEfetivo() {
+  efetivoTableBody.innerHTML = "";
+
+  indiceMilitares.forEach((militar) => {
+    const estado = efetivoState.get(militar.cardId);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="efetivo-check-cell">
+        <input class="efetivo-check" type="checkbox" data-id="${militar.cardId}" ${estado && estado.emForma ? "checked" : ""} />
+      </td>
+      <td>
+        <span class="nome-guerra">${extrairNomeGuerra(militar.nome)}</span>
+        <span class="nome-completo">${militar.nome}</span>
+      </td>
+      <td>
+        <select class="status-select" data-id="${militar.cardId}" ${estado && estado.emForma ? "disabled" : ""}>
+          <option value="">Selecionar situação</option>
+          <option value="falta">Falta</option>
+          <option value="missao">Missão</option>
+          <option value="baixado">Baixado</option>
+          <option value="ferias">Férias</option>
+          <option value="outros">Outros</option>
+        </select>
+      </td>
+    `;
+    efetivoTableBody.appendChild(tr);
+    atualizarLinhaEfetivo(militar.cardId);
+  });
+
+  atualizarResumoEfetivo();
+}
+
+efetivoTableBody.addEventListener("change", (event) => {
+  const alvo = event.target;
+  if (!(alvo instanceof HTMLElement)) {
+    return;
+  }
+
+  if (alvo.classList.contains("efetivo-check")) {
+    const id = alvo.dataset.id;
+    const estado = efetivoState.get(id);
+    if (!estado) {
+      return;
+    }
+
+    if (alvo.checked) {
+      estado.emForma = true;
+      estado.situacao = "em_forma";
+    } else {
+      estado.emForma = false;
+      estado.situacao = "";
+    }
+
+    atualizarLinhaEfetivo(id);
+    atualizarResumoEfetivo();
+    return;
+  }
+
+  if (alvo.classList.contains("status-select")) {
+    const id = alvo.dataset.id;
+    const estado = efetivoState.get(id);
+    if (!estado) {
+      return;
+    }
+
+    estado.situacao = alvo.value;
+    estado.emForma = false;
+    atualizarLinhaEfetivo(id);
+    atualizarResumoEfetivo();
+  }
+});
+
 toggleSidebar.addEventListener("click", () => {
   sidebar.classList.toggle("collapsed");
 });
@@ -249,3 +381,4 @@ if (window.matchMedia("(max-width: 900px)").matches) {
 
 renderTabs();
 renderCards();
+renderEfetivo();
