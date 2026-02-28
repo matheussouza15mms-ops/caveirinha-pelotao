@@ -1,30 +1,30 @@
-﻿const organizacao = [
+const organizacao = [
   {
     aba: "Comando",
     militares: [
-      { nome: "Cap Silva", funcao: "Comandante", foto: "https://i.pravatar.cc/100?img=11" },
-      { nome: "Ten Costa", funcao: "Subcomandante", foto: "https://i.pravatar.cc/100?img=12" }
+      { pg: "Cap", nomeGuerra: "Silva", funcao: "Comandante", foto: "https://i.pravatar.cc/100?img=11" },
+      { pg: "Ten", nomeGuerra: "Costa", funcao: "Subcomandante", foto: "https://i.pravatar.cc/100?img=12" }
     ]
   },
   {
-    aba: "Administração",
+    aba: "Administracao",
     militares: [
-      { nome: "Sgt Lima", funcao: "Chefe Administrativo", foto: "https://i.pravatar.cc/100?img=13" },
-      { nome: "Cb Rocha", funcao: "Auxiliar Administrativo", foto: "https://i.pravatar.cc/100?img=14" }
+      { pg: "Sgt", nomeGuerra: "Lima", funcao: "Chefe Administrativo", foto: "https://i.pravatar.cc/100?img=13" },
+      { pg: "Cb", nomeGuerra: "Rocha", funcao: "Auxiliar Administrativo", foto: "https://i.pravatar.cc/100?img=14" }
     ]
   },
   {
-    aba: "Operações",
+    aba: "Operacoes",
     militares: [
-      { nome: "Sgt Melo", funcao: "Chefe de Operações", foto: "https://i.pravatar.cc/100?img=15" },
-      { nome: "Sd Nunes", funcao: "Operador", foto: "https://i.pravatar.cc/100?img=16" }
+      { pg: "Sgt", nomeGuerra: "Melo", funcao: "Chefe de Operacoes", foto: "https://i.pravatar.cc/100?img=15" },
+      { pg: "Sd EV", numero: 135, nomeGuerra: "Selva", funcao: "Recruta", foto: "https://i.pravatar.cc/100?img=16" }
     ]
   },
   {
-    aba: "Logística",
+    aba: "Logistica",
     militares: [
-      { nome: "Ten Prado", funcao: "Chefe de Logística", foto: "https://i.pravatar.cc/100?img=17" },
-      { nome: "Sd Alves", funcao: "Apoio Logístico", foto: "https://i.pravatar.cc/100?img=18" }
+      { pg: "Ten", nomeGuerra: "Prado", funcao: "Chefe de Logistica", foto: "https://i.pravatar.cc/100?img=17" },
+      { pg: "Cb", nomeGuerra: "Silva", funcao: "Armeiro", foto: "https://i.pravatar.cc/100?img=18" }
     ]
   }
 ];
@@ -70,9 +70,21 @@ const efetivoState = new Map(
   indiceMilitares.map((militar) => [militar.cardId, { emForma: false, situacao: "" }])
 );
 
-function extrairNomeGuerra(nomeCompleto) {
-  const partes = nomeCompleto.trim().split(/\s+/);
-  return partes[partes.length - 1] || nomeCompleto;
+function isSdEv(militar) {
+  return militar.pg.trim().toUpperCase() === "SD EV";
+}
+
+function militarNomeBase(militar) {
+  const partes = [militar.pg];
+  if (isSdEv(militar) && militar.numero) {
+    partes.push(String(militar.numero));
+  }
+  partes.push(militar.nomeGuerra);
+  return partes.join(" ");
+}
+
+function militarNomeComFuncao(militar) {
+  return `${militarNomeBase(militar)} (${militar.funcao}).`;
 }
 
 function setScreen(screen) {
@@ -120,17 +132,23 @@ function renderCards() {
     card.className = "card-militar";
     card.dataset.cardId = `${abaAtiva}-${index}`;
     card.style.animationDelay = `${index * 0.08}s`;
+
+    const numeroCard = isSdEv(militar) && militar.numero ? String(militar.numero) : "--";
     card.innerHTML = `
-      <img src="${militar.foto}" alt="Foto de ${militar.nome}" />
+      <img src="${militar.foto}" alt="Foto de ${militarNomeBase(militar)}" />
       <div>
-        <strong>${militar.nome}</strong>
+        <div class="militar-meta">
+          <span><b>No:</b> ${numeroCard}</span>
+          <span><b>P/G:</b> ${militar.pg}</span>
+        </div>
+        <strong>${militar.nomeGuerra}</strong>
         <p>${militar.funcao}</p>
       </div>
     `;
 
     card.addEventListener("click", () => {
       fichaFoto.src = militar.foto;
-      fichaNome.textContent = militar.nome;
+      fichaNome.textContent = militarNomeBase(militar);
       fichaFuncao.textContent = militar.funcao;
       setScreen("ficha");
     });
@@ -157,7 +175,9 @@ function renderResultadosBusca(termo) {
   }
 
   const encontrados = indiceMilitares.filter((item) => {
-    return item.nome.toLowerCase().includes(filtro) || item.funcao.toLowerCase().includes(filtro);
+    const numeroBusca = isSdEv(item) && item.numero ? String(item.numero) : "";
+    const campoBusca = `${item.pg} ${item.nomeGuerra} ${item.funcao} ${numeroBusca}`.toLowerCase();
+    return campoBusca.includes(filtro);
   });
 
   if (!encontrados.length) {
@@ -169,8 +189,8 @@ function renderResultadosBusca(termo) {
     const botao = document.createElement("button");
     botao.className = "search-result-item";
     botao.innerHTML = `
-      <strong>${item.nome}</strong>
-      <small>${item.funcao} • ${item.aba}</small>
+      <strong>${militarNomeBase(item)}</strong>
+      <small>${item.funcao} - ${item.aba}</small>
     `;
     botao.addEventListener("click", () => {
       abaAtiva = item.abaIndex;
@@ -248,7 +268,7 @@ function atualizarLinhaEfetivo(cardId) {
   checkbox.checked = false;
   select.disabled = false;
   if (select.options[0]) {
-    select.options[0].textContent = "Selecionar situação";
+    select.options[0].textContent = "Selecionar situacao";
   }
   select.value = estado.situacao;
 }
@@ -264,16 +284,15 @@ function renderEfetivo() {
         <input class="efetivo-check" type="checkbox" data-id="${militar.cardId}" ${estado && estado.emForma ? "checked" : ""} />
       </td>
       <td>
-        <span class="nome-guerra">${extrairNomeGuerra(militar.nome)}</span>
-        <span class="nome-completo">${militar.nome}</span>
+        <span class="efetivo-linha">${militarNomeComFuncao(militar)}</span>
       </td>
       <td>
         <select class="status-select" data-id="${militar.cardId}" ${estado && estado.emForma ? "disabled" : ""}>
-          <option value="">Selecionar situação</option>
+          <option value="">Selecionar situacao</option>
           <option value="falta">Falta</option>
-          <option value="missao">Missão</option>
+          <option value="missao">Missao</option>
           <option value="baixado">Baixado</option>
-          <option value="ferias">Férias</option>
+          <option value="ferias">Ferias</option>
           <option value="outros">Outros</option>
         </select>
       </td>

@@ -291,6 +291,21 @@ body {
   animation: cardIn 0.35s ease forwards;
 }
 
+.militar-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.militar-meta span {
+  font-size: 0.75rem;
+  color: #42576d;
+  background: #eef3f9;
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+
 .card-militar.found {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(43, 127, 255, 0.2);
@@ -411,15 +426,9 @@ body {
   cursor: pointer;
 }
 
-.nome-guerra {
-  font-weight: 700;
-}
-
-.nome-completo {
-  display: block;
-  color: var(--muted);
-  font-size: 0.82rem;
-  margin-top: 2px;
+.efetivo-linha {
+  font-weight: 600;
+  color: #253647;
 }
 
 .status-select {
