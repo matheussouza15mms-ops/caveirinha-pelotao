@@ -46,6 +46,7 @@ const searchResults = document.getElementById("searchResults");
 const kpiTotalPelotao = document.getElementById("kpiTotalPelotao");
 const kpiEmForma = document.getElementById("kpiEmForma");
 const kpiDestinos = document.getElementById("kpiDestinos");
+const kpiBaixados = document.getElementById("kpiBaixados");
 const efetivoTableBody = document.getElementById("efetivoTableBody");
 
 const fichaFoto = document.getElementById("fichaFoto");
@@ -81,10 +82,6 @@ function militarNomeBase(militar) {
   }
   partes.push(militar.nomeGuerra);
   return partes.join(" ");
-}
-
-function militarNomeComFuncao(militar) {
-  return `${militarNomeBase(militar)} (${militar.funcao}).`;
 }
 
 function setScreen(screen) {
@@ -231,6 +228,7 @@ function atualizarResumoEfetivo() {
   const total = indiceMilitares.length;
   let emForma = 0;
   let destinos = 0;
+  let baixados = 0;
 
   efetivoState.forEach((estado) => {
     if (estado.emForma) {
@@ -239,12 +237,16 @@ function atualizarResumoEfetivo() {
     }
     if (opcoesSituacao.includes(estado.situacao)) {
       destinos += 1;
+      if (estado.situacao === "baixado") {
+        baixados += 1;
+      }
     }
   });
 
   kpiTotalPelotao.textContent = String(total);
   kpiEmForma.textContent = String(emForma);
   kpiDestinos.textContent = String(destinos);
+  kpiBaixados.textContent = `Baixados: ${baixados}`;
 }
 
 function atualizarLinhaEfetivo(cardId) {
@@ -284,7 +286,7 @@ function renderEfetivo() {
         <input class="efetivo-check" type="checkbox" data-id="${militar.cardId}" ${estado && estado.emForma ? "checked" : ""} />
       </td>
       <td>
-        <span class="efetivo-linha">${militarNomeComFuncao(militar)}</span>
+        <span class="efetivo-linha">${militarNomeBase(militar)}</span>
       </td>
       <td>
         <select class="status-select" data-id="${militar.cardId}" ${estado && estado.emForma ? "disabled" : ""}>
