@@ -20,6 +20,19 @@
           <span class="label">Efetivo</span>
         </button>
       </nav>
+      <button id="searchToggle" class="search-toggle">
+        <span class="icon">🔎</span>
+        <span class="label">Pesquisar Militar</span>
+      </button>
+      <div id="searchPanel" class="search-panel" aria-hidden="true">
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Buscar por nome ou função"
+          autocomplete="off"
+        />
+        <div id="searchResults" class="search-results"></div>
+      </div>
     </aside>
 
     <main class="content">
