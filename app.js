@@ -26,13 +26,32 @@ const fichaFoto = document.getElementById("fichaFoto");
 const fichaNome = document.getElementById("fichaNome");
 const fichaFuncao = document.getElementById("fichaFuncao");
 const fichaDadosBtn = document.getElementById("fichaDadosBtn");
+const fichaFoBtn = document.getElementById("fichaFoBtn");
 const dadosModal = document.getElementById("dadosModal");
 const dadosModalClose = document.getElementById("dadosModalClose");
 const dadosModalBody = document.getElementById("dadosModalBody");
+const foModal = document.getElementById("foModal");
+const foModalClose = document.getElementById("foModalClose");
+const foTabPlus = document.getElementById("foTabPlus");
+const foTabMinus = document.getElementById("foTabMinus");
+const foNovoBtn = document.getElementById("foNovoBtn");
+const foTableBody = document.getElementById("foTableBody");
+const foEditorModal = document.getElementById("foEditorModal");
+const foEditorClose = document.getElementById("foEditorClose");
+const foEditorCancel = document.getElementById("foEditorCancel");
+const foEditorForm = document.getElementById("foEditorForm");
+const foDescricaoInput = document.getElementById("foDescricaoInput");
+const foAutorInput = document.getElementById("foAutorInput");
+const foDataInput = document.getElementById("foDataInput");
+const foEditorTitle = document.getElementById("foEditorTitle");
 
 let abaAtiva = 0;
 let ultimoCardEncontrado = null;
 let militarSelecionadoId = null;
+let foTipoAtivo = "FO+";
+let foListaCache = [];
+let foEditandoId = null;
+let foEditandoTipo = "FO+";
 
 const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
 const efetivoState = new Map();
@@ -73,6 +92,28 @@ function valorCampoExibicao(valor) {
     return "--";
   }
   return String(valor);
+}
+
+function hojeISODate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatarDataExibicao(valorData) {
+  if (!valorData) {
+    return "--";
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(valorData);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+
+  const parsed = new Date(valorData);
+  if (Number.isNaN(parsed.getTime())) {
+    return String(valorData);
+  }
+
+  return parsed.toLocaleDateString("pt-BR");
 }
 
 function renderDadosMilitarModal(dadosMilitar) {
@@ -127,6 +168,103 @@ async function abrirDadosMilitar() {
   } catch (error) {
     console.error("Falha ao carregar dados do militar:", error);
   }
+}
+
+function abrirFoModal() {
+  foModal.classList.add("active");
+  foModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharFoModal() {
+  foModal.classList.remove("active");
+  foModal.setAttribute("aria-hidden", "true");
+}
+
+function abrirFoEditorModal() {
+  foEditorModal.classList.add("active");
+  foEditorModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharFoEditorModal() {
+  foEditorModal.classList.remove("active");
+  foEditorModal.setAttribute("aria-hidden", "true");
+  foEditorForm.reset();
+}
+
+function renderFoTabs() {
+  [foTabPlus, foTabMinus].forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.tipo === foTipoAtivo);
+  });
+}
+
+function renderFoTabela() {
+  foTableBody.innerHTML = "";
+
+  const registros = foListaCache
+    .filter((item) => item.idMilitar === militarSelecionadoId && item.tipo === foTipoAtivo)
+    .sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
+
+  if (!registros.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = '<td class="fo-empty-row" colspan="4">Nenhum fato observado nesta aba.</td>';
+    foTableBody.appendChild(tr);
+    return;
+  }
+
+  registros.forEach((registro) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${valorCampoExibicao(registro.descricao)}</td>
+      <td>${valorCampoExibicao(registro.autor)}</td>
+      <td>${formatarDataExibicao(registro.data)}</td>
+      <td class="fo-actions-cell">
+        <button class="fo-action-btn" data-action="copy" data-id="${registro.id}">Copiar</button>
+        <button class="fo-action-btn" data-action="edit" data-id="${registro.id}">Editar</button>
+        <button class="fo-action-btn warn" data-action="delete" data-id="${registro.id}">Excluir</button>
+      </td>
+    `;
+    foTableBody.appendChild(tr);
+  });
+}
+
+async function carregarFo() {
+  try {
+    foListaCache = await window.CaveirinhaAPI.getFO();
+  } catch (error) {
+    console.error("Falha ao carregar FO:", error);
+    foListaCache = [];
+  }
+  renderFoTabela();
+}
+
+function abrirFoEditor(registro) {
+  if (registro) {
+    foEditandoId = registro.id;
+    foEditandoTipo = registro.tipo || foTipoAtivo;
+    foEditorTitle.textContent = "Editar FO";
+    foDescricaoInput.value = registro.descricao || "";
+    foAutorInput.value = registro.autor || "";
+    foDataInput.value = (registro.data || "").slice(0, 10) || hojeISODate();
+  } else {
+    foEditandoId = null;
+    foEditandoTipo = foTipoAtivo;
+    foEditorTitle.textContent = "Registrar FO";
+    foDescricaoInput.value = "";
+    foAutorInput.value = "";
+    foDataInput.value = hojeISODate();
+  }
+
+  abrirFoEditorModal();
+}
+
+async function abrirFatosObservados() {
+  if (!militarSelecionadoId) {
+    return;
+  }
+
+  renderFoTabs();
+  abrirFoModal();
+  await carregarFo();
 }
 
 function construirOrganizacao(militares) {
@@ -537,6 +675,14 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    if (foEditorModal.classList.contains("active")) {
+      fecharFoEditorModal();
+      return;
+    }
+    if (foModal.classList.contains("active")) {
+      fecharFoModal();
+      return;
+    }
     if (dadosModal.classList.contains("active")) {
       fecharModalDados();
       return;
@@ -547,6 +693,10 @@ document.addEventListener("keydown", (event) => {
 
 fichaDadosBtn.addEventListener("click", () => {
   void abrirDadosMilitar();
+});
+
+fichaFoBtn.addEventListener("click", () => {
+  void abrirFatosObservados();
 });
 
 dadosModalClose.addEventListener("click", () => {
@@ -581,6 +731,119 @@ dadosModalBody.addEventListener("click", async (event) => {
     }, 1000);
   } catch (error) {
     console.error("Falha ao copiar valor:", error);
+  }
+});
+
+foModalClose.addEventListener("click", () => {
+  fecharFoModal();
+});
+
+foModal.addEventListener("click", (event) => {
+  if (event.target === foModal) {
+    fecharFoModal();
+  }
+});
+
+[foTabPlus, foTabMinus].forEach((tab) => {
+  tab.addEventListener("click", () => {
+    foTipoAtivo = tab.dataset.tipo || "FO+";
+    renderFoTabs();
+    renderFoTabela();
+  });
+});
+
+foNovoBtn.addEventListener("click", () => {
+  abrirFoEditor(null);
+});
+
+foTableBody.addEventListener("click", async (event) => {
+  const alvo = event.target;
+  if (!(alvo instanceof HTMLElement) || !alvo.dataset.id) {
+    return;
+  }
+
+  const action = alvo.dataset.action;
+  const registro = foListaCache.find((item) => item.id === alvo.dataset.id);
+  if (!registro) {
+    return;
+  }
+
+  if (action === "copy") {
+    try {
+      await navigator.clipboard.writeText(registro.descricao || "");
+      alvo.textContent = "Copiado";
+      window.setTimeout(() => {
+        alvo.textContent = "Copiar";
+      }, 1000);
+    } catch (error) {
+      console.error("Falha ao copiar FO:", error);
+    }
+    return;
+  }
+
+  if (action === "edit") {
+    abrirFoEditor(registro);
+    return;
+  }
+
+  if (action === "delete") {
+    const confirma = window.confirm("Deseja excluir este fato observado?");
+    if (!confirma) {
+      return;
+    }
+
+    try {
+      await window.CaveirinhaAPI.deleteFO(registro.id);
+      await carregarFo();
+    } catch (error) {
+      console.error("Falha ao excluir FO:", error);
+    }
+  }
+});
+
+foEditorClose.addEventListener("click", () => {
+  fecharFoEditorModal();
+});
+
+foEditorCancel.addEventListener("click", () => {
+  fecharFoEditorModal();
+});
+
+foEditorModal.addEventListener("click", (event) => {
+  if (event.target === foEditorModal) {
+    fecharFoEditorModal();
+  }
+});
+
+foEditorForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!militarSelecionadoId) {
+    return;
+  }
+
+  const payload = {
+    idMilitar: militarSelecionadoId,
+    tipo: foEditandoTipo,
+    descricao: foDescricaoInput.value.trim(),
+    autor: foAutorInput.value.trim(),
+    data: foDataInput.value
+  };
+
+  try {
+    if (foEditandoId) {
+      await window.CaveirinhaAPI.updateFO({
+        id: foEditandoId,
+        ...payload
+      });
+    } else {
+      await window.CaveirinhaAPI.createFO(payload);
+    }
+
+    fecharFoEditorModal();
+    await carregarFo();
+  } catch (error) {
+    console.error("Falha ao salvar FO:", error);
   }
 });
 

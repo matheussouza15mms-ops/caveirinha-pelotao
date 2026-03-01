@@ -565,6 +565,156 @@ body {
   word-break: break-word;
 }
 
+.fo-modal-card {
+  width: min(980px, 100%);
+}
+
+.fo-modal-content {
+  padding: 12px;
+}
+
+.fo-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.fo-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.fo-tab-btn {
+  border: 1px solid #ccd8e6;
+  background: #f3f7fc;
+  color: #32506f;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fo-tab-btn.active[data-tipo="FO+"] {
+  background: #dcf7e9;
+  color: #1f744f;
+  border-color: #87d4ae;
+}
+
+.fo-tab-btn.active[data-tipo="FO-"] {
+  background: #ffe5e5;
+  color: #8e2a2a;
+  border-color: #ef9f9f;
+}
+
+.fo-new-btn {
+  border: 1px solid #99b8da;
+  background: #e7f0fb;
+  color: #1f4d7a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.fo-table-wrap {
+  border: 1px solid #e1e9f3;
+  border-radius: 10px;
+  overflow: auto;
+  background: #fff;
+}
+
+.fo-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fo-table th,
+.fo-table td {
+  border-bottom: 1px solid #edf2f8;
+  padding: 9px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.fo-table th {
+  background: #f6f9fd;
+  color: #2a4a6a;
+  font-size: 0.9rem;
+}
+
+.fo-empty-row {
+  color: #67829d;
+  text-align: center;
+  font-style: italic;
+}
+
+.fo-actions-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fo-action-btn {
+  border: 1px solid #c8d7e7;
+  background: #f2f7fc;
+  color: #1f4870;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.fo-action-btn.warn {
+  border-color: #e9c2c2;
+  background: #fff2f2;
+  color: #8c2e2e;
+}
+
+.fo-editor-card {
+  width: min(580px, 100%);
+}
+
+.fo-form {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.fo-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #355473;
+  font-weight: 600;
+}
+
+.fo-form input,
+.fo-form textarea {
+  border: 1px solid #cddaea;
+  border-radius: 8px;
+  padding: 8px;
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+
+.fo-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.fo-save-btn {
+  border: 1px solid #7fb4dd;
+  background: #d7eefd;
+  color: #184c73;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 @keyframes cardIn {
   to {
     transform: translateY(0);

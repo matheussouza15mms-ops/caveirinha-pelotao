@@ -227,9 +227,6 @@
                         "dataAtualizacao":  "2026-02-28T00:00:00.000Z"
                     }
                 ],
-    "fo":  [
-
-           ],
     "punicoes":  [
 
                  ],
@@ -238,5 +235,34 @@
             ],
     "tat":  [
 
-            ]
+            ],
+    "fo":  [
+               {
+                   "id":  "fo-001",
+                   "idMilitar":  "mil-001",
+                   "data":  "2026-02-10",
+                   "tipo":  "FO+",
+                   "descricao":  "Conduziu briefing operacional com clareza e objetividade.",
+                   "autor":  "Ten Costa",
+                   "lastUpdate":  "2026-03-01T13:10:48.6762614Z"
+               },
+               {
+                   "id":  "fo-002",
+                   "idMilitar":  "mil-001",
+                   "data":  "2026-02-19",
+                   "tipo":  "FO-",
+                   "descricao":  "Atraso de 12 minutos na formatura matinal.",
+                   "autor":  "Sgt Lima",
+                   "lastUpdate":  "2026-03-01T13:10:48.6762614Z"
+               },
+               {
+                   "id":  "fo-003",
+                   "idMilitar":  "mil-006",
+                   "data":  "2026-02-21",
+                   "tipo":  "FO+",
+                   "descricao":  "Excelente desempenho no apoio logístico da instrução.",
+                   "autor":  "Ten Prado",
+                   "lastUpdate":  "2026-03-01T13:10:48.6762614Z"
+               }
+           ]
 }

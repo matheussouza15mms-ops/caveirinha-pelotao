@@ -160,6 +160,15 @@
         );
         return clone(row);
       }
+      case "deleteFO": {
+        assertRequired(payload.id, "id");
+        const index = db.fo.findIndex((item) => item.id === payload.id);
+        if (index < 0) {
+          throw new Error("FO nao encontrado");
+        }
+        const [deleted] = db.fo.splice(index, 1);
+        return clone(deleted);
+      }
       case "getPunicoes":
         return clone(db.punicoes);
       case "createPunicao": {
@@ -294,6 +303,10 @@
     return apiRequest("updateFO", payload);
   }
 
+  function deleteFO(id) {
+    return apiRequest("deleteFO", { id });
+  }
+
   function getPunicoes() {
     return apiRequest("getPunicoes");
   }
@@ -341,6 +354,7 @@
     getFO,
     createFO,
     updateFO,
+    deleteFO,
     getPunicoes,
     createPunicao,
     updatePunicao,
