@@ -97,7 +97,7 @@
         <div class="ficha-actions">
           <button id="fichaDadosBtn" class="ficha-action">Dados</button>
           <button id="fichaTafBtn" class="ficha-action">TAF</button>
-          <button class="ficha-action">TAT</button>
+          <button id="fichaTatBtn" class="ficha-action">TAT</button>
           <button id="fichaFoBtn" class="ficha-action">Fatos Observados</button>
           <button id="fichaHistoricoBtn" class="ficha-action">Histórico/Obs.</button>
         </div>
@@ -293,6 +293,48 @@
           <button type="submit" class="fo-save-btn">Salvar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="tatModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card tat-modal-card" role="dialog" aria-modal="true" aria-labelledby="tatModalTitle">
+      <div class="modal-header">
+        <h3 id="tatModalTitle">Resultado TAT</h3>
+        <button id="tatModalClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+      <div class="tat-modal-content">
+        <div class="tat-info-wrap">
+          <div class="tat-info-row">
+            <span>Armamento</span>
+            <strong id="tatArmamentoValue">--</strong>
+          </div>
+          <div class="tat-info-row">
+            <span>Menção</span>
+            <span id="tatMencaoValue" class="tat-mencao-chip">B</span>
+          </div>
+        </div>
+
+        <div class="tat-actions">
+          <button id="tatEditBtn" type="button" class="ficha-action">Editar menção</button>
+        </div>
+
+        <form id="tatEditorForm" class="tat-editor-form" aria-label="Editar menção do TAT">
+          <label>
+            Nova menção
+            <select id="tatMencaoInput" required>
+              <option value="I">I</option>
+              <option value="R">R</option>
+              <option value="B">B</option>
+              <option value="MB">MB</option>
+              <option value="E">E</option>
+            </select>
+          </label>
+          <div class="fo-form-actions">
+            <button id="tatEditorCancel" type="button" class="ficha-action">Cancelar</button>
+            <button type="submit" class="fo-save-btn">Salvar</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 

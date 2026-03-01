@@ -56,6 +56,21 @@
     return normalized === "true" || normalized === "1" || normalized === "sim";
   }
 
+  function normalizeTatMencao(value) {
+    const upper = String(value || "")
+      .trim()
+      .toUpperCase();
+    const legacyMap = {
+      A: "MB",
+      B: "B",
+      C: "R",
+      D: "I",
+      F: "I"
+    };
+    const normalized = legacyMap[upper] || upper;
+    return ["I", "R", "B", "MB", "E"].includes(normalized) ? normalized : "B";
+  }
+
   function parseCsvLine(line) {
     const values = [];
     let current = "";
@@ -200,7 +215,8 @@
       data: row.data || "",
       armamento: row.armamento || "",
       pontuacao: row.pontuacao || "",
-      classificacao: row.classificacao || "",
+      mencao: normalizeTatMencao(row.mencao || row.classificacao || row.resultado),
+      classificacao: normalizeTatMencao(row.classificacao || row.mencao || row.resultado),
       lastUpdate: row.lastUpdate || ""
     }));
   }
@@ -519,13 +535,15 @@
         return clone(db.tat);
       case "createTAT": {
         assertRequired(payload.idMilitar, "idMilitar");
+        const mencao = normalizeTatMencao(payload.mencao || payload.classificacao || payload.resultado);
         const record = {
           id: payload.id || createId("tat"),
           idMilitar: payload.idMilitar,
           data: payload.data || "",
           armamento: payload.armamento || "",
           pontuacao: payload.pontuacao || "",
-          classificacao: payload.classificacao || "",
+          mencao,
+          classificacao: mencao,
           lastUpdate: nowIso()
         };
         db.tat.push(record);
@@ -533,7 +551,13 @@
       }
       case "updateTAT": {
         assertRequired(payload.id, "id");
-        const row = updateOrInsertById(db.tat, "id", { ...payload, lastUpdate: nowIso() }, null);
+        const mencao = normalizeTatMencao(payload.mencao || payload.classificacao || payload.resultado);
+        const row = updateOrInsertById(
+          db.tat,
+          "id",
+          { ...payload, mencao, classificacao: mencao, lastUpdate: nowIso() },
+          null
+        );
         return clone(row);
       }
       default:

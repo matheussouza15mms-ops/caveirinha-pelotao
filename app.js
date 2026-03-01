@@ -27,6 +27,7 @@ const fichaNome = document.getElementById("fichaNome");
 const fichaFuncao = document.getElementById("fichaFuncao");
 const fichaDadosBtn = document.getElementById("fichaDadosBtn");
 const fichaTafBtn = document.getElementById("fichaTafBtn");
+const fichaTatBtn = document.getElementById("fichaTatBtn");
 const fichaFoBtn = document.getElementById("fichaFoBtn");
 const dadosModal = document.getElementById("dadosModal");
 const dadosModalClose = document.getElementById("dadosModalClose");
@@ -70,6 +71,14 @@ const tafBarraInput = document.getElementById("tafBarraInput");
 const tafFlexaoInput = document.getElementById("tafFlexaoInput");
 const tafAbdominalInput = document.getElementById("tafAbdominalInput");
 const tafCorridaInput = document.getElementById("tafCorridaInput");
+const tatModal = document.getElementById("tatModal");
+const tatModalClose = document.getElementById("tatModalClose");
+const tatArmamentoValue = document.getElementById("tatArmamentoValue");
+const tatMencaoValue = document.getElementById("tatMencaoValue");
+const tatEditBtn = document.getElementById("tatEditBtn");
+const tatEditorForm = document.getElementById("tatEditorForm");
+const tatMencaoInput = document.getElementById("tatMencaoInput");
+const tatEditorCancel = document.getElementById("tatEditorCancel");
 
 let abaAtiva = 0;
 let ultimoCardEncontrado = null;
@@ -82,6 +91,8 @@ let historicoListaCache = [];
 let historicoEditandoId = null;
 let tafDashboardCache = [];
 let tafEditandoCiclo = 1;
+let tatListaCache = [];
+let tatRegistroAtual = null;
 
 const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
 const efetivoState = new Map();
@@ -167,6 +178,29 @@ function calcularMencaoFinal(mencoes) {
 
   const menorIndice = Math.min(...indices);
   return mencoesOrdenadas[menorIndice];
+}
+
+function renderTatMencaoChip(mencao) {
+  const mencaoNormalizada = normalizarMencao(mencao);
+  tatMencaoValue.textContent = mencaoNormalizada;
+  tatMencaoValue.className = `tat-mencao-chip ${classeMencao(mencaoNormalizada)}`;
+}
+
+function normalizarMencaoTat(valor) {
+  const upper = String(valor || "").trim().toUpperCase();
+  const mapLegado = {
+    A: "MB",
+    B: "B",
+    C: "R",
+    D: "I",
+    F: "I"
+  };
+  return normalizarMencao(mapLegado[upper] || upper);
+}
+
+function renderTatEditor(ativo) {
+  tatEditorForm.classList.toggle("active", ativo);
+  tatEditBtn.classList.toggle("hidden", ativo);
 }
 
 function renderDadosMilitarModal(dadosMilitar) {
@@ -486,6 +520,54 @@ async function abrirDashboardTaf() {
   }
   abrirTafModal();
   await carregarTafDashboard();
+}
+
+function abrirTatModal() {
+  tatModal.classList.add("active");
+  tatModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharTatModal() {
+  tatModal.classList.remove("active");
+  tatModal.setAttribute("aria-hidden", "true");
+}
+
+function mencaoTatRegistro(registro) {
+  return normalizarMencaoTat(registro?.mencao || registro?.classificacao || registro?.resultado);
+}
+
+async function carregarTat() {
+  try {
+    tatListaCache = await window.CaveirinhaAPI.getTAT();
+  } catch (error) {
+    console.error("Falha ao carregar TAT:", error);
+    tatListaCache = [];
+  }
+}
+
+async function abrirTat() {
+  if (!militarSelecionadoId) {
+    return;
+  }
+
+  abrirTatModal();
+  renderTatEditor(false);
+  await carregarTat();
+
+  const registrosMilitar = tatListaCache
+    .filter((item) => item.idMilitar === militarSelecionadoId)
+    .sort((a, b) => {
+      const dataA = String(a.data || a.lastUpdate || "");
+      const dataB = String(b.data || b.lastUpdate || "");
+      return dataB.localeCompare(dataA);
+    });
+
+  tatRegistroAtual = registrosMilitar.length ? registrosMilitar[0] : null;
+  const mencao = tatRegistroAtual ? mencaoTatRegistro(tatRegistroAtual) : "B";
+  const armamento = tatRegistroAtual?.armamento ? String(tatRegistroAtual.armamento) : "--";
+  tatArmamentoValue.textContent = armamento;
+  tatMencaoInput.value = mencao;
+  renderTatMencaoChip(mencao);
 }
 
 function construirOrganizacao(militares) {
@@ -904,6 +986,10 @@ document.addEventListener("keydown", (event) => {
       fecharTafModal();
       return;
     }
+    if (tatModal.classList.contains("active")) {
+      fecharTatModal();
+      return;
+    }
     if (historicoEditorModal.classList.contains("active")) {
       fecharHistoricoEditorModal();
       return;
@@ -934,6 +1020,10 @@ fichaDadosBtn.addEventListener("click", () => {
 
 fichaTafBtn.addEventListener("click", () => {
   void abrirDashboardTaf();
+});
+
+fichaTatBtn.addEventListener("click", () => {
+  void abrirTat();
 });
 
 fichaFoBtn.addEventListener("click", () => {
@@ -1099,6 +1189,67 @@ tafModalClose.addEventListener("click", () => {
 tafModal.addEventListener("click", (event) => {
   if (event.target === tafModal) {
     fecharTafModal();
+  }
+});
+
+tatModalClose.addEventListener("click", () => {
+  fecharTatModal();
+  renderTatEditor(false);
+});
+
+tatModal.addEventListener("click", (event) => {
+  if (event.target === tatModal) {
+    fecharTatModal();
+    renderTatEditor(false);
+  }
+});
+
+tatEditBtn.addEventListener("click", () => {
+  tatMencaoInput.value = tatRegistroAtual ? mencaoTatRegistro(tatRegistroAtual) : "B";
+  renderTatEditor(true);
+});
+
+tatEditorCancel.addEventListener("click", () => {
+  renderTatEditor(false);
+});
+
+tatEditorForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!militarSelecionadoId) {
+    return;
+  }
+
+  const mencao = normalizarMencaoTat(tatMencaoInput.value);
+
+  try {
+    if (tatRegistroAtual?.id) {
+      tatRegistroAtual = await window.CaveirinhaAPI.updateTAT({
+        id: tatRegistroAtual.id,
+        idMilitar: militarSelecionadoId,
+        data: tatRegistroAtual.data || hojeISODate(),
+        armamento: tatRegistroAtual.armamento || "",
+        pontuacao: tatRegistroAtual.pontuacao || "",
+        mencao,
+        classificacao: mencao
+      });
+    } else {
+      tatRegistroAtual = await window.CaveirinhaAPI.createTAT({
+        idMilitar: militarSelecionadoId,
+        data: hojeISODate(),
+        armamento: "",
+        pontuacao: "",
+        mencao,
+        classificacao: mencao
+      });
+    }
+
+    renderTatMencaoChip(mencaoTatRegistro(tatRegistroAtual));
+    tatArmamentoValue.textContent = tatRegistroAtual.armamento || "--";
+    renderTatEditor(false);
+    await carregarTat();
+  } catch (error) {
+    console.error("Falha ao salvar menção do TAT:", error);
   }
 });
 

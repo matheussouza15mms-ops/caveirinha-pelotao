@@ -833,6 +833,105 @@ body {
   width: min(560px, 100%);
 }
 
+.tat-modal-card {
+  width: min(420px, 100%);
+}
+
+.tat-modal-content {
+  padding: 18px 14px 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.tat-info-wrap {
+  border: 1px solid #d9e5f3;
+  border-radius: 12px;
+  background: #fbfdff;
+  padding: 16px 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.tat-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.tat-info-row span {
+  color: #274363;
+  font-weight: 600;
+}
+
+.tat-info-row strong {
+  color: #213f5d;
+}
+
+.tat-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tat-editor-form {
+  display: none;
+  border: 1px solid #d9e5f3;
+  border-radius: 12px;
+  background: #fbfdff;
+  padding: 12px;
+  gap: 10px;
+}
+
+.tat-editor-form.active {
+  display: grid;
+}
+
+.tat-editor-form label {
+  display: grid;
+  gap: 6px;
+  color: #294762;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.tat-editor-form select {
+  border: 1px solid #cad7e5;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.tat-mencao-chip {
+  min-width: 72px;
+  text-align: center;
+  border-radius: 999px;
+  border: 1px solid #cad7e5;
+  background: #f4f8fc;
+  color: #2b4a67;
+  padding: 6px 12px;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.tat-mencao-chip.level-i,
+.tat-mencao-chip.level-r {
+  background: #ffe8e8;
+  border-color: #efb2b2;
+  color: #8f2f2f;
+}
+
+.tat-mencao-chip.level-b,
+.tat-mencao-chip.level-mb,
+.tat-mencao-chip.level-e {
+  background: #def6e8;
+  border-color: #8ad0aa;
+  color: #1f6f4d;
+}
+
 @keyframes cardIn {
   to {
     transform: translateY(0);
