@@ -69,6 +69,28 @@
     }
   }
 
+  function buildMilitarDadosFromRecord(militar) {
+    return {
+      id: militar.id,
+      nomeCompleto: militar.nomeCompleto || `${militar.pg || ""} ${militar.nomeGuerra || ""}`.trim(),
+      nomeGuerra: militar.nomeGuerra || "",
+      pg: militar.pg || "",
+      dataNascimento: militar.dataNascimento || "",
+      numero: militar.numero === null || militar.numero === undefined ? "" : militar.numero,
+      identidade: militar.identidade || "",
+      dataPraca: militar.dataPraca || "",
+      funcao: militar.funcao || "",
+      fracao: militar.fracao || militar.aba || "",
+      endereco: militar.endereco || "",
+      celular: militar.celular || "",
+      nomePai: militar.nomePai || "",
+      nomeMae: militar.nomeMae || "",
+      contatoEmergencia: militar.contatoEmergencia || "",
+      comportamento: militar.comportamento || "",
+      habilidade: militar.habilidade || ""
+    };
+  }
+
   async function handleMockAction(action, payload) {
     const db = await loadMockDb();
 
@@ -77,6 +99,27 @@
         return clone(db.militares);
       case "getEfetivo":
         return clone(db.efetivo);
+      case "getMilitarDados": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const militar = db.militares.find((item) => item.id === payload.idMilitar);
+        if (!militar) {
+          throw new Error("Militar nao encontrado");
+        }
+        return clone(buildMilitarDadosFromRecord(militar));
+      }
+      case "updateMilitarDados": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const index = db.militares.findIndex((item) => item.id === payload.idMilitar);
+        if (index < 0) {
+          throw new Error("Militar nao encontrado");
+        }
+        db.militares[index] = {
+          ...db.militares[index],
+          ...payload.dados,
+          lastUpdate: nowIso()
+        };
+        return clone(buildMilitarDadosFromRecord(db.militares[index]));
+      }
       case "updateEfetivo": {
         assertRequired(payload.idMilitar, "idMilitar");
         const row = updateOrInsertById(
@@ -227,6 +270,14 @@
     return apiRequest("getEfetivo");
   }
 
+  function getMilitarDados(idMilitar) {
+    return apiRequest("getMilitarDados", { idMilitar });
+  }
+
+  function updateMilitarDados(idMilitar, dados) {
+    return apiRequest("updateMilitarDados", { idMilitar, dados });
+  }
+
   function updateEfetivo(payload) {
     return apiRequest("updateEfetivo", payload);
   }
@@ -284,6 +335,8 @@
     apiRequest,
     getMilitares,
     getEfetivo,
+    getMilitarDados,
+    updateMilitarDados,
     updateEfetivo,
     getFO,
     createFO,

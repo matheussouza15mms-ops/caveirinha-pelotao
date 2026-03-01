@@ -95,13 +95,23 @@
           </div>
         </div>
         <div class="ficha-actions">
-          <button class="ficha-action">Dados</button>
+          <button id="fichaDadosBtn" class="ficha-action">Dados</button>
           <button class="ficha-action">TAF</button>
           <button class="ficha-action">TAT</button>
           <button class="ficha-action">Punições FO</button>
         </div>
       </section>
     </main>
+  </div>
+
+  <div id="dadosModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="dadosModalTitle">
+      <div class="modal-header">
+        <h3 id="dadosModalTitle">Dados do Militar</h3>
+        <button id="dadosModalClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+      <div id="dadosModalBody" class="dados-grid"></div>
+    </div>
   </div>
 
   <script src="services/api.js"></script>

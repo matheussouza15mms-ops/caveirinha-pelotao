@@ -25,12 +25,35 @@ const efetivoTableBody = document.getElementById("efetivoTableBody");
 const fichaFoto = document.getElementById("fichaFoto");
 const fichaNome = document.getElementById("fichaNome");
 const fichaFuncao = document.getElementById("fichaFuncao");
+const fichaDadosBtn = document.getElementById("fichaDadosBtn");
+const dadosModal = document.getElementById("dadosModal");
+const dadosModalClose = document.getElementById("dadosModalClose");
+const dadosModalBody = document.getElementById("dadosModalBody");
 
 let abaAtiva = 0;
 let ultimoCardEncontrado = null;
+let militarSelecionadoId = null;
 
 const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
 const efetivoState = new Map();
+const camposDadosMilitar = [
+  { key: "nomeCompleto", label: "Nome completo" },
+  { key: "nomeGuerra", label: "Nome de guerra" },
+  { key: "pg", label: "P/G" },
+  { key: "dataNascimento", label: "Data de nascimento" },
+  { key: "numero", label: "Numero" },
+  { key: "identidade", label: "Identidade" },
+  { key: "dataPraca", label: "Data de praca" },
+  { key: "funcao", label: "Funcao" },
+  { key: "fracao", label: "Fracao" },
+  { key: "endereco", label: "Endereco" },
+  { key: "celular", label: "Celular" },
+  { key: "nomePai", label: "Nome do pai" },
+  { key: "nomeMae", label: "Nome da mae" },
+  { key: "contatoEmergencia", label: "Contato de emergencia" },
+  { key: "comportamento", label: "Comportamento" },
+  { key: "habilidade", label: "Habilidade" }
+];
 
 function isSdEv(militar) {
   return militar.pg.trim().toUpperCase() === "SD EV";
@@ -43,6 +66,67 @@ function militarNomeBase(militar) {
   }
   partes.push(militar.nomeGuerra);
   return partes.join(" ");
+}
+
+function valorCampoExibicao(valor) {
+  if (valor === undefined || valor === null || valor === "") {
+    return "--";
+  }
+  return String(valor);
+}
+
+function renderDadosMilitarModal(dadosMilitar) {
+  dadosModalBody.innerHTML = "";
+
+  camposDadosMilitar.forEach((campo) => {
+    const valor = valorCampoExibicao(dadosMilitar[campo.key]);
+    const item = document.createElement("article");
+    item.className = "dados-item";
+
+    const itemHead = document.createElement("div");
+    itemHead.className = "dados-item-head";
+
+    const label = document.createElement("strong");
+    label.textContent = campo.label;
+
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "copy-field-btn";
+    copyBtn.textContent = "Copiar";
+    copyBtn.dataset.copyValue = valor;
+
+    const valueText = document.createElement("p");
+    valueText.textContent = valor;
+
+    itemHead.appendChild(label);
+    itemHead.appendChild(copyBtn);
+    item.appendChild(itemHead);
+    item.appendChild(valueText);
+    dadosModalBody.appendChild(item);
+  });
+}
+
+function abrirModalDados() {
+  dadosModal.classList.add("active");
+  dadosModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharModalDados() {
+  dadosModal.classList.remove("active");
+  dadosModal.setAttribute("aria-hidden", "true");
+}
+
+async function abrirDadosMilitar() {
+  if (!militarSelecionadoId) {
+    return;
+  }
+
+  try {
+    const dadosMilitar = await window.CaveirinhaAPI.getMilitarDados(militarSelecionadoId);
+    renderDadosMilitarModal(dadosMilitar);
+    abrirModalDados();
+  } catch (error) {
+    console.error("Falha ao carregar dados do militar:", error);
+  }
 }
 
 function construirOrganizacao(militares) {
@@ -184,6 +268,7 @@ function renderCards() {
     `;
 
     card.addEventListener("click", () => {
+      militarSelecionadoId = militar.id;
       fichaFoto.src = militar.foto;
       fichaNome.textContent = militarNomeBase(militar);
       fichaFuncao.textContent = militar.funcao;
@@ -452,7 +537,50 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    if (dadosModal.classList.contains("active")) {
+      fecharModalDados();
+      return;
+    }
     fecharBusca();
+  }
+});
+
+fichaDadosBtn.addEventListener("click", () => {
+  void abrirDadosMilitar();
+});
+
+dadosModalClose.addEventListener("click", () => {
+  fecharModalDados();
+});
+
+dadosModal.addEventListener("click", (event) => {
+  if (event.target === dadosModal) {
+    fecharModalDados();
+  }
+});
+
+dadosModalBody.addEventListener("click", async (event) => {
+  const alvo = event.target;
+  if (!(alvo instanceof HTMLElement)) {
+    return;
+  }
+
+  if (!alvo.classList.contains("copy-field-btn")) {
+    return;
+  }
+
+  const valor = alvo.dataset.copyValue || "";
+
+  try {
+    await navigator.clipboard.writeText(valor === "--" ? "" : valor);
+    alvo.classList.add("copied");
+    alvo.textContent = "Copiado";
+    window.setTimeout(() => {
+      alvo.classList.remove("copied");
+      alvo.textContent = "Copiar";
+    }, 1000);
+  } catch (error) {
+    console.error("Falha ao copiar valor:", error);
   }
 });
 
