@@ -20,6 +20,12 @@ Campos:
 - `lastUpdate`
 - dados cadastrais: `nomeCompleto`, `dataNascimento`, `identidade`, `dataPraca`, `fracao`, `endereco`, `celular`, `nomePai`, `nomeMae`, `contatoEmergencia`, `comportamento`, `habilidade`
 
+Convencao de fotos:
+- Pasta padrao: `assets/imagens/`
+- Nome do arquivo: mesmo valor de `id` do militar (ex.: `mil-001.jpg`)
+- Se `foto` estiver vazio no CSV, a aplicacao resolve automaticamente para `assets/imagens/<id>.jpg`
+- Se `foto` tiver apenas nome de arquivo (ex.: `mil-002.png`), a aplicacao resolve para `assets/imagens/mil-002.png`
+
 ### 2) `data/efetivo.csv`
 Estado de efetivo por militar.
 

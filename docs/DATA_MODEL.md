@@ -14,6 +14,11 @@ Campos relevantes:
 - `id`, `pg`, `numero`, `nomeGuerra`, `funcao`, `aba`, `foto`, `lastUpdate`
 - dados pessoais: `nomeCompleto`, `dataNascimento`, `identidade`, `dataPraca`, `fracao`, `endereco`, `celular`, `nomePai`, `nomeMae`, `contatoEmergencia`, `comportamento`, `habilidade`
 
+Convencao de foto local:
+- Pasta: `assets/imagens/`
+- Nome: mesmo `id` do militar, preferencialmente `.jpg` (ex.: `assets/imagens/mil-001.jpg`)
+- Compatibilidade: `foto` segue aceitando URL absoluta ou caminho relativo em `assets/`
+
 ## Efetivo
 - `idMilitar`
 - `emForma`

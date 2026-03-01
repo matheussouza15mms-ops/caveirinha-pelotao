@@ -8,6 +8,8 @@
     taf: "./data/taf.csv",
     tat: "./data/tat.csv"
   };
+  const IMAGENS_DIR = "./assets/imagens";
+  const IMAGENS_EXTENSOES = ["jpg", "jpeg", "png", "webp"];
 
   const COLLECTION_DEFAULTS = {
     quadroOrganizacional: [],
@@ -70,6 +72,34 @@
     };
     const normalized = legacyMap[upper] || upper;
     return ["I", "R", "B", "MB", "E"].includes(normalized) ? normalized : "B";
+  }
+
+  function isAbsoluteUrl(value) {
+    return /^https?:\/\//i.test(String(value || "").trim());
+  }
+
+  function isRelativeAssetPath(value) {
+    return /^(\.\/|\/)?assets\//i.test(String(value || "").trim());
+  }
+
+  function resolveMilitarFoto(idMilitar, fotoCsv) {
+    const fotoRaw = String(fotoCsv || "").trim();
+    if (fotoRaw) {
+      if (isAbsoluteUrl(fotoRaw) || isRelativeAssetPath(fotoRaw)) {
+        return fotoRaw;
+      }
+
+      if (/\.(jpg|jpeg|png|webp)$/i.test(fotoRaw)) {
+        return `${IMAGENS_DIR}/${fotoRaw}`;
+      }
+    }
+
+    const id = String(idMilitar || "").trim();
+    if (!id) {
+      return "";
+    }
+
+    return `${IMAGENS_DIR}/${id}.${IMAGENS_EXTENSOES[0]}`;
   }
 
   function parseCsvLine(line) {
@@ -147,7 +177,7 @@
         nomeGuerra: row.nomeGuerra || "",
         funcao: row.funcao || "",
         aba: row.aba || "",
-        foto: row.foto || "",
+        foto: resolveMilitarFoto(row.id, row.foto),
         lastUpdate: row.lastUpdate || "",
         nomeCompleto: row.nomeCompleto || "",
         dataNascimento: row.dataNascimento || "",
