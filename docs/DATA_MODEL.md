@@ -14,6 +14,12 @@ Campos relevantes:
 - `id`, `pg`, `numero`, `nomeGuerra`, `funcao`, `aba`, `foto`, `lastUpdate`
 - dados pessoais: `nomeCompleto`, `dataNascimento`, `identidade`, `dataPraca`, `fracao`, `endereco`, `celular`, `nomePai`, `nomeMae`, `contatoEmergencia`, `comportamento`, `habilidade`
 
+## Efetivo
+- `idMilitar`
+- `emForma`
+- `situacao`
+- `dataAtualizacao` (data de referência do efetivo, com suporte a atualização global na UI)
+
 ## FO
 - `id`
 - `idMilitar`

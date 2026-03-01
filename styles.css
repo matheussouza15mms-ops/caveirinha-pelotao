@@ -395,6 +395,30 @@ body {
   font-weight: 600;
 }
 
+.efetivo-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.efetivo-date-label {
+  font-size: 0.88rem;
+  color: #2d4864;
+  font-weight: 600;
+}
+
+#efetivoDataInput {
+  border: 1px solid #cddaea;
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-family: inherit;
+}
+
 .efetivo-table-wrap {
   overflow: auto;
   background: var(--surface);

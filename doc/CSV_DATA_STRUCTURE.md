@@ -27,7 +27,7 @@ Campos:
 - `id`: referencia para `quadro_organizacional.id`
 - `emForma`: `true` ou `false`
 - `situacao`
-- `dataAtualizacao`
+- `dataAtualizacao` (coluna de data do efetivo; pode ser aplicada de forma global para todos os militares pela tela de Efetivo)
 
 ### 3) `data/fatos_observados.csv`
 Registros FO+ e FO-.

@@ -28,6 +28,8 @@
 ## Efetivo
 - Checkbox em forma + select situação
 - KPIs em tempo real
+- Controle de data global do efetivo (botão "Aplicar para todos")
+- Coluna de data na tabela de efetivo usando `dataAtualizacao`
 - Persistência via API layer
 
 ## API Layer (ações já disponíveis)

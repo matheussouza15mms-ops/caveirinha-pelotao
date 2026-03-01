@@ -20,6 +20,7 @@ const kpiTotalPelotao = document.getElementById("kpiTotalPelotao");
 const kpiEmForma = document.getElementById("kpiEmForma");
 const kpiDestinos = document.getElementById("kpiDestinos");
 const kpiBaixados = document.getElementById("kpiBaixados");
+const efetivoDataInput = document.getElementById("efetivoDataInput");
 const efetivoTableBody = document.getElementById("efetivoTableBody");
 
 const fichaFoto = document.getElementById("fichaFoto");
@@ -156,6 +157,21 @@ function valorCampoExibicao(valor) {
 
 function hojeISODate() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function isoDoDia(valorData) {
+  if (!valorData) {
+    return "";
+  }
+  return `${valorData}T00:00:00.000Z`;
+}
+
+function dataInputFromIso(valorData) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(valorData || ""));
+  if (!match) {
+    return "";
+  }
+  return `${match[1]}-${match[2]}-${match[3]}`;
 }
 
 function formatarDataExibicao(valorData) {
@@ -788,16 +804,24 @@ function sincronizarEfetivoState(efetivoRegistros) {
   indiceMilitares.forEach((militar) => {
     const registro = efetivoPorMilitar.get(militar.id);
     if (!registro) {
-      efetivoState.set(militar.cardId, { emForma: false, situacao: "" });
+      efetivoState.set(militar.cardId, {
+        emForma: false,
+        situacao: "",
+        dataAtualizacao: ""
+      });
       return;
     }
 
     const emForma = Boolean(registro.emForma) || registro.situacao === "em_forma";
     efetivoState.set(militar.cardId, {
       emForma,
-      situacao: emForma ? "em_forma" : registro.situacao || ""
+      situacao: emForma ? "em_forma" : registro.situacao || "",
+      dataAtualizacao: registro.dataAtualizacao || ""
     });
   });
+
+  const primeiraData = Array.from(efetivoState.values()).find((estado) => estado.dataAtualizacao);
+  efetivoDataInput.value = dataInputFromIso(primeiraData ? primeiraData.dataAtualizacao : "");
 }
 
 function setScreen(screen) {
@@ -1049,10 +1073,45 @@ async function persistirEfetivo(cardId) {
     await window.CaveirinhaAPI.updateEfetivo({
       idMilitar,
       emForma: estado.emForma,
-      situacao: estado.situacao
+      situacao: estado.situacao,
+      dataAtualizacao: estado.dataAtualizacao || isoDoDia(efetivoDataInput.value || hojeISODate())
     });
   } catch (error) {
     console.error("Falha ao atualizar efetivo na API layer:", error);
+  }
+}
+
+async function aplicarDataEfetivoParaTodos() {
+  const dataSelecionada = efetivoDataInput.value || hojeISODate();
+  const dataIso = isoDoDia(dataSelecionada);
+  efetivoDataInput.value = dataSelecionada;
+
+  efetivoState.forEach((estado, cardId) => {
+    const atual = efetivoState.get(cardId);
+    if (!atual) {
+      return;
+    }
+    atual.dataAtualizacao = dataIso;
+    atualizarLinhaEfetivo(cardId);
+  });
+
+  const atualizacoes = Array.from(efetivoState.entries()).map(async ([cardId, estado]) => {
+    const idMilitar = cardIdToMilitarId.get(cardId);
+    if (!idMilitar) {
+      return;
+    }
+    await window.CaveirinhaAPI.updateEfetivo({
+      idMilitar,
+      emForma: estado.emForma,
+      situacao: estado.situacao,
+      dataAtualizacao: estado.dataAtualizacao
+    });
+  });
+
+  try {
+    await Promise.all(atualizacoes);
+  } catch (error) {
+    console.error("Falha ao aplicar data global do efetivo:", error);
   }
 }
 
@@ -1076,6 +1135,7 @@ efetivoTableBody.addEventListener("change", (event) => {
       estado.emForma = false;
       estado.situacao = "";
     }
+    estado.dataAtualizacao = estado.dataAtualizacao || isoDoDia(efetivoDataInput.value || hojeISODate());
 
     atualizarLinhaEfetivo(id);
     atualizarResumoEfetivo();
@@ -1092,10 +1152,15 @@ efetivoTableBody.addEventListener("change", (event) => {
 
     estado.situacao = alvo.value;
     estado.emForma = false;
+    estado.dataAtualizacao = estado.dataAtualizacao || isoDoDia(efetivoDataInput.value || hojeISODate());
     atualizarLinhaEfetivo(id);
     atualizarResumoEfetivo();
     void persistirEfetivo(id);
   }
+});
+
+efetivoDataInput.addEventListener("change", () => {
+  void aplicarDataEfetivoParaTodos();
 });
 
 toggleSidebar.addEventListener("click", () => {

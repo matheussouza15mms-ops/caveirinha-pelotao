@@ -386,9 +386,10 @@
           {
             idMilitar: payload.idMilitar,
             emForma: Boolean(payload.emForma),
-            situacao: payload.situacao || ""
+            situacao: payload.situacao || "",
+            dataAtualizacao: payload.dataAtualizacao || nowIso()
           },
-          "dataAtualizacao"
+          null
         );
         return clone(row);
       }

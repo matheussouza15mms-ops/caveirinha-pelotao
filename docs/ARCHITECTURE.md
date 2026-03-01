@@ -13,7 +13,7 @@ Separação de responsabilidades sem framework:
 3. UI renderiza a partir do estado local (sem acessar JSON direto).
 
 ## Módulos de Negócio na UI
-- Efetivo (KPIs + atualização)
+- Efetivo (KPIs + atualização + data global por coluna)
 - FO+/FO- (listagem + criar + editar + excluir + copiar)
 - Histórico/Obs (listagem + criar + editar + excluir)
 - Dashboard TAF (1º/2º/3º, menções por teste e menção final)
