@@ -1,6 +1,6 @@
 ﻿# AI HANDOFF CONTEXT
 
-Você está assumindo o desenvolvimento do projeto Caveirinha App.
+Você está assumindo o desenvolvimento do Caveirinha App.
 
 ## Verdades absolutas
 - `PROJECT_CONTEXT.md`
@@ -9,31 +9,24 @@ Você está assumindo o desenvolvimento do projeto Caveirinha App.
 - `FEATURES.md`
 - `ROADMAP.md`
 
-## Regras obrigatórias
-1. Não propor reescrita de arquitetura sem justificativa técnica clara.
-2. Não sugerir frameworks (React, Vue etc.) sem solicitação explícita.
-3. Preservar compatibilidade com:
-   - `organizacao`
-   - `indiceMilitares`
-   - `efetivoState`
-   - padrão `render*`
-4. Não remover funcionalidades existentes.
+## Regras do projeto
+1. Não remover funcionalidades existentes.
+2. Não sugerir frameworks sem solicitação explícita.
+3. Preservar compatibilidade com `organizacao`, `indiceMilitares`, `efetivoState` e padrão `render*`.
+4. Qualquer mudança estrutural deve ter justificativa técnica.
 
-## Estado atual da arquitetura
-- App em HTML + CSS + JS puro.
-- Camada de abstração de dados implementada em `services/api.js`.
-- Banco mock local em `mock/db.json`.
-- `app.js` não acessa JSON diretamente.
-- Leitura e atualização de efetivo passam pela API layer.
+## Estado atual importante
+- Dados e persistência abstraídos em `services/api.js`.
+- UI sem acesso direto a `mock/db.json`.
+- FO e Histórico/Obs com CRUD via API layer.
+- TAF com dashboard por ciclo e atualização de menções via API layer.
 
 ## Contrato de integração
-A função central é:
-- `apiRequest(action, payload)`
+- `apiRequest(action, payload)` é o ponto único.
+- Ações de negócio já modeladas para futura implementação no Apps Script.
 
-A troca para Google Apps Script deve ocorrer alterando apenas `BASE_URL` em `services/api.js`.
-
-## Se sugerir melhorias
-Sempre informar:
+## Ao propor melhorias
+Sempre explicitar:
 - impacto
 - risco
-- compatibilidade (se quebra ou não)
+- compatibilidade

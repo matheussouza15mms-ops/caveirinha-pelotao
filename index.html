@@ -96,7 +96,7 @@
         </div>
         <div class="ficha-actions">
           <button id="fichaDadosBtn" class="ficha-action">Dados</button>
-          <button class="ficha-action">TAF</button>
+          <button id="fichaTafBtn" class="ficha-action">TAF</button>
           <button class="ficha-action">TAT</button>
           <button id="fichaFoBtn" class="ficha-action">Fatos Observados</button>
           <button id="fichaHistoricoBtn" class="ficha-action">Histórico/Obs.</button>
@@ -192,6 +192,7 @@
             <thead>
               <tr>
                 <th>Registro</th>
+                <th>Registrado por</th>
                 <th>Data</th>
                 <th>Ações</th>
               </tr>
@@ -214,8 +215,81 @@
           Texto do registro
           <textarea id="historicoTextoInput" rows="5" required></textarea>
         </label>
+        <label>
+          Registrado por
+          <input id="historicoAutorInput" type="text" required />
+        </label>
         <div class="fo-form-actions">
           <button type="button" id="historicoEditorCancel" class="ficha-action">Cancelar</button>
+          <button type="submit" class="fo-save-btn">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="tafModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card taf-modal-card" role="dialog" aria-modal="true" aria-labelledby="tafModalTitle">
+      <div class="modal-header">
+        <h3 id="tafModalTitle">Dashboard TAF</h3>
+        <button id="tafModalClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+      <div id="tafCardsWrap" class="taf-cards-wrap"></div>
+    </div>
+  </div>
+
+  <div id="tafEditorModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card taf-editor-card" role="dialog" aria-modal="true" aria-labelledby="tafEditorTitle">
+      <div class="modal-header">
+        <h3 id="tafEditorTitle">Atualizar TAF</h3>
+        <button id="tafEditorClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+      <form id="tafEditorForm" class="fo-form">
+        <label>
+          Data do TAF
+          <input id="tafDataInput" type="date" required />
+        </label>
+        <label>
+          Barra
+          <select id="tafBarraInput" required>
+            <option value="I">I</option>
+            <option value="R">R</option>
+            <option value="B">B</option>
+            <option value="MB">MB</option>
+            <option value="E">E</option>
+          </select>
+        </label>
+        <label>
+          Flexão
+          <select id="tafFlexaoInput" required>
+            <option value="I">I</option>
+            <option value="R">R</option>
+            <option value="B">B</option>
+            <option value="MB">MB</option>
+            <option value="E">E</option>
+          </select>
+        </label>
+        <label>
+          Abdominal
+          <select id="tafAbdominalInput" required>
+            <option value="I">I</option>
+            <option value="R">R</option>
+            <option value="B">B</option>
+            <option value="MB">MB</option>
+            <option value="E">E</option>
+          </select>
+        </label>
+        <label>
+          Corrida
+          <select id="tafCorridaInput" required>
+            <option value="I">I</option>
+            <option value="R">R</option>
+            <option value="B">B</option>
+            <option value="MB">MB</option>
+            <option value="E">E</option>
+          </select>
+        </label>
+        <div class="fo-form-actions">
+          <button type="button" id="tafEditorCancel" class="ficha-action">Cancelar</button>
           <button type="submit" class="fo-save-btn">Salvar</button>
         </div>
       </form>

@@ -26,6 +26,7 @@ const fichaFoto = document.getElementById("fichaFoto");
 const fichaNome = document.getElementById("fichaNome");
 const fichaFuncao = document.getElementById("fichaFuncao");
 const fichaDadosBtn = document.getElementById("fichaDadosBtn");
+const fichaTafBtn = document.getElementById("fichaTafBtn");
 const fichaFoBtn = document.getElementById("fichaFoBtn");
 const dadosModal = document.getElementById("dadosModal");
 const dadosModalClose = document.getElementById("dadosModalClose");
@@ -54,7 +55,21 @@ const historicoEditorClose = document.getElementById("historicoEditorClose");
 const historicoEditorCancel = document.getElementById("historicoEditorCancel");
 const historicoEditorForm = document.getElementById("historicoEditorForm");
 const historicoTextoInput = document.getElementById("historicoTextoInput");
+const historicoAutorInput = document.getElementById("historicoAutorInput");
 const historicoEditorTitle = document.getElementById("historicoEditorTitle");
+const tafModal = document.getElementById("tafModal");
+const tafModalClose = document.getElementById("tafModalClose");
+const tafCardsWrap = document.getElementById("tafCardsWrap");
+const tafEditorModal = document.getElementById("tafEditorModal");
+const tafEditorClose = document.getElementById("tafEditorClose");
+const tafEditorCancel = document.getElementById("tafEditorCancel");
+const tafEditorForm = document.getElementById("tafEditorForm");
+const tafEditorTitle = document.getElementById("tafEditorTitle");
+const tafDataInput = document.getElementById("tafDataInput");
+const tafBarraInput = document.getElementById("tafBarraInput");
+const tafFlexaoInput = document.getElementById("tafFlexaoInput");
+const tafAbdominalInput = document.getElementById("tafAbdominalInput");
+const tafCorridaInput = document.getElementById("tafCorridaInput");
 
 let abaAtiva = 0;
 let ultimoCardEncontrado = null;
@@ -65,9 +80,12 @@ let foEditandoId = null;
 let foEditandoTipo = "FO+";
 let historicoListaCache = [];
 let historicoEditandoId = null;
+let tafDashboardCache = [];
+let tafEditandoCiclo = 1;
 
 const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
 const efetivoState = new Map();
+const mencoesOrdenadas = ["I", "R", "B", "MB", "E"];
 const camposDadosMilitar = [
   { key: "nomeCompleto", label: "Nome completo" },
   { key: "nomeGuerra", label: "Nome de guerra" },
@@ -127,6 +145,28 @@ function formatarDataExibicao(valorData) {
   }
 
   return parsed.toLocaleDateString("pt-BR");
+}
+
+function normalizarMencao(valor) {
+  const upper = String(valor || "").toUpperCase();
+  return mencoesOrdenadas.includes(upper) ? upper : "B";
+}
+
+function classeMencao(mencao) {
+  return `level-${String(mencao || "").toLowerCase()}`;
+}
+
+function calcularMencaoFinal(mencoes) {
+  const indices = mencoes
+    .map((mencao) => mencoesOrdenadas.indexOf(normalizarMencao(mencao)))
+    .filter((index) => index >= 0);
+
+  if (!indices.length) {
+    return "B";
+  }
+
+  const menorIndice = Math.min(...indices);
+  return mencoesOrdenadas[menorIndice];
 }
 
 function renderDadosMilitarModal(dadosMilitar) {
@@ -310,7 +350,7 @@ function renderHistoricoTabela() {
 
   if (!registros.length) {
     const tr = document.createElement("tr");
-    tr.innerHTML = '<td class="fo-empty-row" colspan="3">Nenhum registro de histórico.</td>';
+    tr.innerHTML = '<td class="fo-empty-row" colspan="4">Nenhum registro de historico.</td>';
     historicoTableBody.appendChild(tr);
     return;
   }
@@ -319,6 +359,7 @@ function renderHistoricoTabela() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${valorCampoExibicao(registro.texto)}</td>
+      <td>${valorCampoExibicao(registro.autor)}</td>
       <td>${formatarDataExibicao(registro.data)}</td>
       <td class="fo-actions-cell">
         <button class="fo-action-btn" data-action="edit" data-id="${registro.id}">Editar</button>
@@ -331,7 +372,7 @@ function renderHistoricoTabela() {
 
 async function carregarHistorico() {
   try {
-    historicoListaCache = await window.CaveirinhaAPI.getHistoricoObs();
+    historicoListaCache = await window.CaveirinhaAPI.getHistoricoObs(militarSelecionadoId);
   } catch (error) {
     console.error("Falha ao carregar historico/obs:", error);
     historicoListaCache = [];
@@ -344,10 +385,12 @@ function abrirHistoricoEditor(registro) {
     historicoEditandoId = registro.id;
     historicoEditorTitle.textContent = "Editar Registro";
     historicoTextoInput.value = registro.texto || "";
+    historicoAutorInput.value = registro.autor || "";
   } else {
     historicoEditandoId = null;
     historicoEditorTitle.textContent = "Novo Registro";
     historicoTextoInput.value = "";
+    historicoAutorInput.value = "";
   }
   abrirHistoricoEditorModal();
 }
@@ -358,6 +401,91 @@ async function abrirHistoricoObs() {
   }
   abrirHistoricoModal();
   await carregarHistorico();
+}
+
+function abrirTafModal() {
+  tafModal.classList.add("active");
+  tafModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharTafModal() {
+  tafModal.classList.remove("active");
+  tafModal.setAttribute("aria-hidden", "true");
+}
+
+function abrirTafEditorModal() {
+  tafEditorModal.classList.add("active");
+  tafEditorModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharTafEditorModal() {
+  tafEditorModal.classList.remove("active");
+  tafEditorModal.setAttribute("aria-hidden", "true");
+  tafEditorForm.reset();
+}
+
+function renderTafDashboard() {
+  tafCardsWrap.innerHTML = "";
+
+  tafDashboardCache.forEach((item) => {
+    const mencaoFinal = calcularMencaoFinal([
+      item.mencoes.barra,
+      item.mencoes.flexao,
+      item.mencoes.abdominal,
+      item.mencoes.corrida
+    ]);
+
+    const card = document.createElement("article");
+    card.className = "taf-card";
+    card.innerHTML = `
+      <div class="taf-card-head">
+        <strong>${item.ciclo}º TAF</strong>
+        <button class="taf-edit-btn" data-ciclo="${item.ciclo}">Atualizar</button>
+      </div>
+      <small class="taf-card-date">Data: ${formatarDataExibicao(item.data)}</small>
+      <div class="taf-row"><b>Barra</b><span class="mencao-chip ${classeMencao(item.mencoes.barra)}">${item.mencoes.barra}</span></div>
+      <div class="taf-row"><b>Flexão</b><span class="mencao-chip ${classeMencao(item.mencoes.flexao)}">${item.mencoes.flexao}</span></div>
+      <div class="taf-row"><b>Abdominal</b><span class="mencao-chip ${classeMencao(item.mencoes.abdominal)}">${item.mencoes.abdominal}</span></div>
+      <div class="taf-row"><b>Corrida</b><span class="mencao-chip ${classeMencao(item.mencoes.corrida)}">${item.mencoes.corrida}</span></div>
+      <div class="taf-row final"><b>Menção Final</b><span class="mencao-chip ${classeMencao(mencaoFinal)}">${mencaoFinal}</span></div>
+    `;
+    tafCardsWrap.appendChild(card);
+  });
+}
+
+async function carregarTafDashboard() {
+  try {
+    tafDashboardCache = await window.CaveirinhaAPI.getTAFDashboard(militarSelecionadoId);
+  } catch (error) {
+    console.error("Falha ao carregar dashboard TAF:", error);
+    tafDashboardCache = [];
+  }
+  renderTafDashboard();
+}
+
+function abrirTafEditor(ciclo) {
+  tafEditandoCiclo = ciclo;
+  const atual = tafDashboardCache.find((item) => item.ciclo === ciclo) || {
+    ciclo,
+    data: hojeISODate(),
+    mencoes: { barra: "B", flexao: "B", abdominal: "B", corrida: "B" }
+  };
+
+  tafEditorTitle.textContent = `Atualizar ${ciclo}º TAF`;
+  tafDataInput.value = (atual.data || hojeISODate()).slice(0, 10);
+  tafBarraInput.value = normalizarMencao(atual.mencoes.barra);
+  tafFlexaoInput.value = normalizarMencao(atual.mencoes.flexao);
+  tafAbdominalInput.value = normalizarMencao(atual.mencoes.abdominal);
+  tafCorridaInput.value = normalizarMencao(atual.mencoes.corrida);
+  abrirTafEditorModal();
+}
+
+async function abrirDashboardTaf() {
+  if (!militarSelecionadoId) {
+    return;
+  }
+  abrirTafModal();
+  await carregarTafDashboard();
 }
 
 function construirOrganizacao(militares) {
@@ -768,6 +896,14 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    if (tafEditorModal.classList.contains("active")) {
+      fecharTafEditorModal();
+      return;
+    }
+    if (tafModal.classList.contains("active")) {
+      fecharTafModal();
+      return;
+    }
     if (historicoEditorModal.classList.contains("active")) {
       fecharHistoricoEditorModal();
       return;
@@ -794,6 +930,10 @@ document.addEventListener("keydown", (event) => {
 
 fichaDadosBtn.addEventListener("click", () => {
   void abrirDadosMilitar();
+});
+
+fichaTafBtn.addEventListener("click", () => {
+  void abrirDashboardTaf();
 });
 
 fichaFoBtn.addEventListener("click", () => {
@@ -952,6 +1092,68 @@ foEditorForm.addEventListener("submit", async (event) => {
   }
 });
 
+tafModalClose.addEventListener("click", () => {
+  fecharTafModal();
+});
+
+tafModal.addEventListener("click", (event) => {
+  if (event.target === tafModal) {
+    fecharTafModal();
+  }
+});
+
+tafCardsWrap.addEventListener("click", (event) => {
+  const alvo = event.target;
+  if (!(alvo instanceof HTMLElement)) {
+    return;
+  }
+
+  if (alvo.classList.contains("taf-edit-btn")) {
+    const ciclo = Number(alvo.dataset.ciclo || 1);
+    abrirTafEditor(ciclo);
+  }
+});
+
+tafEditorClose.addEventListener("click", () => {
+  fecharTafEditorModal();
+});
+
+tafEditorCancel.addEventListener("click", () => {
+  fecharTafEditorModal();
+});
+
+tafEditorModal.addEventListener("click", (event) => {
+  if (event.target === tafEditorModal) {
+    fecharTafEditorModal();
+  }
+});
+
+tafEditorForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!militarSelecionadoId) {
+    return;
+  }
+
+  try {
+    await window.CaveirinhaAPI.updateTAFDashboard({
+      idMilitar: militarSelecionadoId,
+      ciclo: tafEditandoCiclo,
+      data: tafDataInput.value,
+      mencoes: {
+        barra: tafBarraInput.value,
+        flexao: tafFlexaoInput.value,
+        abdominal: tafAbdominalInput.value,
+        corrida: tafCorridaInput.value
+      }
+    });
+    fecharTafEditorModal();
+    await carregarTafDashboard();
+  } catch (error) {
+    console.error("Falha ao salvar TAF:", error);
+  }
+});
+
 historicoModalClose.addEventListener("click", () => {
   fecharHistoricoModal();
 });
@@ -1021,6 +1223,7 @@ historicoEditorForm.addEventListener("submit", async (event) => {
   const payload = {
     idMilitar: militarSelecionadoId,
     texto: historicoTextoInput.value.trim(),
+    autor: historicoAutorInput.value.trim(),
     data: hojeISODate()
   };
 

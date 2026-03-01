@@ -1,55 +1,39 @@
 ﻿# Funcionalidades Implementadas
 
-## Sidebar
-- Toggle retrátil
-- Ícones com `background-image`
-- Modo colapsado esconde labels
-
 ## Quadro Organizacional
-- Abas verticais
-- Cards animados
-- Animação escalonada
-- Destaque visual para item encontrado
+- Abas verticais por fração
+- Cards de militar com animação
+- Correção visual para evitar card esticado quando há apenas 1 militar na aba
 
 ## Busca
-- Painel flutuante lateral
-- Filtro por:
-  - Posto/Graduação
-  - Nome
-  - Função
-  - Número (SD EV)
-- Scroll automático até card
+- Busca lateral por posto/graduação, nome, função e número
+- Navegação até o card encontrado com destaque
 
 ## Ficha do Militar
-- Foto
-- Nome completo formatado
-- Função
-- Botões de ação (estrutura pronta, sem lógica de negócio completa)
+- Módulo Dados (modal com cópia por campo)
+- Módulo Fatos Observados (FO+ / FO-) com CRUD completo e cópia do fato
+- Módulo Histórico/Obs com CRUD completo
+- Módulo TAF com mini dashboard visual por ciclo (1º/2º/3º)
+
+## TAF Dashboard
+- Testes por ciclo: barra, flexão, abdominal, corrida
+- Menções: I, R, B, MB, E
+- Regras visuais:
+  - I e R em vermelho
+  - B neutro
+  - MB e E em verde
+- Menção final calculada automaticamente como a menor menção do ciclo
+- Atualização por modal de edição
 
 ## Efetivo
-- Checkbox = Em forma
-- Select = Situação
-- KPIs:
-  - Total
-  - Em forma
-  - Destinos
-  - Baixados
-- Atualização dinâmica em tempo real
-- Persistência via API layer (`updateEfetivo`)
+- Checkbox em forma + select situação
+- KPIs em tempo real
+- Persistência via API layer
 
-## Integração de Dados (nova base)
-- Inicialização dos militares via `getMilitares()`
-- Inicialização do efetivo via `getEfetivo()`
-- Camada de abstração criada em `services/api.js`
-- Mock local criado em `mock/db.json`
-- Interface sem acesso direto ao JSON
-- Interface sem lógica de persistência direta
-
-## Endpoints lógicos já expostos na API layer
-- `getMilitares`
-- `getEfetivo`
-- `updateEfetivo`
-- `getFO`, `createFO`, `updateFO`
-- `getPunicoes`, `createPunicao`, `updatePunicao`
-- `getTAF`, `createTAF`, `updateTAF`
-- `getTAT`, `createTAT`, `updateTAT`
+## API Layer (ações já disponíveis)
+- Militares: `getMilitares`, `getMilitarDados`, `updateMilitarDados`
+- Efetivo: `getEfetivo`, `updateEfetivo`
+- FO: `getFO`, `createFO`, `updateFO`, `deleteFO`
+- Histórico/Obs: `getHistoricoObs`, `createHistoricoObs`, `updateHistoricoObs`, `deleteHistoricoObs`
+- TAF base: `getTAF`, `createTAF`, `updateTAF`
+- TAF dashboard: `getTAFDashboard`, `updateTAFDashboard`

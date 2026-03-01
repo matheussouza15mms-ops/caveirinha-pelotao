@@ -92,6 +92,51 @@
     };
   }
 
+  function parseTafTipoTeste(tipoTeste) {
+    const match = /^([123])TAF_(barra|flexao|abdominal|corrida)$/i.exec(String(tipoTeste || ""));
+    if (!match) {
+      return null;
+    }
+    return {
+      ciclo: Number(match[1]),
+      teste: match[2].toLowerCase()
+    };
+  }
+
+  function buildTafDashboard(idMilitar, tafRows) {
+    const base = [1, 2, 3].map((ciclo) => ({
+      ciclo,
+      data: "",
+      mencoes: {
+        barra: "B",
+        flexao: "B",
+        abdominal: "B",
+        corrida: "B"
+      }
+    }));
+
+    const byCiclo = new Map(base.map((item) => [item.ciclo, item]));
+
+    tafRows
+      .filter((row) => row.idMilitar === idMilitar)
+      .forEach((row) => {
+        const parsed = parseTafTipoTeste(row.tipoTeste);
+        if (!parsed) {
+          return;
+        }
+        const atual = byCiclo.get(parsed.ciclo);
+        if (!atual) {
+          return;
+        }
+        atual.mencoes[parsed.teste] = String(row.resultado || "B").toUpperCase();
+        if (row.data) {
+          atual.data = row.data;
+        }
+      });
+
+    return base;
+  }
+
   async function handleMockAction(action, payload) {
     const db = await loadMockDb();
 
@@ -170,14 +215,19 @@
         const [deleted] = db.fo.splice(index, 1);
         return clone(deleted);
       }
-      case "getHistoricoObs":
-        return clone(db.historicoObs);
+      case "getHistoricoObs": {
+        if (!payload.idMilitar) {
+          return clone(db.historicoObs);
+        }
+        return clone(db.historicoObs.filter((row) => row.idMilitar === payload.idMilitar));
+      }
       case "createHistoricoObs": {
         assertRequired(payload.idMilitar, "idMilitar");
         const record = {
           id: payload.id || `hist-${Date.now()}`,
           idMilitar: payload.idMilitar,
           texto: payload.texto || "",
+          autor: payload.autor || "",
           data: payload.data || nowIso().slice(0, 10),
           lastUpdate: nowIso()
         };
@@ -192,6 +242,7 @@
           {
             ...payload,
             texto: payload.texto || "",
+            autor: payload.autor || "",
             data: payload.data || nowIso().slice(0, 10),
             lastUpdate: nowIso()
           },
@@ -260,6 +311,43 @@
           null
         );
         return clone(row);
+      }
+      case "getTAFDashboard": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        return clone(buildTafDashboard(payload.idMilitar, db.taf));
+      }
+      case "updateTAFDashboard": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        assertRequired(payload.ciclo, "ciclo");
+        const ciclo = Number(payload.ciclo);
+        const data = payload.data || nowIso().slice(0, 10);
+        const mencoes = payload.mencoes || {};
+        const testes = ["barra", "flexao", "abdominal", "corrida"];
+
+        testes.forEach((teste) => {
+          const tipoTeste = `${ciclo}TAF_${teste}`;
+          const existenteIndex = db.taf.findIndex(
+            (row) => row.idMilitar === payload.idMilitar && row.tipoTeste === tipoTeste
+          );
+
+          const registro = {
+            id: existenteIndex >= 0 ? db.taf[existenteIndex].id : `taf-${Date.now()}-${teste}`,
+            idMilitar: payload.idMilitar,
+            data,
+            tipoTeste,
+            resultado: String(mencoes[teste] || "B").toUpperCase(),
+            observacao: `ciclo:${ciclo}`,
+            lastUpdate: nowIso()
+          };
+
+          if (existenteIndex >= 0) {
+            db.taf[existenteIndex] = { ...db.taf[existenteIndex], ...registro };
+          } else {
+            db.taf.push(registro);
+          }
+        });
+
+        return clone(buildTafDashboard(payload.idMilitar, db.taf));
       }
       case "getTAT":
         return clone(db.tat);
@@ -346,8 +434,8 @@
     return apiRequest("deleteFO", { id });
   }
 
-  function getHistoricoObs() {
-    return apiRequest("getHistoricoObs");
+  function getHistoricoObs(idMilitar) {
+    return apiRequest("getHistoricoObs", { idMilitar });
   }
 
   function createHistoricoObs(payload) {
@@ -386,6 +474,14 @@
     return apiRequest("updateTAF", payload);
   }
 
+  function getTAFDashboard(idMilitar) {
+    return apiRequest("getTAFDashboard", { idMilitar });
+  }
+
+  function updateTAFDashboard(payload) {
+    return apiRequest("updateTAFDashboard", payload);
+  }
+
   function getTAT() {
     return apiRequest("getTAT");
   }
@@ -420,6 +516,8 @@
     getTAF,
     createTAF,
     updateTAF,
+    getTAFDashboard,
+    updateTAFDashboard,
     getTAT,
     createTAT,
     updateTAT

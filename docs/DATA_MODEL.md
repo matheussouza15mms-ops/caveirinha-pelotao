@@ -1,113 +1,46 @@
 ﻿# Modelo de Dados
 
-## Modelo Operacional Atual (UI)
+## Coleções Atuais no Mock (`mock/db.json`)
+- `militares`
+- `efetivo`
+- `fo`
+- `historicoObs`
+- `punicoes`
+- `taf`
+- `tat`
 
-### Militar (na UI)
-```js
-{
-  id: string,
-  pg: string,
-  numero: number | null,
-  nomeGuerra: string,
-  funcao: string,
-  foto: string,
-  aba: string,
-  lastUpdate: string
-}
-```
+## Militar
+Campos relevantes:
+- `id`, `pg`, `numero`, `nomeGuerra`, `funcao`, `aba`, `foto`, `lastUpdate`
+- dados pessoais: `nomeCompleto`, `dataNascimento`, `identidade`, `dataPraca`, `fracao`, `endereco`, `celular`, `nomePai`, `nomeMae`, `contatoEmergencia`, `comportamento`, `habilidade`
 
-### Grupo / Aba (compatibilidade legada)
-```js
-{
-  aba: string,
-  militares: Militar[]
-}
-```
-
-### Estado do Efetivo (UI)
-- Chave: `cardId` no formato `"abaIndex-militarIndex"`
-- Estrutura:
-```js
-{
-  emForma: boolean,
-  situacao: string
-}
-```
-
-### Situações Permitidas
-- `falta`
-- `missao`
-- `baixado`
-- `ferias`
-- `outros`
-- `em_forma` (interno quando checkbox está marcado)
-
-## Modelo Alvo (Google Sheets / Apps Script)
-
-### MILITARES
-- `id`
-- `pg`
-- `numero`
-- `nomeGuerra`
-- `funcao`
-- `aba`
-- `foto`
-- `lastUpdate`
-
-### EFETIVO
-- `idMilitar`
-- `emForma`
-- `situacao`
-- `dataAtualizacao`
-
-### FO
+## FO
 - `id`
 - `idMilitar`
 - `data`
-- `tipo`
+- `tipo` (`FO+` ou `FO-`)
 - `descricao`
 - `autor`
 - `lastUpdate`
 
-### PUNICOES
+## Histórico/Obs
 - `id`
 - `idMilitar`
-- `tipo`
-- `enquadramento`
-- `dataInicio`
-- `dataFim`
-- `status`
+- `texto`
+- `autor`
+- `data`
 - `lastUpdate`
 
-### TAF
+## TAF (persistência base)
 - `id`
 - `idMilitar`
 - `data`
-- `tipoTeste`
-- `resultado`
+- `tipoTeste` (padrão atual: `1TAF_barra`, `2TAF_corrida`, etc.)
+- `resultado` (I, R, B, MB, E)
 - `observacao`
 - `lastUpdate`
 
-### TAT
-- `id`
-- `idMilitar`
-- `data`
-- `armamento`
-- `pontuacao`
-- `classificacao`
-- `lastUpdate`
-
-## Mock Local Atual
-Arquivo: `mock/db.json`
-
-Estrutura base:
-```json
-{
-  "militares": [],
-  "efetivo": [],
-  "fo": [],
-  "punicoes": [],
-  "taf": [],
-  "tat": []
-}
-```
+## Dashboard TAF (visão derivada)
+- Ciclos: 1º, 2º e 3º
+- Testes: barra, flexão, abdominal, corrida
+- Menção final: menor menção entre os quatro testes do ciclo

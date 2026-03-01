@@ -691,7 +691,8 @@ body {
 }
 
 .fo-form input,
-.fo-form textarea {
+.fo-form textarea,
+.fo-form select {
   border: 1px solid #cddaea;
   border-radius: 8px;
   padding: 8px;
@@ -727,6 +728,109 @@ body {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
+}
+
+.taf-modal-card {
+  width: min(1020px, 100%);
+}
+
+.taf-cards-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  padding: 12px;
+}
+
+.taf-card {
+  border: 1px solid #d9e5f3;
+  border-radius: 12px;
+  background: #fbfdff;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.taf-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.taf-card-head strong {
+  color: #213f5d;
+}
+
+.taf-edit-btn {
+  border: 1px solid #bfd3e8;
+  background: #ecf4fb;
+  color: #1f4a71;
+  border-radius: 7px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.taf-card-date {
+  color: #5b7692;
+  font-size: 0.82rem;
+}
+
+.taf-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e5edf6;
+  border-radius: 9px;
+  padding: 8px;
+  background: #fff;
+}
+
+.taf-row b {
+  font-size: 0.9rem;
+  color: #274363;
+}
+
+.taf-row.final {
+  border-color: #aac6e2;
+  background: #f0f7fe;
+}
+
+.mencao-chip {
+  min-width: 46px;
+  text-align: center;
+  border-radius: 999px;
+  border: 1px solid #cad7e5;
+  background: #f4f8fc;
+  color: #2b4a67;
+  padding: 3px 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.mencao-chip.level-i,
+.mencao-chip.level-r {
+  background: #ffe8e8;
+  border-color: #efb2b2;
+  color: #8f2f2f;
+}
+
+.mencao-chip.level-b {
+  background: #f4f8fc;
+  border-color: #cad7e5;
+  color: #2b4a67;
+}
+
+.mencao-chip.level-mb,
+.mencao-chip.level-e {
+  background: #def6e8;
+  border-color: #8ad0aa;
+  color: #1f6f4d;
+}
+
+.taf-editor-card {
+  width: min(560px, 100%);
 }
 
 @keyframes cardIn {
