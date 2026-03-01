@@ -264,5 +264,28 @@
                    "autor":  "Ten Prado",
                    "lastUpdate":  "2026-03-01T13:10:48.6762614Z"
                }
-           ]
+           ],
+    "historicoObs":  [
+                         {
+                             "id":  "hist-001",
+                             "idMilitar":  "mil-001",
+                             "texto":  "Participou da reunião de comando e apresentou proposta de melhoria para escala de serviço.",
+                             "data":  "2026-02-26",
+                             "lastUpdate":  "2026-03-01T14:32:13.4929276Z"
+                         },
+                         {
+                             "id":  "hist-002",
+                             "idMilitar":  "mil-003",
+                             "texto":  "Observação administrativa registrada sobre revisão de documentação interna.",
+                             "data":  "2026-02-27",
+                             "lastUpdate":  "2026-03-01T14:32:13.4929276Z"
+                         },
+                         {
+                             "id":  "hist-003",
+                             "idMilitar":  "mil-006",
+                             "texto":  "Acompanhamento de adaptação inicial na fração com bom progresso.",
+                             "data":  "2026-02-28",
+                             "lastUpdate":  "2026-03-01T14:32:13.4929276Z"
+                         }
+                     ]
 }

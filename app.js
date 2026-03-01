@@ -44,6 +44,17 @@ const foDescricaoInput = document.getElementById("foDescricaoInput");
 const foAutorInput = document.getElementById("foAutorInput");
 const foDataInput = document.getElementById("foDataInput");
 const foEditorTitle = document.getElementById("foEditorTitle");
+const fichaHistoricoBtn = document.getElementById("fichaHistoricoBtn");
+const historicoModal = document.getElementById("historicoModal");
+const historicoModalClose = document.getElementById("historicoModalClose");
+const historicoNovoBtn = document.getElementById("historicoNovoBtn");
+const historicoTableBody = document.getElementById("historicoTableBody");
+const historicoEditorModal = document.getElementById("historicoEditorModal");
+const historicoEditorClose = document.getElementById("historicoEditorClose");
+const historicoEditorCancel = document.getElementById("historicoEditorCancel");
+const historicoEditorForm = document.getElementById("historicoEditorForm");
+const historicoTextoInput = document.getElementById("historicoTextoInput");
+const historicoEditorTitle = document.getElementById("historicoEditorTitle");
 
 let abaAtiva = 0;
 let ultimoCardEncontrado = null;
@@ -52,6 +63,8 @@ let foTipoAtivo = "FO+";
 let foListaCache = [];
 let foEditandoId = null;
 let foEditandoTipo = "FO+";
+let historicoListaCache = [];
+let historicoEditandoId = null;
 
 const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
 const efetivoState = new Map();
@@ -265,6 +278,86 @@ async function abrirFatosObservados() {
   renderFoTabs();
   abrirFoModal();
   await carregarFo();
+}
+
+function abrirHistoricoModal() {
+  historicoModal.classList.add("active");
+  historicoModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharHistoricoModal() {
+  historicoModal.classList.remove("active");
+  historicoModal.setAttribute("aria-hidden", "true");
+}
+
+function abrirHistoricoEditorModal() {
+  historicoEditorModal.classList.add("active");
+  historicoEditorModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharHistoricoEditorModal() {
+  historicoEditorModal.classList.remove("active");
+  historicoEditorModal.setAttribute("aria-hidden", "true");
+  historicoEditorForm.reset();
+}
+
+function renderHistoricoTabela() {
+  historicoTableBody.innerHTML = "";
+
+  const registros = historicoListaCache
+    .filter((item) => item.idMilitar === militarSelecionadoId)
+    .sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
+
+  if (!registros.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = '<td class="fo-empty-row" colspan="3">Nenhum registro de histórico.</td>';
+    historicoTableBody.appendChild(tr);
+    return;
+  }
+
+  registros.forEach((registro) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${valorCampoExibicao(registro.texto)}</td>
+      <td>${formatarDataExibicao(registro.data)}</td>
+      <td class="fo-actions-cell">
+        <button class="fo-action-btn" data-action="edit" data-id="${registro.id}">Editar</button>
+        <button class="fo-action-btn warn" data-action="delete" data-id="${registro.id}">Excluir</button>
+      </td>
+    `;
+    historicoTableBody.appendChild(tr);
+  });
+}
+
+async function carregarHistorico() {
+  try {
+    historicoListaCache = await window.CaveirinhaAPI.getHistoricoObs();
+  } catch (error) {
+    console.error("Falha ao carregar historico/obs:", error);
+    historicoListaCache = [];
+  }
+  renderHistoricoTabela();
+}
+
+function abrirHistoricoEditor(registro) {
+  if (registro) {
+    historicoEditandoId = registro.id;
+    historicoEditorTitle.textContent = "Editar Registro";
+    historicoTextoInput.value = registro.texto || "";
+  } else {
+    historicoEditandoId = null;
+    historicoEditorTitle.textContent = "Novo Registro";
+    historicoTextoInput.value = "";
+  }
+  abrirHistoricoEditorModal();
+}
+
+async function abrirHistoricoObs() {
+  if (!militarSelecionadoId) {
+    return;
+  }
+  abrirHistoricoModal();
+  await carregarHistorico();
 }
 
 function construirOrganizacao(militares) {
@@ -675,6 +768,14 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    if (historicoEditorModal.classList.contains("active")) {
+      fecharHistoricoEditorModal();
+      return;
+    }
+    if (historicoModal.classList.contains("active")) {
+      fecharHistoricoModal();
+      return;
+    }
     if (foEditorModal.classList.contains("active")) {
       fecharFoEditorModal();
       return;
@@ -697,6 +798,10 @@ fichaDadosBtn.addEventListener("click", () => {
 
 fichaFoBtn.addEventListener("click", () => {
   void abrirFatosObservados();
+});
+
+fichaHistoricoBtn.addEventListener("click", () => {
+  void abrirHistoricoObs();
 });
 
 dadosModalClose.addEventListener("click", () => {
@@ -844,6 +949,95 @@ foEditorForm.addEventListener("submit", async (event) => {
     await carregarFo();
   } catch (error) {
     console.error("Falha ao salvar FO:", error);
+  }
+});
+
+historicoModalClose.addEventListener("click", () => {
+  fecharHistoricoModal();
+});
+
+historicoModal.addEventListener("click", (event) => {
+  if (event.target === historicoModal) {
+    fecharHistoricoModal();
+  }
+});
+
+historicoNovoBtn.addEventListener("click", () => {
+  abrirHistoricoEditor(null);
+});
+
+historicoTableBody.addEventListener("click", async (event) => {
+  const alvo = event.target;
+  if (!(alvo instanceof HTMLElement) || !alvo.dataset.id) {
+    return;
+  }
+
+  const registro = historicoListaCache.find((item) => item.id === alvo.dataset.id);
+  if (!registro) {
+    return;
+  }
+
+  if (alvo.dataset.action === "edit") {
+    abrirHistoricoEditor(registro);
+    return;
+  }
+
+  if (alvo.dataset.action === "delete") {
+    const confirma = window.confirm("Deseja excluir este registro de historico/obs?");
+    if (!confirma) {
+      return;
+    }
+
+    try {
+      await window.CaveirinhaAPI.deleteHistoricoObs(registro.id);
+      await carregarHistorico();
+    } catch (error) {
+      console.error("Falha ao excluir registro de historico/obs:", error);
+    }
+  }
+});
+
+historicoEditorClose.addEventListener("click", () => {
+  fecharHistoricoEditorModal();
+});
+
+historicoEditorCancel.addEventListener("click", () => {
+  fecharHistoricoEditorModal();
+});
+
+historicoEditorModal.addEventListener("click", (event) => {
+  if (event.target === historicoEditorModal) {
+    fecharHistoricoEditorModal();
+  }
+});
+
+historicoEditorForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!militarSelecionadoId) {
+    return;
+  }
+
+  const payload = {
+    idMilitar: militarSelecionadoId,
+    texto: historicoTextoInput.value.trim(),
+    data: hojeISODate()
+  };
+
+  try {
+    if (historicoEditandoId) {
+      await window.CaveirinhaAPI.updateHistoricoObs({
+        id: historicoEditandoId,
+        ...payload
+      });
+    } else {
+      await window.CaveirinhaAPI.createHistoricoObs(payload);
+    }
+
+    fecharHistoricoEditorModal();
+    await carregarHistorico();
+  } catch (error) {
+    console.error("Falha ao salvar registro de historico/obs:", error);
   }
 });
 

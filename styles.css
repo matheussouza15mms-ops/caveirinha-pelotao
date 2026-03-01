@@ -715,6 +715,20 @@ body {
   cursor: pointer;
 }
 
+.historico-modal-card {
+  width: min(920px, 100%);
+}
+
+.historico-modal-content {
+  padding: 12px;
+}
+
+.historico-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
 @keyframes cardIn {
   to {
     transform: translateY(0);

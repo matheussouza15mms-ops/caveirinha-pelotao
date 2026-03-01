@@ -6,6 +6,7 @@
     militares: [],
     efetivo: [],
     fo: [],
+    historicoObs: [],
     punicoes: [],
     taf: [],
     tat: []
@@ -169,6 +170,44 @@
         const [deleted] = db.fo.splice(index, 1);
         return clone(deleted);
       }
+      case "getHistoricoObs":
+        return clone(db.historicoObs);
+      case "createHistoricoObs": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const record = {
+          id: payload.id || `hist-${Date.now()}`,
+          idMilitar: payload.idMilitar,
+          texto: payload.texto || "",
+          data: payload.data || nowIso().slice(0, 10),
+          lastUpdate: nowIso()
+        };
+        db.historicoObs.push(record);
+        return clone(record);
+      }
+      case "updateHistoricoObs": {
+        assertRequired(payload.id, "id");
+        const row = updateOrInsertById(
+          db.historicoObs,
+          "id",
+          {
+            ...payload,
+            texto: payload.texto || "",
+            data: payload.data || nowIso().slice(0, 10),
+            lastUpdate: nowIso()
+          },
+          null
+        );
+        return clone(row);
+      }
+      case "deleteHistoricoObs": {
+        assertRequired(payload.id, "id");
+        const index = db.historicoObs.findIndex((item) => item.id === payload.id);
+        if (index < 0) {
+          throw new Error("Historico/Obs nao encontrado");
+        }
+        const [deleted] = db.historicoObs.splice(index, 1);
+        return clone(deleted);
+      }
       case "getPunicoes":
         return clone(db.punicoes);
       case "createPunicao": {
@@ -307,6 +346,22 @@
     return apiRequest("deleteFO", { id });
   }
 
+  function getHistoricoObs() {
+    return apiRequest("getHistoricoObs");
+  }
+
+  function createHistoricoObs(payload) {
+    return apiRequest("createHistoricoObs", payload);
+  }
+
+  function updateHistoricoObs(payload) {
+    return apiRequest("updateHistoricoObs", payload);
+  }
+
+  function deleteHistoricoObs(id) {
+    return apiRequest("deleteHistoricoObs", { id });
+  }
+
   function getPunicoes() {
     return apiRequest("getPunicoes");
   }
@@ -355,6 +410,10 @@
     createFO,
     updateFO,
     deleteFO,
+    getHistoricoObs,
+    createHistoricoObs,
+    updateHistoricoObs,
+    deleteHistoricoObs,
     getPunicoes,
     createPunicao,
     updatePunicao,

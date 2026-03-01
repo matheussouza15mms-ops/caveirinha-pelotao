@@ -99,6 +99,7 @@
           <button class="ficha-action">TAF</button>
           <button class="ficha-action">TAT</button>
           <button id="fichaFoBtn" class="ficha-action">Fatos Observados</button>
+          <button id="fichaHistoricoBtn" class="ficha-action">Histórico/Obs.</button>
         </div>
       </section>
     </main>
@@ -169,6 +170,52 @@
         </label>
         <div class="fo-form-actions">
           <button type="button" id="foEditorCancel" class="ficha-action">Cancelar</button>
+          <button type="submit" class="fo-save-btn">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="historicoModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card historico-modal-card" role="dialog" aria-modal="true" aria-labelledby="historicoModalTitle">
+      <div class="modal-header">
+        <h3 id="historicoModalTitle">Histórico / Observações</h3>
+        <button id="historicoModalClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+
+      <div class="historico-modal-content">
+        <div class="historico-topbar">
+          <button id="historicoNovoBtn" class="fo-new-btn">Novo Registro</button>
+        </div>
+        <div class="fo-table-wrap">
+          <table class="fo-table">
+            <thead>
+              <tr>
+                <th>Registro</th>
+                <th>Data</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="historicoTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="historicoEditorModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card fo-editor-card" role="dialog" aria-modal="true" aria-labelledby="historicoEditorTitle">
+      <div class="modal-header">
+        <h3 id="historicoEditorTitle">Novo Registro</h3>
+        <button id="historicoEditorClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+      <form id="historicoEditorForm" class="fo-form">
+        <label>
+          Texto do registro
+          <textarea id="historicoTextoInput" rows="5" required></textarea>
+        </label>
+        <div class="fo-form-actions">
+          <button type="button" id="historicoEditorCancel" class="ficha-action">Cancelar</button>
           <button type="submit" class="fo-save-btn">Salvar</button>
         </div>
       </form>
