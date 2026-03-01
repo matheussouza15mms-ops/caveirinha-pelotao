@@ -4,6 +4,7 @@
     efetivo: "./data/efetivo.csv",
     fatosObservados: "./data/fatos_observados.csv",
     historicoObs: "./data/historico_obs.csv",
+    punicoes: "./data/punicoes.csv",
     taf: "./data/taf.csv",
     tat: "./data/tat.csv"
   };
@@ -221,16 +222,30 @@
     }));
   }
 
+  function normalizePunicoes(rows) {
+    return rows.map((row) => ({
+      id: row.punicaoId || row.id || createId("pun"),
+      idMilitar: row.id || row.idMilitar || "",
+      fato: row.fato || row.enquadramento || "",
+      punicao: row.punicao || row.tipo || "",
+      dias: Number(row.dias || 0),
+      dataInicio: row.dataInicio || "",
+      dataFim: row.dataFim || "",
+      lastUpdate: row.lastUpdate || ""
+    }));
+  }
+
   async function loadDb() {
     if (dbCache) {
       return dbCache;
     }
 
-    const [quadroRows, efetivoRows, foRows, historicoRows, tafRows, tatRows] = await Promise.all([
+    const [quadroRows, efetivoRows, foRows, historicoRows, punicoesRows, tafRows, tatRows] = await Promise.all([
       loadCsvFile(CSV_PATHS.quadroOrganizacional),
       loadCsvFile(CSV_PATHS.efetivo),
       loadCsvFile(CSV_PATHS.fatosObservados),
       loadCsvFile(CSV_PATHS.historicoObs),
+      loadCsvFile(CSV_PATHS.punicoes),
       loadCsvFile(CSV_PATHS.taf),
       loadCsvFile(CSV_PATHS.tat)
     ]);
@@ -240,9 +255,9 @@
       efetivo: normalizeEfetivo(efetivoRows),
       fatosObservados: normalizeFatosObservados(foRows),
       historicoObs: normalizeHistoricoObs(historicoRows),
+      punicoes: normalizePunicoes(punicoesRows),
       taf: normalizeTaf(tafRows),
-      tat: normalizeTat(tatRows),
-      punicoes: []
+      tat: normalizeTat(tatRows)
     });
 
     return dbCache;
@@ -452,17 +467,20 @@
         return clone(deleted);
       }
       case "getPunicoes":
-        return clone(db.punicoes);
+        if (!payload.idMilitar) {
+          return clone(db.punicoes);
+        }
+        return clone(db.punicoes.filter((row) => row.idMilitar === payload.idMilitar));
       case "createPunicao": {
         assertRequired(payload.idMilitar, "idMilitar");
         const record = {
           id: payload.id || createId("pun"),
           idMilitar: payload.idMilitar,
-          tipo: payload.tipo || "",
-          enquadramento: payload.enquadramento || "",
+          fato: payload.fato || "",
+          punicao: payload.punicao || "ADV",
+          dias: Number(payload.dias || 0),
           dataInicio: payload.dataInicio || "",
           dataFim: payload.dataFim || "",
-          status: payload.status || "",
           lastUpdate: nowIso()
         };
         db.punicoes.push(record);
@@ -470,8 +488,30 @@
       }
       case "updatePunicao": {
         assertRequired(payload.id, "id");
-        const row = updateOrInsertById(db.punicoes, "id", { ...payload, lastUpdate: nowIso() }, null);
+        const row = updateOrInsertById(
+          db.punicoes,
+          "id",
+          {
+            ...payload,
+            fato: payload.fato || "",
+            punicao: payload.punicao || "ADV",
+            dias: Number(payload.dias || 0),
+            dataInicio: payload.dataInicio || "",
+            dataFim: payload.dataFim || "",
+            lastUpdate: nowIso()
+          },
+          null
+        );
         return clone(row);
+      }
+      case "deletePunicao": {
+        assertRequired(payload.id, "id");
+        const index = db.punicoes.findIndex((item) => item.id === payload.id);
+        if (index < 0) {
+          throw new Error("Punicao nao encontrada");
+        }
+        const [deleted] = db.punicoes.splice(index, 1);
+        return clone(deleted);
       }
       case "getTAF":
         return clone(db.taf);

@@ -87,6 +87,10 @@
     return apiRequest("updatePunicao", payload);
   }
 
+  function deletePunicao(id) {
+    return apiRequest("deletePunicao", { id });
+  }
+
   function getTAF() {
     return apiRequest("getTAF");
   }
@@ -138,6 +142,7 @@
     getPunicoes,
     createPunicao,
     updatePunicao,
+    deletePunicao,
     getTAF,
     createTAF,
     updateTAF,

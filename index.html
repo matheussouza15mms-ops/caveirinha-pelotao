@@ -98,6 +98,7 @@
           <button id="fichaDadosBtn" class="ficha-action">Dados</button>
           <button id="fichaTafBtn" class="ficha-action">TAF</button>
           <button id="fichaTatBtn" class="ficha-action">TAT</button>
+          <button id="fichaPunicoesBtn" class="ficha-action">Punições</button>
           <button id="fichaFoBtn" class="ficha-action">Fatos Observados</button>
           <button id="fichaHistoricoBtn" class="ficha-action">Histórico/Obs.</button>
         </div>
@@ -221,6 +222,77 @@
         </label>
         <div class="fo-form-actions">
           <button type="button" id="historicoEditorCancel" class="ficha-action">Cancelar</button>
+          <button type="submit" class="fo-save-btn">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="punicoesModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card historico-modal-card" role="dialog" aria-modal="true" aria-labelledby="punicoesModalTitle">
+      <div class="modal-header">
+        <h3 id="punicoesModalTitle">Punições</h3>
+        <button id="punicoesModalClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+
+      <div class="historico-modal-content">
+        <div class="historico-topbar">
+          <button id="punicoesNovoBtn" class="fo-new-btn">Registrar Punição</button>
+        </div>
+        <div class="fo-table-wrap">
+          <table class="fo-table">
+            <thead>
+              <tr>
+                <th>Fato</th>
+                <th>Punição</th>
+                <th>Dias</th>
+                <th>Início</th>
+                <th>Término</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="punicoesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="punicoesEditorModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card fo-editor-card" role="dialog" aria-modal="true" aria-labelledby="punicoesEditorTitle">
+      <div class="modal-header">
+        <h3 id="punicoesEditorTitle">Registrar Punição</h3>
+        <button id="punicoesEditorClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+      <form id="punicoesEditorForm" class="fo-form">
+        <label>
+          Fato
+          <textarea id="punicoesFatoInput" rows="4" required></textarea>
+        </label>
+        <label>
+          Punição
+          <select id="punicoesTipoInput" required>
+            <option value="ADV">Adv</option>
+            <option value="IMP">Imp</option>
+            <option value="DET">Det</option>
+            <option value="REP">Rep</option>
+            <option value="PRISAO">Prisão</option>
+          </select>
+        </label>
+        <label>
+          Início
+          <input id="punicoesInicioInput" type="date" required />
+        </label>
+        <label>
+          Término
+          <input id="punicoesFimInput" type="date" required />
+        </label>
+        <label>
+          Dias
+          <input id="punicoesDiasInput" type="number" min="0" readonly />
+        </label>
+        <div class="fo-form-actions">
+          <button type="button" id="punicoesEditorCancel" class="ficha-action">Cancelar</button>
           <button type="submit" class="fo-save-btn">Salvar</button>
         </div>
       </form>

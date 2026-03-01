@@ -61,12 +61,21 @@ Campos:
 - `id`: referencia para `quadro_organizacional.id`
 - `data`, `armamento`, `pontuacao`, `classificacao`, `lastUpdate`
 
+### 7) `data/punicoes.csv`
+Base de punições por militar.
+
+Campos:
+- `punicaoId`: identificador unico do registro
+- `id`: referencia para `quadro_organizacional.id`
+- `fato`, `punicao`, `dias`, `dataInicio`, `dataFim`, `lastUpdate`
+
 ## Relacionamento entre arquivos
 Relacao principal (1:N a partir de militar):
 - `quadro_organizacional.id` 1:N `fatos_observados.id`
 - `quadro_organizacional.id` 1:N `historico_obs.id`
 - `quadro_organizacional.id` 1:N `taf.id`
 - `quadro_organizacional.id` 1:N `tat.id`
+- `quadro_organizacional.id` 1:N `punicoes.id`
 - `quadro_organizacional.id` 1:1 (ou 1:N historico) `efetivo.id`
 
 ## Compatibilidade com frontend

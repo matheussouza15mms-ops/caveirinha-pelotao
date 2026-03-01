@@ -28,6 +28,7 @@ const fichaFuncao = document.getElementById("fichaFuncao");
 const fichaDadosBtn = document.getElementById("fichaDadosBtn");
 const fichaTafBtn = document.getElementById("fichaTafBtn");
 const fichaTatBtn = document.getElementById("fichaTatBtn");
+const fichaPunicoesBtn = document.getElementById("fichaPunicoesBtn");
 const fichaFoBtn = document.getElementById("fichaFoBtn");
 const dadosModal = document.getElementById("dadosModal");
 const dadosModalClose = document.getElementById("dadosModalClose");
@@ -58,6 +59,20 @@ const historicoEditorForm = document.getElementById("historicoEditorForm");
 const historicoTextoInput = document.getElementById("historicoTextoInput");
 const historicoAutorInput = document.getElementById("historicoAutorInput");
 const historicoEditorTitle = document.getElementById("historicoEditorTitle");
+const punicoesModal = document.getElementById("punicoesModal");
+const punicoesModalClose = document.getElementById("punicoesModalClose");
+const punicoesNovoBtn = document.getElementById("punicoesNovoBtn");
+const punicoesTableBody = document.getElementById("punicoesTableBody");
+const punicoesEditorModal = document.getElementById("punicoesEditorModal");
+const punicoesEditorClose = document.getElementById("punicoesEditorClose");
+const punicoesEditorCancel = document.getElementById("punicoesEditorCancel");
+const punicoesEditorForm = document.getElementById("punicoesEditorForm");
+const punicoesEditorTitle = document.getElementById("punicoesEditorTitle");
+const punicoesFatoInput = document.getElementById("punicoesFatoInput");
+const punicoesTipoInput = document.getElementById("punicoesTipoInput");
+const punicoesInicioInput = document.getElementById("punicoesInicioInput");
+const punicoesFimInput = document.getElementById("punicoesFimInput");
+const punicoesDiasInput = document.getElementById("punicoesDiasInput");
 const tafModal = document.getElementById("tafModal");
 const tafModalClose = document.getElementById("tafModalClose");
 const tafCardsWrap = document.getElementById("tafCardsWrap");
@@ -89,6 +104,8 @@ let foEditandoId = null;
 let foEditandoTipo = "FO+";
 let historicoListaCache = [];
 let historicoEditandoId = null;
+let punicoesListaCache = [];
+let punicoesEditandoId = null;
 let tafDashboardCache = [];
 let tafEditandoCiclo = 1;
 let tatListaCache = [];
@@ -97,6 +114,7 @@ let tatRegistroAtual = null;
 const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
 const efetivoState = new Map();
 const mencoesOrdenadas = ["I", "R", "B", "MB", "E"];
+const tiposPunicao = ["ADV", "IMP", "DET", "REP", "PRISAO"];
 const camposDadosMilitar = [
   { key: "nomeCompleto", label: "Nome completo" },
   { key: "nomeGuerra", label: "Nome de guerra" },
@@ -156,6 +174,56 @@ function formatarDataExibicao(valorData) {
   }
 
   return parsed.toLocaleDateString("pt-BR");
+}
+
+function normalizarTipoPunicao(valor) {
+  const upper = String(valor || "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (upper === "PRISAO") {
+    return "PRISAO";
+  }
+  return tiposPunicao.includes(upper) ? upper : "ADV";
+}
+
+function labelPunicao(tipo) {
+  const normalizado = normalizarTipoPunicao(tipo);
+  const labels = {
+    ADV: "Adv",
+    IMP: "Imp",
+    DET: "Det",
+    REP: "Rep",
+    PRISAO: "Prisão"
+  };
+  return labels[normalizado] || "Adv";
+}
+
+function classePunicao(tipo) {
+  const normalizado = normalizarTipoPunicao(tipo);
+  if (normalizado === "DET" || normalizado === "REP") {
+    return "orange";
+  }
+  if (normalizado === "PRISAO") {
+    return "red";
+  }
+  return "normal";
+}
+
+function calcularDiasPunicao(dataInicio, dataFim) {
+  if (!dataInicio || !dataFim) {
+    return 0;
+  }
+
+  const inicio = new Date(`${dataInicio}T00:00:00`);
+  const fim = new Date(`${dataFim}T00:00:00`);
+  if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime()) || fim < inicio) {
+    return 0;
+  }
+
+  const diffMs = fim.getTime() - inicio.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
 function normalizarMencao(valor) {
@@ -437,6 +505,105 @@ async function abrirHistoricoObs() {
   await carregarHistorico();
 }
 
+function abrirPunicoesModal() {
+  punicoesModal.classList.add("active");
+  punicoesModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharPunicoesModal() {
+  punicoesModal.classList.remove("active");
+  punicoesModal.setAttribute("aria-hidden", "true");
+}
+
+function abrirPunicoesEditorModal() {
+  punicoesEditorModal.classList.add("active");
+  punicoesEditorModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharPunicoesEditorModal() {
+  punicoesEditorModal.classList.remove("active");
+  punicoesEditorModal.setAttribute("aria-hidden", "true");
+  punicoesEditorForm.reset();
+  punicoesDiasInput.value = "0";
+}
+
+function atualizarDiasPunicaoEditor() {
+  const dias = calcularDiasPunicao(punicoesInicioInput.value, punicoesFimInput.value);
+  punicoesDiasInput.value = String(dias);
+}
+
+function renderPunicoesTabela() {
+  punicoesTableBody.innerHTML = "";
+
+  const registros = punicoesListaCache
+    .filter((item) => item.idMilitar === militarSelecionadoId)
+    .sort((a, b) => String(b.dataInicio || "").localeCompare(String(a.dataInicio || "")));
+
+  if (!registros.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = '<td class="fo-empty-row" colspan="6">Nenhuma punição registrada.</td>';
+    punicoesTableBody.appendChild(tr);
+    return;
+  }
+
+  registros.forEach((registro) => {
+    const tipo = normalizarTipoPunicao(registro.punicao || registro.tipo);
+    const dias = calcularDiasPunicao(registro.dataInicio, registro.dataFim);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${valorCampoExibicao(registro.fato || registro.enquadramento)}</td>
+      <td><span class="punicao-chip ${classePunicao(tipo)}">${labelPunicao(tipo)}</span></td>
+      <td>${dias}</td>
+      <td>${formatarDataExibicao(registro.dataInicio)}</td>
+      <td>${formatarDataExibicao(registro.dataFim)}</td>
+      <td class="fo-actions-cell">
+        <button class="fo-action-btn" data-action="edit" data-id="${registro.id}">Editar</button>
+        <button class="fo-action-btn warn" data-action="delete" data-id="${registro.id}">Excluir</button>
+      </td>
+    `;
+    punicoesTableBody.appendChild(tr);
+  });
+}
+
+async function carregarPunicoes() {
+  try {
+    punicoesListaCache = await window.CaveirinhaAPI.getPunicoes();
+  } catch (error) {
+    console.error("Falha ao carregar punições:", error);
+    punicoesListaCache = [];
+  }
+  renderPunicoesTabela();
+}
+
+function abrirPunicoesEditor(registro) {
+  if (registro) {
+    punicoesEditandoId = registro.id;
+    punicoesEditorTitle.textContent = "Editar Punição";
+    punicoesFatoInput.value = registro.fato || registro.enquadramento || "";
+    punicoesTipoInput.value = normalizarTipoPunicao(registro.punicao || registro.tipo);
+    punicoesInicioInput.value = (registro.dataInicio || "").slice(0, 10) || hojeISODate();
+    punicoesFimInput.value = (registro.dataFim || "").slice(0, 10) || hojeISODate();
+  } else {
+    punicoesEditandoId = null;
+    punicoesEditorTitle.textContent = "Registrar Punição";
+    punicoesFatoInput.value = "";
+    punicoesTipoInput.value = "ADV";
+    punicoesInicioInput.value = hojeISODate();
+    punicoesFimInput.value = hojeISODate();
+  }
+
+  atualizarDiasPunicaoEditor();
+  abrirPunicoesEditorModal();
+}
+
+async function abrirPunicoes() {
+  if (!militarSelecionadoId) {
+    return;
+  }
+  abrirPunicoesModal();
+  await carregarPunicoes();
+}
+
 function abrirTafModal() {
   tafModal.classList.add("active");
   tafModal.setAttribute("aria-hidden", "false");
@@ -462,12 +629,11 @@ function renderTafDashboard() {
   tafCardsWrap.innerHTML = "";
 
   tafDashboardCache.forEach((item) => {
-    const mencaoFinal = calcularMencaoFinal([
-      item.mencoes.barra,
-      item.mencoes.flexao,
-      item.mencoes.abdominal,
-      item.mencoes.corrida
-    ]);
+    const barra = normalizarMencao(item.mencoes.barra);
+    const flexao = normalizarMencao(item.mencoes.flexao);
+    const abdominal = normalizarMencao(item.mencoes.abdominal);
+    const corrida = normalizarMencao(item.mencoes.corrida);
+    const mencaoFinal = calcularMencaoFinal([barra, flexao, abdominal, corrida]);
 
     const card = document.createElement("article");
     card.className = "taf-card";
@@ -477,10 +643,10 @@ function renderTafDashboard() {
         <button class="taf-edit-btn" data-ciclo="${item.ciclo}">Atualizar</button>
       </div>
       <small class="taf-card-date">Data: ${formatarDataExibicao(item.data)}</small>
-      <div class="taf-row"><b>Barra</b><span class="mencao-chip ${classeMencao(item.mencoes.barra)}">${item.mencoes.barra}</span></div>
-      <div class="taf-row"><b>Flexão</b><span class="mencao-chip ${classeMencao(item.mencoes.flexao)}">${item.mencoes.flexao}</span></div>
-      <div class="taf-row"><b>Abdominal</b><span class="mencao-chip ${classeMencao(item.mencoes.abdominal)}">${item.mencoes.abdominal}</span></div>
-      <div class="taf-row"><b>Corrida</b><span class="mencao-chip ${classeMencao(item.mencoes.corrida)}">${item.mencoes.corrida}</span></div>
+      <div class="taf-row"><b>Barra</b><span class="mencao-chip ${classeMencao(barra)}">${barra}</span></div>
+      <div class="taf-row"><b>Flexão</b><span class="mencao-chip ${classeMencao(flexao)}">${flexao}</span></div>
+      <div class="taf-row"><b>Abdominal</b><span class="mencao-chip ${classeMencao(abdominal)}">${abdominal}</span></div>
+      <div class="taf-row"><b>Corrida</b><span class="mencao-chip ${classeMencao(corrida)}">${corrida}</span></div>
       <div class="taf-row final"><b>Menção Final</b><span class="mencao-chip ${classeMencao(mencaoFinal)}">${mencaoFinal}</span></div>
     `;
     tafCardsWrap.appendChild(card);
@@ -990,6 +1156,14 @@ document.addEventListener("keydown", (event) => {
       fecharTatModal();
       return;
     }
+    if (punicoesEditorModal.classList.contains("active")) {
+      fecharPunicoesEditorModal();
+      return;
+    }
+    if (punicoesModal.classList.contains("active")) {
+      fecharPunicoesModal();
+      return;
+    }
     if (historicoEditorModal.classList.contains("active")) {
       fecharHistoricoEditorModal();
       return;
@@ -1024,6 +1198,10 @@ fichaTafBtn.addEventListener("click", () => {
 
 fichaTatBtn.addEventListener("click", () => {
   void abrirTat();
+});
+
+fichaPunicoesBtn.addEventListener("click", () => {
+  void abrirPunicoes();
 });
 
 fichaFoBtn.addEventListener("click", () => {
@@ -1201,6 +1379,105 @@ tatModal.addEventListener("click", (event) => {
   if (event.target === tatModal) {
     fecharTatModal();
     renderTatEditor(false);
+  }
+});
+
+punicoesModalClose.addEventListener("click", () => {
+  fecharPunicoesModal();
+});
+
+punicoesModal.addEventListener("click", (event) => {
+  if (event.target === punicoesModal) {
+    fecharPunicoesModal();
+  }
+});
+
+punicoesNovoBtn.addEventListener("click", () => {
+  abrirPunicoesEditor(null);
+});
+
+punicoesTableBody.addEventListener("click", async (event) => {
+  const alvo = event.target;
+  if (!(alvo instanceof HTMLElement) || !alvo.dataset.id) {
+    return;
+  }
+
+  const registro = punicoesListaCache.find((item) => item.id === alvo.dataset.id);
+  if (!registro) {
+    return;
+  }
+
+  if (alvo.dataset.action === "edit") {
+    abrirPunicoesEditor(registro);
+    return;
+  }
+
+  if (alvo.dataset.action === "delete") {
+    const confirma = window.confirm("Deseja excluir esta punição?");
+    if (!confirma) {
+      return;
+    }
+    try {
+      await window.CaveirinhaAPI.deletePunicao(registro.id);
+      await carregarPunicoes();
+    } catch (error) {
+      console.error("Falha ao excluir punição:", error);
+    }
+  }
+});
+
+punicoesEditorClose.addEventListener("click", () => {
+  fecharPunicoesEditorModal();
+});
+
+punicoesEditorCancel.addEventListener("click", () => {
+  fecharPunicoesEditorModal();
+});
+
+punicoesEditorModal.addEventListener("click", (event) => {
+  if (event.target === punicoesEditorModal) {
+    fecharPunicoesEditorModal();
+  }
+});
+
+[punicoesInicioInput, punicoesFimInput].forEach((input) => {
+  input.addEventListener("change", () => {
+    atualizarDiasPunicaoEditor();
+  });
+});
+
+punicoesEditorForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!militarSelecionadoId) {
+    return;
+  }
+
+  const dataInicio = punicoesInicioInput.value;
+  const dataFim = punicoesFimInput.value;
+  const payload = {
+    idMilitar: militarSelecionadoId,
+    fato: punicoesFatoInput.value.trim(),
+    punicao: normalizarTipoPunicao(punicoesTipoInput.value),
+    dias: calcularDiasPunicao(dataInicio, dataFim),
+    dataInicio,
+    dataFim
+  };
+
+  try {
+    if (punicoesEditandoId) {
+      await window.CaveirinhaAPI.updatePunicao({
+        id: punicoesEditandoId,
+        ...payload
+      });
+    } else {
+      await window.CaveirinhaAPI.createPunicao(payload);
+    }
+
+    fecharPunicoesEditorModal();
+    await carregarPunicoes();
+  } catch (error) {
+    console.error("Falha ao salvar punição:", error);
   }
 });
 

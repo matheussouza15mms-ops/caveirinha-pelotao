@@ -700,6 +700,37 @@ body {
   font-size: 0.92rem;
 }
 
+.fo-form input[readonly] {
+  background: #f3f7fc;
+  color: #365574;
+}
+
+.punicao-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  border-radius: 999px;
+  border: 1px solid #cad7e5;
+  padding: 3px 10px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  background: #f4f8fc;
+  color: #2b4a67;
+}
+
+.punicao-chip.orange {
+  background: #ffefd9;
+  border-color: #f1be74;
+  color: #91551a;
+}
+
+.punicao-chip.red {
+  background: #ffe8e8;
+  border-color: #efb2b2;
+  color: #8f2f2f;
+}
+
 .fo-form-actions {
   display: flex;
   justify-content: flex-end;
