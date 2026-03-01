@@ -274,6 +274,7 @@ body {
 .cards-area {
   display: grid;
   gap: 12px;
+  align-content: start;
 }
 
 .card-militar {
@@ -289,6 +290,7 @@ body {
   transform: translateY(12px);
   opacity: 0;
   animation: cardIn 0.35s ease forwards;
+  align-self: start;
 }
 
 .militar-meta {
