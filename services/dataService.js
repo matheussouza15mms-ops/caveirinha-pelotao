@@ -1,0 +1,547 @@
+﻿(function bootstrapDataService(globalScope) {
+  const CSV_PATHS = {
+    quadroOrganizacional: "./data/quadro_organizacional.csv",
+    efetivo: "./data/efetivo.csv",
+    fatosObservados: "./data/fatos_observados.csv",
+    historicoObs: "./data/historico_obs.csv",
+    taf: "./data/taf.csv",
+    tat: "./data/tat.csv"
+  };
+
+  const COLLECTION_DEFAULTS = {
+    quadroOrganizacional: [],
+    efetivo: [],
+    fatosObservados: [],
+    historicoObs: [],
+    punicoes: [],
+    taf: [],
+    tat: []
+  };
+
+  let dbCache = null;
+
+  function nowIso() {
+    return new Date().toISOString();
+  }
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function assertRequired(value, fieldName) {
+    if (value === undefined || value === null || value === "") {
+      throw new Error(`Campo obrigatorio ausente: ${fieldName}`);
+    }
+  }
+
+  function createId(prefix) {
+    const random = Math.random().toString(36).slice(2, 7);
+    return `${prefix}-${Date.now()}-${random}`;
+  }
+
+  function ensureCollectionsShape(db) {
+    const safeDb = { ...COLLECTION_DEFAULTS, ...(db || {}) };
+    Object.keys(COLLECTION_DEFAULTS).forEach((key) => {
+      if (!Array.isArray(safeDb[key])) {
+        safeDb[key] = [];
+      }
+    });
+    return safeDb;
+  }
+
+  function parseBoolean(value) {
+    const normalized = String(value || "")
+      .trim()
+      .toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "sim";
+  }
+
+  function parseCsvLine(line) {
+    const values = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let index = 0; index < line.length; index += 1) {
+      const char = line[index];
+
+      if (char === '"') {
+        const next = line[index + 1];
+        if (inQuotes && next === '"') {
+          current += '"';
+          index += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (char === "," && !inQuotes) {
+        values.push(current);
+        current = "";
+        continue;
+      }
+
+      current += char;
+    }
+
+    values.push(current);
+    return values;
+  }
+
+  function parseCsv(csvText) {
+    const text = String(csvText || "").replace(/^\uFEFF/, "");
+    const lines = text
+      .split(/\r?\n/)
+      .map((line) => line.trimEnd())
+      .filter((line) => line.length > 0);
+
+    if (!lines.length) {
+      return [];
+    }
+
+    const headers = parseCsvLine(lines[0]).map((item) => item.trim());
+
+    return lines.slice(1).map((line) => {
+      const columns = parseCsvLine(line);
+      const row = {};
+      headers.forEach((header, idx) => {
+        row[header] = columns[idx] === undefined ? "" : columns[idx];
+      });
+      return row;
+    });
+  }
+
+  async function loadCsvFile(path) {
+    const response = await fetch(path, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Falha ao carregar CSV: ${path} (${response.status})`);
+    }
+
+    const text = await response.text();
+    return parseCsv(text);
+  }
+
+  function normalizeQuadro(rows) {
+    return rows.map((row) => {
+      const numeroRaw = String(row.numero || "").trim();
+      return {
+        id: row.id || "",
+        pg: row.pg || "",
+        numero: numeroRaw === "" ? "" : Number.isNaN(Number(numeroRaw)) ? numeroRaw : Number(numeroRaw),
+        nomeGuerra: row.nomeGuerra || "",
+        funcao: row.funcao || "",
+        aba: row.aba || "",
+        foto: row.foto || "",
+        lastUpdate: row.lastUpdate || "",
+        nomeCompleto: row.nomeCompleto || "",
+        dataNascimento: row.dataNascimento || "",
+        identidade: row.identidade || "",
+        dataPraca: row.dataPraca || "",
+        fracao: row.fracao || "",
+        endereco: row.endereco || "",
+        celular: row.celular || "",
+        nomePai: row.nomePai || "",
+        nomeMae: row.nomeMae || "",
+        contatoEmergencia: row.contatoEmergencia || "",
+        comportamento: row.comportamento || "",
+        habilidade: row.habilidade || ""
+      };
+    });
+  }
+
+  function normalizeEfetivo(rows) {
+    return rows.map((row) => ({
+      idMilitar: row.id || row.idMilitar || "",
+      emForma: parseBoolean(row.emForma),
+      situacao: row.situacao || "",
+      dataAtualizacao: row.dataAtualizacao || ""
+    }));
+  }
+
+  function normalizeFatosObservados(rows) {
+    return rows.map((row) => ({
+      id: row.foId || (row.idMilitar ? row.id : createId("fo")),
+      idMilitar: row.id || row.idMilitar || "",
+      data: row.data || "",
+      tipo: row.tipo || "",
+      descricao: row.descricao || "",
+      autor: row.autor || "",
+      lastUpdate: row.lastUpdate || ""
+    }));
+  }
+
+  function normalizeHistoricoObs(rows) {
+    return rows.map((row) => ({
+      id: row.historicoId || (row.idMilitar ? row.id : createId("hist")),
+      idMilitar: row.id || row.idMilitar || "",
+      texto: row.texto || "",
+      autor: row.autor || "",
+      data: row.data || "",
+      lastUpdate: row.lastUpdate || ""
+    }));
+  }
+
+  function normalizeTaf(rows) {
+    return rows.map((row) => ({
+      id: row.tafId || (row.idMilitar ? row.id : createId("taf")),
+      idMilitar: row.id || row.idMilitar || "",
+      data: row.data || "",
+      tipoTeste: row.tipoTeste || "",
+      resultado: row.resultado || "",
+      observacao: row.observacao || "",
+      lastUpdate: row.lastUpdate || ""
+    }));
+  }
+
+  function normalizeTat(rows) {
+    return rows.map((row) => ({
+      id: row.tatId || (row.idMilitar ? row.id : createId("tat")),
+      idMilitar: row.id || row.idMilitar || "",
+      data: row.data || "",
+      armamento: row.armamento || "",
+      pontuacao: row.pontuacao || "",
+      classificacao: row.classificacao || "",
+      lastUpdate: row.lastUpdate || ""
+    }));
+  }
+
+  async function loadDb() {
+    if (dbCache) {
+      return dbCache;
+    }
+
+    const [quadroRows, efetivoRows, foRows, historicoRows, tafRows, tatRows] = await Promise.all([
+      loadCsvFile(CSV_PATHS.quadroOrganizacional),
+      loadCsvFile(CSV_PATHS.efetivo),
+      loadCsvFile(CSV_PATHS.fatosObservados),
+      loadCsvFile(CSV_PATHS.historicoObs),
+      loadCsvFile(CSV_PATHS.taf),
+      loadCsvFile(CSV_PATHS.tat)
+    ]);
+
+    dbCache = ensureCollectionsShape({
+      quadroOrganizacional: normalizeQuadro(quadroRows),
+      efetivo: normalizeEfetivo(efetivoRows),
+      fatosObservados: normalizeFatosObservados(foRows),
+      historicoObs: normalizeHistoricoObs(historicoRows),
+      taf: normalizeTaf(tafRows),
+      tat: normalizeTat(tatRows),
+      punicoes: []
+    });
+
+    return dbCache;
+  }
+
+  function updateOrInsertById(collection, idKey, payload, withTimestampField) {
+    const index = collection.findIndex((item) => item[idKey] === payload[idKey]);
+    const nextValue = { ...payload };
+
+    if (withTimestampField) {
+      nextValue[withTimestampField] = nowIso();
+    }
+
+    if (index >= 0) {
+      collection[index] = { ...collection[index], ...nextValue };
+      return collection[index];
+    }
+
+    collection.push(nextValue);
+    return nextValue;
+  }
+
+  function buildMilitarDadosFromRecord(militar) {
+    return {
+      id: militar.id,
+      nomeCompleto: militar.nomeCompleto || `${militar.pg || ""} ${militar.nomeGuerra || ""}`.trim(),
+      nomeGuerra: militar.nomeGuerra || "",
+      pg: militar.pg || "",
+      dataNascimento: militar.dataNascimento || "",
+      numero: militar.numero === null || militar.numero === undefined ? "" : militar.numero,
+      identidade: militar.identidade || "",
+      dataPraca: militar.dataPraca || "",
+      funcao: militar.funcao || "",
+      fracao: militar.fracao || militar.aba || "",
+      endereco: militar.endereco || "",
+      celular: militar.celular || "",
+      nomePai: militar.nomePai || "",
+      nomeMae: militar.nomeMae || "",
+      contatoEmergencia: militar.contatoEmergencia || "",
+      comportamento: militar.comportamento || "",
+      habilidade: militar.habilidade || ""
+    };
+  }
+
+  function parseTafTipoTeste(tipoTeste) {
+    const match = /^([123])TAF_(barra|flexao|abdominal|corrida)$/i.exec(String(tipoTeste || ""));
+    if (!match) {
+      return null;
+    }
+    return {
+      ciclo: Number(match[1]),
+      teste: match[2].toLowerCase()
+    };
+  }
+
+  function buildTafDashboard(idMilitar, tafRows) {
+    const base = [1, 2, 3].map((ciclo) => ({
+      ciclo,
+      data: "",
+      mencoes: {
+        barra: "B",
+        flexao: "B",
+        abdominal: "B",
+        corrida: "B"
+      }
+    }));
+
+    const byCiclo = new Map(base.map((item) => [item.ciclo, item]));
+
+    tafRows
+      .filter((row) => row.idMilitar === idMilitar)
+      .forEach((row) => {
+        const parsed = parseTafTipoTeste(row.tipoTeste);
+        if (!parsed) {
+          return;
+        }
+
+        const atual = byCiclo.get(parsed.ciclo);
+        if (!atual) {
+          return;
+        }
+
+        atual.mencoes[parsed.teste] = String(row.resultado || "B").toUpperCase();
+        if (row.data) {
+          atual.data = row.data;
+        }
+      });
+
+    return base;
+  }
+
+  async function handleAction(action, payload = {}) {
+    const db = await loadDb();
+
+    switch (action) {
+      case "getMilitares":
+        return clone(db.quadroOrganizacional);
+      case "getEfetivo":
+        return clone(db.efetivo);
+      case "getMilitarDados": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const militar = db.quadroOrganizacional.find((item) => item.id === payload.idMilitar);
+        if (!militar) {
+          throw new Error("Militar nao encontrado");
+        }
+        return clone(buildMilitarDadosFromRecord(militar));
+      }
+      case "updateMilitarDados": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const index = db.quadroOrganizacional.findIndex((item) => item.id === payload.idMilitar);
+        if (index < 0) {
+          throw new Error("Militar nao encontrado");
+        }
+        db.quadroOrganizacional[index] = {
+          ...db.quadroOrganizacional[index],
+          ...payload.dados,
+          lastUpdate: nowIso()
+        };
+        return clone(buildMilitarDadosFromRecord(db.quadroOrganizacional[index]));
+      }
+      case "updateEfetivo": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const row = updateOrInsertById(
+          db.efetivo,
+          "idMilitar",
+          {
+            idMilitar: payload.idMilitar,
+            emForma: Boolean(payload.emForma),
+            situacao: payload.situacao || ""
+          },
+          "dataAtualizacao"
+        );
+        return clone(row);
+      }
+      case "getFO":
+        return clone(db.fatosObservados);
+      case "createFO": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const record = {
+          id: payload.id || createId("fo"),
+          idMilitar: payload.idMilitar,
+          data: payload.data || "",
+          tipo: payload.tipo || "",
+          descricao: payload.descricao || "",
+          autor: payload.autor || "",
+          lastUpdate: nowIso()
+        };
+        db.fatosObservados.push(record);
+        return clone(record);
+      }
+      case "updateFO": {
+        assertRequired(payload.id, "id");
+        const row = updateOrInsertById(db.fatosObservados, "id", { ...payload, lastUpdate: nowIso() }, null);
+        return clone(row);
+      }
+      case "deleteFO": {
+        assertRequired(payload.id, "id");
+        const index = db.fatosObservados.findIndex((item) => item.id === payload.id);
+        if (index < 0) {
+          throw new Error("FO nao encontrado");
+        }
+        const [deleted] = db.fatosObservados.splice(index, 1);
+        return clone(deleted);
+      }
+      case "getHistoricoObs": {
+        if (!payload.idMilitar) {
+          return clone(db.historicoObs);
+        }
+        return clone(db.historicoObs.filter((row) => row.idMilitar === payload.idMilitar));
+      }
+      case "createHistoricoObs": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const record = {
+          id: payload.id || createId("hist"),
+          idMilitar: payload.idMilitar,
+          texto: payload.texto || "",
+          autor: payload.autor || "",
+          data: payload.data || nowIso().slice(0, 10),
+          lastUpdate: nowIso()
+        };
+        db.historicoObs.push(record);
+        return clone(record);
+      }
+      case "updateHistoricoObs": {
+        assertRequired(payload.id, "id");
+        const row = updateOrInsertById(
+          db.historicoObs,
+          "id",
+          {
+            ...payload,
+            texto: payload.texto || "",
+            autor: payload.autor || "",
+            data: payload.data || nowIso().slice(0, 10),
+            lastUpdate: nowIso()
+          },
+          null
+        );
+        return clone(row);
+      }
+      case "deleteHistoricoObs": {
+        assertRequired(payload.id, "id");
+        const index = db.historicoObs.findIndex((item) => item.id === payload.id);
+        if (index < 0) {
+          throw new Error("Historico/Obs nao encontrado");
+        }
+        const [deleted] = db.historicoObs.splice(index, 1);
+        return clone(deleted);
+      }
+      case "getPunicoes":
+        return clone(db.punicoes);
+      case "createPunicao": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const record = {
+          id: payload.id || createId("pun"),
+          idMilitar: payload.idMilitar,
+          tipo: payload.tipo || "",
+          enquadramento: payload.enquadramento || "",
+          dataInicio: payload.dataInicio || "",
+          dataFim: payload.dataFim || "",
+          status: payload.status || "",
+          lastUpdate: nowIso()
+        };
+        db.punicoes.push(record);
+        return clone(record);
+      }
+      case "updatePunicao": {
+        assertRequired(payload.id, "id");
+        const row = updateOrInsertById(db.punicoes, "id", { ...payload, lastUpdate: nowIso() }, null);
+        return clone(row);
+      }
+      case "getTAF":
+        return clone(db.taf);
+      case "createTAF": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const record = {
+          id: payload.id || createId("taf"),
+          idMilitar: payload.idMilitar,
+          data: payload.data || "",
+          tipoTeste: payload.tipoTeste || "",
+          resultado: payload.resultado || "",
+          observacao: payload.observacao || "",
+          lastUpdate: nowIso()
+        };
+        db.taf.push(record);
+        return clone(record);
+      }
+      case "updateTAF": {
+        assertRequired(payload.id, "id");
+        const row = updateOrInsertById(db.taf, "id", { ...payload, lastUpdate: nowIso() }, null);
+        return clone(row);
+      }
+      case "getTAFDashboard": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        return clone(buildTafDashboard(payload.idMilitar, db.taf));
+      }
+      case "updateTAFDashboard": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        assertRequired(payload.ciclo, "ciclo");
+        const ciclo = Number(payload.ciclo);
+        const data = payload.data || nowIso().slice(0, 10);
+        const mencoes = payload.mencoes || {};
+        const testes = ["barra", "flexao", "abdominal", "corrida"];
+
+        testes.forEach((teste) => {
+          const tipoTeste = `${ciclo}TAF_${teste}`;
+          const existenteIndex = db.taf.findIndex(
+            (row) => row.idMilitar === payload.idMilitar && row.tipoTeste === tipoTeste
+          );
+
+          const registro = {
+            id: existenteIndex >= 0 ? db.taf[existenteIndex].id : createId(`taf-${teste}`),
+            idMilitar: payload.idMilitar,
+            data,
+            tipoTeste,
+            resultado: String(mencoes[teste] || "B").toUpperCase(),
+            observacao: `ciclo:${ciclo}`,
+            lastUpdate: nowIso()
+          };
+
+          if (existenteIndex >= 0) {
+            db.taf[existenteIndex] = { ...db.taf[existenteIndex], ...registro };
+          } else {
+            db.taf.push(registro);
+          }
+        });
+
+        return clone(buildTafDashboard(payload.idMilitar, db.taf));
+      }
+      case "getTAT":
+        return clone(db.tat);
+      case "createTAT": {
+        assertRequired(payload.idMilitar, "idMilitar");
+        const record = {
+          id: payload.id || createId("tat"),
+          idMilitar: payload.idMilitar,
+          data: payload.data || "",
+          armamento: payload.armamento || "",
+          pontuacao: payload.pontuacao || "",
+          classificacao: payload.classificacao || "",
+          lastUpdate: nowIso()
+        };
+        db.tat.push(record);
+        return clone(record);
+      }
+      case "updateTAT": {
+        assertRequired(payload.id, "id");
+        const row = updateOrInsertById(db.tat, "id", { ...payload, lastUpdate: nowIso() }, null);
+        return clone(row);
+      }
+      default:
+        throw new Error(`Acao nao suportada: ${action}`);
+    }
+  }
+
+  globalScope.CaveirinhaDataService = {
+    handleAction
+  };
+})(window);

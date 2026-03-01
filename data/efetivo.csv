@@ -1,0 +1,16 @@
+﻿id,emForma,situacao,dataAtualizacao
+mil-001,true,em_forma,2026-02-28T00:00:00.000Z
+mil-002,true,em_forma,2026-02-28T00:00:00.000Z
+mil-003,false,missao,2026-02-28T00:00:00.000Z
+mil-004,false,falta,2026-02-28T00:00:00.000Z
+mil-005,true,em_forma,2026-02-28T00:00:00.000Z
+mil-006,false,baixado,2026-02-28T00:00:00.000Z
+mil-007,true,em_forma,2026-02-28T00:00:00.000Z
+mil-008,false,ferias,2026-02-28T00:00:00.000Z
+mil-009,true,em_forma,2026-02-28T00:00:00.000Z
+mil-010,false,outros,2026-02-28T00:00:00.000Z
+mil-011,true,em_forma,2026-02-28T00:00:00.000Z
+mil-012,true,em_forma,2026-02-28T00:00:00.000Z
+mil-013,false,missao,2026-02-28T00:00:00.000Z
+mil-014,true,em_forma,2026-02-28T00:00:00.000Z
+mil-015,false,falta,2026-02-28T00:00:00.000Z
