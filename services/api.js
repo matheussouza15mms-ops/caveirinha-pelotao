@@ -123,6 +123,18 @@
     return apiRequest("updateTAT", payload);
   }
 
+  function login(payload) {
+    return apiRequest("login", payload);
+  }
+
+  function logout() {
+    return apiRequest("logout");
+  }
+
+  function getSession() {
+    return apiRequest("getSession");
+  }
+
   globalScope.CaveirinhaAPI = {
     BASE_URL,
     apiRequest,
@@ -150,6 +162,9 @@
     updateTAFDashboard,
     getTAT,
     createTAT,
-    updateTAT
+    updateTAT,
+    login,
+    logout,
+    getSession
   };
 })(window);

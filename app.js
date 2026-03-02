@@ -95,6 +95,14 @@ const tatEditBtn = document.getElementById("tatEditBtn");
 const tatEditorForm = document.getElementById("tatEditorForm");
 const tatMencaoInput = document.getElementById("tatMencaoInput");
 const tatEditorCancel = document.getElementById("tatEditorCancel");
+const loginGate = document.getElementById("loginGate");
+const loginForm = document.getElementById("loginForm");
+const loginEmailInput = document.getElementById("loginEmailInput");
+const loginPasswordInput = document.getElementById("loginPasswordInput");
+const loginRememberInput = document.getElementById("loginRememberInput");
+const loginError = document.getElementById("loginError");
+const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 
 let abaAtiva = 0;
 let ultimoCardEncontrado = null;
@@ -111,11 +119,14 @@ let tafDashboardCache = [];
 let tafEditandoCiclo = 1;
 let tatListaCache = [];
 let tatRegistroAtual = null;
+let appJaInicializado = false;
+let usuarioSessao = null;
 
 const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
 const efetivoState = new Map();
 const mencoesOrdenadas = ["I", "R", "B", "MB", "E"];
 const tiposPunicao = ["ADV", "IMP", "DET", "REP", "PRISAO"];
+const AUTH_REMEMBER_KEY = "caveirinha_auth_remember";
 const camposDadosMilitar = [
   { key: "nomeCompleto", label: "Nome completo" },
   { key: "nomeGuerra", label: "Nome de guerra" },
@@ -134,6 +145,135 @@ const camposDadosMilitar = [
   { key: "comportamento", label: "Comportamento" },
   { key: "habilidade", label: "Habilidade" }
 ];
+
+function normalizarEmail(valor) {
+  return String(valor || "")
+    .trim()
+    .toLowerCase();
+}
+
+function setLoginError(mensagem) {
+  loginError.textContent = mensagem || "";
+}
+
+function salvarCredenciaisLembradas(email, senha) {
+  try {
+    localStorage.setItem(
+      AUTH_REMEMBER_KEY,
+      JSON.stringify({
+        email: normalizarEmail(email),
+        password: String(senha || "")
+      })
+    );
+  } catch (error) {
+    // no-op
+  }
+}
+
+function limparCredenciaisLembradas() {
+  try {
+    localStorage.removeItem(AUTH_REMEMBER_KEY);
+  } catch (error) {
+    // no-op
+  }
+}
+
+function preencherLoginLembrado() {
+  try {
+    const raw = localStorage.getItem(AUTH_REMEMBER_KEY);
+    if (!raw) {
+      return;
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.email || !parsed.password) {
+      return;
+    }
+
+    loginEmailInput.value = String(parsed.email);
+    loginPasswordInput.value = String(parsed.password);
+    loginRememberInput.checked = true;
+  } catch (error) {
+    // no-op
+  }
+}
+
+function abrirTelaLogin() {
+  loginGate.classList.add("active");
+  loginGate.setAttribute("aria-hidden", "false");
+  setLoginError("");
+}
+
+function fecharTelaLogin() {
+  loginGate.classList.remove("active");
+  loginGate.setAttribute("aria-hidden", "true");
+}
+
+async function efetuarLogin(event) {
+  event.preventDefault();
+  setLoginError("");
+
+  const email = normalizarEmail(loginEmailInput.value);
+  const senha = String(loginPasswordInput.value || "").trim();
+  if (!email || !senha) {
+    setLoginError("Informe email e senha para entrar.");
+    return;
+  }
+
+  loginSubmitBtn.disabled = true;
+  loginSubmitBtn.textContent = "Entrando...";
+
+  try {
+    const sessao = await window.CaveirinhaAPI.login({
+      email,
+      password: senha
+    });
+    usuarioSessao = sessao?.user || null;
+
+    if (loginRememberInput.checked) {
+      salvarCredenciaisLembradas(email, senha);
+    } else {
+      limparCredenciaisLembradas();
+    }
+
+    fecharTelaLogin();
+    await inicializarApp();
+  } catch (error) {
+    console.error("Falha no login:", error);
+    setLoginError("Email ou senha invalidos.");
+  } finally {
+    loginSubmitBtn.disabled = false;
+    loginSubmitBtn.textContent = "Entrar";
+  }
+}
+
+async function efetuarLogout() {
+  try {
+    await window.CaveirinhaAPI.logout();
+  } catch (error) {
+    console.error("Falha ao encerrar sessao:", error);
+  }
+  usuarioSessao = null;
+  abrirTelaLogin();
+}
+
+async function inicializarAutenticacao() {
+  preencherLoginLembrado();
+
+  try {
+    const sessao = await window.CaveirinhaAPI.getSession();
+    if (sessao?.user) {
+      usuarioSessao = sessao.user;
+      fecharTelaLogin();
+      await inicializarApp();
+      return;
+    }
+  } catch (error) {
+    console.error("Falha ao recuperar sessao:", error);
+  }
+
+  abrirTelaLogin();
+}
 
 function isSdEv(militar) {
   return militar.pg.trim().toUpperCase() === "SD EV";
@@ -1738,6 +1878,10 @@ historicoEditorForm.addEventListener("submit", async (event) => {
 });
 
 async function inicializarApp() {
+  if (appJaInicializado) {
+    return;
+  }
+
   try {
     const militares = await window.CaveirinhaAPI.getMilitares();
     organizacao = construirOrganizacao(militares);
@@ -1759,6 +1903,15 @@ async function inicializarApp() {
   renderTabs();
   renderCards();
   renderEfetivo();
+  appJaInicializado = true;
 }
 
-void inicializarApp();
+loginForm.addEventListener("submit", (event) => {
+  void efetuarLogin(event);
+});
+
+logoutBtn.addEventListener("click", () => {
+  void efetuarLogout();
+});
+
+void inicializarAutenticacao();

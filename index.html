@@ -7,6 +7,35 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="loginGate" class="login-gate active" aria-hidden="false">
+    <div class="login-card" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <div class="login-brand">
+        <div class="app-brand-logo" aria-hidden="true"></div>
+        <div>
+          <h2 id="loginTitle">Acesso ao Caveirinha</h2>
+          <p>Entre com email e senha para iniciar o app</p>
+        </div>
+      </div>
+      <form id="loginForm" class="login-form">
+        <label>
+          Email
+          <input id="loginEmailInput" type="email" autocomplete="username" placeholder="voce@dominio.com" required />
+        </label>
+        <label>
+          Senha
+          <input id="loginPasswordInput" type="password" autocomplete="current-password" required />
+        </label>
+        <label class="remember-row">
+          <input id="loginRememberInput" type="checkbox" />
+          <span>Manter login e senha salvos</span>
+        </label>
+        <p id="loginError" class="login-error" aria-live="polite"></p>
+        <button id="loginSubmitBtn" type="submit" class="login-submit-btn">Entrar</button>
+        <p class="login-help">Acesso inicial: <strong>admin@caveirinha.app</strong> / <strong>123456</strong></p>
+      </form>
+    </div>
+  </div>
+
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
       <button id="toggleSidebar" class="toggle-btn" aria-label="Expandir ou retrair menu">☰</button>
@@ -42,6 +71,9 @@
           <div class="app-brand-text">
             <h1>Caveirinha do Pelotão</h1>
             <p>PELOPES</p>
+          </div>
+          <div class="topbar-actions">
+            <button id="logoutBtn" class="logout-btn" type="button">Sair</button>
           </div>
         </div>
         <h2 id="screenTitle">Quadro Organizacional</h2>

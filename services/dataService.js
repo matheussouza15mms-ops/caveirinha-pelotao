@@ -20,6 +20,15 @@
     taf: [],
     tat: []
   };
+  const SESSION_STORAGE_KEY = "caveirinha_auth_session";
+  const AUTH_USERS = [
+    {
+      id: "usr-admin",
+      email: "admin@caveirinha.app",
+      password: "123456",
+      nome: "Administrador"
+    }
+  ];
 
   let dbCache = null;
 
@@ -57,6 +66,71 @@
       .trim()
       .toLowerCase();
     return normalized === "true" || normalized === "1" || normalized === "sim";
+  }
+
+  function safeStorageGet(key) {
+    try {
+      return globalScope.localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function safeStorageSet(key, value) {
+    try {
+      globalScope.localStorage.setItem(key, value);
+    } catch (error) {
+      // no-op
+    }
+  }
+
+  function safeStorageRemove(key) {
+    try {
+      globalScope.localStorage.removeItem(key);
+    } catch (error) {
+      // no-op
+    }
+  }
+
+  function normalizeEmail(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function validarCredenciaisLogin(email, senha) {
+    const emailNormalizado = normalizeEmail(email);
+    const senhaNormalizada = String(senha || "").trim();
+
+    const user = AUTH_USERS.find(
+      (item) => normalizeEmail(item.email) === emailNormalizado && String(item.password) === senhaNormalizada
+    );
+    if (!user) {
+      throw new Error("Email ou senha invalidos");
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      nome: user.nome
+    };
+  }
+
+  function carregarSessao() {
+    const raw = safeStorageGet(SESSION_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.user || !parsed.user.email) {
+        return null;
+      }
+      return parsed;
+    } catch (error) {
+      return null;
+    }
   }
 
   function normalizeTatMencao(value) {
@@ -630,6 +704,24 @@
           null
         );
         return clone(row);
+      }
+      case "login": {
+        assertRequired(payload.email, "email");
+        assertRequired(payload.password, "password");
+        const user = validarCredenciaisLogin(payload.email, payload.password);
+        const sessao = {
+          user,
+          createdAt: nowIso()
+        };
+        safeStorageSet(SESSION_STORAGE_KEY, JSON.stringify(sessao));
+        return clone(sessao);
+      }
+      case "logout":
+        safeStorageRemove(SESSION_STORAGE_KEY);
+        return { ok: true };
+      case "getSession": {
+        const sessao = carregarSessao();
+        return clone(sessao);
       }
       default:
         throw new Error(`Acao nao suportada: ${action}`);
