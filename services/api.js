@@ -17,6 +17,14 @@
     );
   }
 
+  function hasSupabaseTaf() {
+    return (
+      Boolean(globalScope.CaveirinhaTafService) &&
+      typeof globalScope.CaveirinhaTafService.getTAFDashboard === "function" &&
+      typeof globalScope.CaveirinhaTafService.updateTAFDashboard === "function"
+    );
+  }
+
   async function apiRequest(action, payload = {}) {
     if (BASE_URL === "mock") {
       if (!globalScope.CaveirinhaDataService || typeof globalScope.CaveirinhaDataService.handleAction !== "function") {
@@ -135,6 +143,9 @@
   }
 
   function getTAF() {
+    if (hasSupabaseTaf()) {
+      return globalScope.CaveirinhaTafService.getTAF();
+    }
     return apiRequest("getTAF");
   }
 
@@ -147,10 +158,16 @@
   }
 
   function getTAFDashboard(idMilitar) {
+    if (hasSupabaseTaf()) {
+      return globalScope.CaveirinhaTafService.getTAFDashboard(idMilitar);
+    }
     return apiRequest("getTAFDashboard", { idMilitar });
   }
 
   function updateTAFDashboard(payload) {
+    if (hasSupabaseTaf()) {
+      return globalScope.CaveirinhaTafService.updateTAFDashboard(payload);
+    }
     return apiRequest("updateTAFDashboard", payload);
   }
 
