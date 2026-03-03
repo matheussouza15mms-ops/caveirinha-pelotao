@@ -127,6 +127,7 @@ const efetivoState = new Map();
 const mencoesOrdenadas = ["I", "R", "B", "MB", "E"];
 const tiposPunicao = ["ADV", "IMP", "DET", "REP", "PRISAO"];
 const AUTH_REMEMBER_KEY = "caveirinha_auth_remember";
+const AUTH_KEEP_SESSION_KEY = "caveirinha_auth_keep_session";
 const camposDadosMilitar = [
   { key: "nomeCompleto", label: "Nome completo" },
   { key: "nomeGuerra", label: "Nome de guerra" },
@@ -175,6 +176,26 @@ function limparCredenciaisLembradas() {
     localStorage.removeItem(AUTH_REMEMBER_KEY);
   } catch (error) {
     // no-op
+  }
+}
+
+function setManterSessaoAtivo(ativo) {
+  try {
+    if (ativo) {
+      localStorage.setItem(AUTH_KEEP_SESSION_KEY, "1");
+      return;
+    }
+    localStorage.removeItem(AUTH_KEEP_SESSION_KEY);
+  } catch (error) {
+    // no-op
+  }
+}
+
+function isManterSessaoAtivo() {
+  try {
+    return localStorage.getItem(AUTH_KEEP_SESSION_KEY) === "1";
+  } catch (error) {
+    return false;
   }
 }
 
@@ -232,8 +253,10 @@ async function efetuarLogin(event) {
 
     if (loginRememberInput.checked) {
       salvarCredenciaisLembradas(email, senha);
+      setManterSessaoAtivo(true);
     } else {
       limparCredenciaisLembradas();
+      setManterSessaoAtivo(false);
     }
 
     fecharTelaLogin();
@@ -253,7 +276,9 @@ async function efetuarLogout() {
   } catch (error) {
     console.error("Falha ao encerrar sessao:", error);
   }
+  setManterSessaoAtivo(false);
   usuarioSessao = null;
+  appJaInicializado = false;
   abrirTelaLogin();
 }
 
@@ -263,6 +288,11 @@ async function inicializarAutenticacao() {
   try {
     const sessao = await window.CaveirinhaAPI.getSession();
     if (sessao?.user) {
+      if (!isManterSessaoAtivo()) {
+        await window.CaveirinhaAPI.logout();
+        abrirTelaLogin();
+        return;
+      }
       usuarioSessao = sessao.user;
       fecharTelaLogin();
       await inicializarApp();
@@ -1879,6 +1909,18 @@ historicoEditorForm.addEventListener("submit", async (event) => {
 
 async function inicializarApp() {
   if (appJaInicializado) {
+    return;
+  }
+
+  try {
+    const sessao = await window.CaveirinhaAPI.getSession();
+    if (!sessao?.user) {
+      abrirTelaLogin();
+      return;
+    }
+  } catch (error) {
+    console.error("Falha ao validar sessao antes da inicializacao:", error);
+    abrirTelaLogin();
     return;
   }
 

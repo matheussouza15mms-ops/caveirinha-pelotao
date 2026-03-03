@@ -1,6 +1,5 @@
 ﻿(function bootstrapDataService(globalScope) {
   const CSV_PATHS = {
-    quadroOrganizacional: "./data/quadro_organizacional.csv",
     efetivo: "./data/efetivo.csv",
     fatosObservados: "./data/fatos_observados.csv",
     historicoObs: "./data/historico_obs.csv",
@@ -344,8 +343,7 @@
       return dbCache;
     }
 
-    const [quadroRows, efetivoRows, foRows, historicoRows, punicoesRows, tafRows, tatRows] = await Promise.all([
-      loadCsvFile(CSV_PATHS.quadroOrganizacional),
+    const [efetivoRows, foRows, historicoRows, punicoesRows, tafRows, tatRows] = await Promise.all([
       loadCsvFile(CSV_PATHS.efetivo),
       loadCsvFile(CSV_PATHS.fatosObservados),
       loadCsvFile(CSV_PATHS.historicoObs),
@@ -355,7 +353,7 @@
     ]);
 
     dbCache = ensureCollectionsShape({
-      quadroOrganizacional: normalizeQuadro(quadroRows),
+      quadroOrganizacional: [],
       efetivo: normalizeEfetivo(efetivoRows),
       fatosObservados: normalizeFatosObservados(foRows),
       historicoObs: normalizeHistoricoObs(historicoRows),
@@ -459,6 +457,42 @@
     switch (action) {
       case "getMilitares":
         return clone(db.quadroOrganizacional);
+      case "addMilitar": {
+        const record = {
+          id: payload.data?.id || createId("mil"),
+          pg: payload.data?.pg || "",
+          numero: payload.data?.numero || "",
+          nomeGuerra: payload.data?.nomeGuerra || "",
+          funcao: payload.data?.funcao || "",
+          aba: payload.data?.aba || payload.data?.fracao || "",
+          fracao: payload.data?.fracao || payload.data?.aba || "",
+          lastUpdate: nowIso()
+        };
+        db.quadroOrganizacional.push(record);
+        return clone(record);
+      }
+      case "updateMilitar": {
+        assertRequired(payload.id, "id");
+        const index = db.quadroOrganizacional.findIndex((item) => item.id === payload.id);
+        if (index < 0) {
+          throw new Error("Militar nao encontrado");
+        }
+        db.quadroOrganizacional[index] = {
+          ...db.quadroOrganizacional[index],
+          ...payload.data,
+          lastUpdate: nowIso()
+        };
+        return clone(db.quadroOrganizacional[index]);
+      }
+      case "deleteMilitar": {
+        assertRequired(payload.id, "id");
+        const index = db.quadroOrganizacional.findIndex((item) => item.id === payload.id);
+        if (index < 0) {
+          throw new Error("Militar nao encontrado");
+        }
+        const [deleted] = db.quadroOrganizacional.splice(index, 1);
+        return clone(deleted);
+      }
       case "getEfetivo":
         return clone(db.efetivo);
       case "getMilitarDados": {

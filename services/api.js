@@ -1,5 +1,21 @@
-﻿(function bootstrapApiLayer(globalScope) {
+(function bootstrapApiLayer(globalScope) {
   const BASE_URL = "mock";
+
+  function hasSupabaseAuth() {
+    return (
+      Boolean(globalScope.CaveirinhaAuth) &&
+      typeof globalScope.CaveirinhaAuth.login === "function" &&
+      typeof globalScope.CaveirinhaAuth.logout === "function" &&
+      typeof globalScope.CaveirinhaAuth.getSession === "function"
+    );
+  }
+
+  function hasSupabaseQuadro() {
+    return (
+      Boolean(globalScope.CaveirinhaQuadroService) &&
+      typeof globalScope.CaveirinhaQuadroService.getQuadro === "function"
+    );
+  }
 
   async function apiRequest(action, payload = {}) {
     if (BASE_URL === "mock") {
@@ -23,20 +39,47 @@
     return response.json();
   }
 
-  function getMilitares() {
+  async function getMilitares() {
+    if (hasSupabaseQuadro()) {
+      return globalScope.CaveirinhaQuadroService.getQuadro();
+    }
     return apiRequest("getMilitares");
+  }
+
+  async function addMilitar(data) {
+    if (hasSupabaseQuadro() && typeof globalScope.CaveirinhaQuadroService.addMilitar === "function") {
+      return globalScope.CaveirinhaQuadroService.addMilitar(data);
+    }
+    return apiRequest("addMilitar", { data });
+  }
+
+  async function updateMilitar(id, data) {
+    if (hasSupabaseQuadro() && typeof globalScope.CaveirinhaQuadroService.updateMilitar === "function") {
+      return globalScope.CaveirinhaQuadroService.updateMilitar(id, data);
+    }
+    return apiRequest("updateMilitar", { id, data });
+  }
+
+  async function deleteMilitar(id) {
+    if (hasSupabaseQuadro() && typeof globalScope.CaveirinhaQuadroService.deleteMilitar === "function") {
+      return globalScope.CaveirinhaQuadroService.deleteMilitar(id);
+    }
+    return apiRequest("deleteMilitar", { id });
   }
 
   function getEfetivo() {
     return apiRequest("getEfetivo");
   }
 
-  function getMilitarDados(idMilitar) {
+  async function getMilitarDados(idMilitar) {
+    if (hasSupabaseQuadro() && typeof globalScope.CaveirinhaQuadroService.getMilitarById === "function") {
+      return globalScope.CaveirinhaQuadroService.getMilitarById(idMilitar);
+    }
     return apiRequest("getMilitarDados", { idMilitar });
   }
 
-  function updateMilitarDados(idMilitar, dados) {
-    return apiRequest("updateMilitarDados", { idMilitar, dados });
+  async function updateMilitarDados(idMilitar, dados) {
+    return updateMilitar(idMilitar, dados);
   }
 
   function updateEfetivo(payload) {
@@ -123,15 +166,24 @@
     return apiRequest("updateTAT", payload);
   }
 
-  function login(payload) {
+  async function login(payload) {
+    if (hasSupabaseAuth()) {
+      return globalScope.CaveirinhaAuth.login(payload);
+    }
     return apiRequest("login", payload);
   }
 
-  function logout() {
+  async function logout() {
+    if (hasSupabaseAuth()) {
+      return globalScope.CaveirinhaAuth.logout();
+    }
     return apiRequest("logout");
   }
 
-  function getSession() {
+  async function getSession() {
+    if (hasSupabaseAuth()) {
+      return globalScope.CaveirinhaAuth.getSession();
+    }
     return apiRequest("getSession");
   }
 
@@ -139,6 +191,9 @@
     BASE_URL,
     apiRequest,
     getMilitares,
+    addMilitar,
+    updateMilitar,
+    deleteMilitar,
     getEfetivo,
     getMilitarDados,
     updateMilitarDados,
