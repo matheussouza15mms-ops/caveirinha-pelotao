@@ -162,8 +162,7 @@ function salvarCredenciaisLembradas(email, senha) {
     localStorage.setItem(
       AUTH_REMEMBER_KEY,
       JSON.stringify({
-        email: normalizarEmail(email),
-        password: String(senha || "")
+        email: normalizarEmail(email)
       })
     );
   } catch (error) {
@@ -207,12 +206,11 @@ function preencherLoginLembrado() {
     }
 
     const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.email || !parsed.password) {
+    if (!parsed || !parsed.email) {
       return;
     }
 
     loginEmailInput.value = String(parsed.email);
-    loginPasswordInput.value = String(parsed.password);
     loginRememberInput.checked = true;
   } catch (error) {
     // no-op
@@ -236,8 +234,19 @@ async function efetuarLogin(event) {
 
   const email = normalizarEmail(loginEmailInput.value);
   const senha = String(loginPasswordInput.value || "").trim();
-  if (!email || !senha) {
-    setLoginError("Informe email e senha para entrar.");
+  if (!email) {
+    setLoginError("Informe email para entrar.");
+    return;
+  }
+
+  if (!senha && usuarioSessao?.email && normalizarEmail(usuarioSessao.email) === email) {
+    fecharTelaLogin();
+    await inicializarApp();
+    return;
+  }
+
+  if (!senha) {
+    setLoginError("Informe a senha para entrar.");
     return;
   }
 
@@ -290,13 +299,9 @@ async function inicializarAutenticacao() {
     if (sessao?.user) {
       if (!isManterSessaoAtivo()) {
         await window.CaveirinhaAPI.logout();
-        abrirTelaLogin();
-        return;
+      } else {
+        usuarioSessao = sessao.user;
       }
-      usuarioSessao = sessao.user;
-      fecharTelaLogin();
-      await inicializarApp();
-      return;
     }
   } catch (error) {
     console.error("Falha ao recuperar sessao:", error);

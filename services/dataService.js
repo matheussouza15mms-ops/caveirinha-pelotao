@@ -20,14 +20,6 @@
     tat: []
   };
   const SESSION_STORAGE_KEY = "caveirinha_auth_session";
-  const AUTH_USERS = [
-    {
-      id: "usr-admin",
-      email: "admin@caveirinha.app",
-      password: "123456",
-      nome: "Administrador"
-    }
-  ];
 
   let dbCache = null;
 
@@ -100,19 +92,10 @@
   function validarCredenciaisLogin(email, senha) {
     const emailNormalizado = normalizeEmail(email);
     const senhaNormalizada = String(senha || "").trim();
-
-    const user = AUTH_USERS.find(
-      (item) => normalizeEmail(item.email) === emailNormalizado && String(item.password) === senhaNormalizada
-    );
-    if (!user) {
+    if (!emailNormalizado || !senhaNormalizada) {
       throw new Error("Email ou senha invalidos");
     }
-
-    return {
-      id: user.id,
-      email: user.email,
-      nome: user.nome
-    };
+    throw new Error("Autenticacao local desativada. Use Supabase Auth.");
   }
 
   function carregarSessao() {
