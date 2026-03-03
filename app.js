@@ -1819,6 +1819,7 @@ tafEditorForm.addEventListener("submit", async (event) => {
     await carregarTafDashboard();
   } catch (error) {
     console.error("Falha ao salvar TAF:", error);
+    window.alert("Nao foi possivel salvar o TAF no Supabase. Verifique permissoes RLS e estrutura da tabela taf.");
   }
 });
 

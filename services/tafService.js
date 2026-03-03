@@ -123,21 +123,61 @@
     }
   }
 
-  async function upsertSchemaA(payload) {
-    const { error } = await getClient().from(TABLE_NAME).upsert(payload, {
-      onConflict: "id"
-    });
-    if (error) {
-      throw error;
+  async function persistSchemaA(records) {
+    for (const record of records) {
+      const { data: updatedRows, error: updateError } = await getClient()
+        .from(TABLE_NAME)
+        .update({
+          data: record.data,
+          resultado: record.resultado,
+          observacao: record.observacao
+        })
+        .eq("id_militar", record.id_militar)
+        .eq("tipo_teste", record.tipo_teste)
+        .select("id")
+        .limit(1);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      if (Array.isArray(updatedRows) && updatedRows.length > 0) {
+        continue;
+      }
+
+      const { error: insertError } = await getClient().from(TABLE_NAME).insert(record);
+      if (insertError) {
+        throw insertError;
+      }
     }
   }
 
-  async function upsertSchemaB(payload) {
-    const { error } = await getClient().from(TABLE_NAME).upsert(payload, {
-      onConflict: "taf_id"
-    });
-    if (error) {
-      throw error;
+  async function persistSchemaB(records) {
+    for (const record of records) {
+      const { data: updatedRows, error: updateError } = await getClient()
+        .from(TABLE_NAME)
+        .update({
+          data: record.data,
+          resultado: record.resultado,
+          observacao: record.observacao
+        })
+        .eq("id", record.id)
+        .eq("tipo_teste", record.tipo_teste)
+        .select("taf_id")
+        .limit(1);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      if (Array.isArray(updatedRows) && updatedRows.length > 0) {
+        continue;
+      }
+
+      const { error: insertError } = await getClient().from(TABLE_NAME).insert(record);
+      if (insertError) {
+        throw insertError;
+      }
     }
   }
 
@@ -160,7 +200,7 @@
         resultado: mencaoNormalizada(mencoes[teste]),
         observacao: `ciclo:${ciclo}`
       }));
-      await upsertSchemaA(recordsA);
+      await persistSchemaA(recordsA);
     } catch (errorA) {
       try {
         const recordsB = TESTES.map((teste) => ({
@@ -171,7 +211,7 @@
           resultado: mencaoNormalizada(mencoes[teste]),
           observacao: `ciclo:${ciclo}`
         }));
-        await upsertSchemaB(recordsB);
+        await persistSchemaB(recordsB);
       } catch (errorB) {
         console.error("Erro ao atualizar TAF no Supabase:", errorA, errorB);
         throw errorB;
