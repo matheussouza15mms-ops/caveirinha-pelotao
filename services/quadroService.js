@@ -1,7 +1,13 @@
-(function bootstrapQuadroService(globalScope) {
+﻿(function bootstrapQuadroService(globalScope) {
   const TABLE_NAME = "quadro_organizacional";
-  const FOTO_BUCKET = "militares-fotos";
   const FOTO_SIGNED_URL_TTL_SECONDS = 3600;
+  const PELOTAO_BUCKET_MAP = {
+    "1 pel": "imagens-1pel",
+    "2 pel": "imagens-2pel",
+    "3 pel": "imagens-3pel",
+    "pel ap": "imagens-pelap",
+    "sec cmdo": "imagens-seccmdo"
+  };
 
   function getClient() {
     const client = globalScope.CaveirinhaSupabase?.client;
@@ -9,6 +15,46 @@
       throw new Error("Cliente Supabase nao inicializado");
     }
     return client;
+  }
+
+  function normalizarPelotao(valor) {
+    return String(valor || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[º°]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function bucketPorPelotao(pelotao) {
+    const key = normalizarPelotao(pelotao);
+    return PELOTAO_BUCKET_MAP[key] || "";
+  }
+
+  function parseBucketAndPath(rawPath, pelotao) {
+    const trimmed = String(rawPath || "").trim();
+    if (!trimmed) {
+      return { bucket: "", path: "" };
+    }
+
+    if (/^https?:\/\//i.test(trimmed) || /^(\.\/|\/)?assets\//i.test(trimmed)) {
+      return { bucket: "", path: trimmed };
+    }
+
+    const matchBucketPrefix = /^(imagens-[^/]+)\/(.+)$/i.exec(trimmed);
+    if (matchBucketPrefix) {
+      return {
+        bucket: matchBucketPrefix[1],
+        path: matchBucketPrefix[2].replace(/^\/+/, "")
+      };
+    }
+
+    return {
+      bucket: bucketPorPelotao(pelotao),
+      path: trimmed.replace(/^\/+/, "")
+    };
   }
 
   function normalizeFotoPath(path) {
@@ -25,11 +71,10 @@
       return raw;
     }
 
-    const semPrefixoBucket = raw.replace(new RegExp(`^${FOTO_BUCKET}/`, "i"), "");
-    return semPrefixoBucket.replace(/^\/+/, "");
+    return raw.replace(/^\/+/, "");
   }
 
-  async function resolveFotoUrl(path) {
+  async function resolveFotoUrl(path, pelotao) {
     const normalized = normalizeFotoPath(path);
     if (!normalized) {
       return "";
@@ -39,12 +84,17 @@
       return normalized;
     }
 
+    const resolved = parseBucketAndPath(normalized, pelotao);
+    if (!resolved.bucket || !resolved.path) {
+      return "";
+    }
+
     try {
-      const storage = getClient().storage.from(FOTO_BUCKET);
+      const storage = getClient().storage.from(resolved.bucket);
 
       // Primeiro tenta URL assinada (bucket privado).
       const { data: signedData, error: signedError } = await storage.createSignedUrl(
-        normalized,
+        resolved.path,
         FOTO_SIGNED_URL_TTL_SECONDS
       );
       if (!signedError && signedData?.signedUrl) {
@@ -52,7 +102,7 @@
       }
 
       // Fallback para bucket publico.
-      const { data: publicData } = storage.getPublicUrl(normalized);
+      const { data: publicData } = storage.getPublicUrl(resolved.path);
       return publicData?.publicUrl || "";
     } catch (error) {
       console.error("Erro ao montar URL publica da foto no Supabase Storage:", error);
@@ -80,7 +130,8 @@
       contatoEmergencia: row.contato_emergencia || "",
       comportamento: row.comportamento || "",
       habilidade: row.habilidade || "",
-      foto: await resolveFotoUrl(row.foto),
+      pelotao: row.pelotao || "",
+      foto: await resolveFotoUrl(row.foto, row.pelotao || row.fracao || ""),
       lastUpdate: row.updated_at || row.last_update || ""
     };
   }
@@ -109,6 +160,7 @@
     if (!partial || source.contatoEmergencia !== undefined) row.contato_emergencia = source.contatoEmergencia;
     if (!partial || source.comportamento !== undefined) row.comportamento = source.comportamento;
     if (!partial || source.habilidade !== undefined) row.habilidade = source.habilidade;
+    if (!partial || source.pelotao !== undefined) row.pelotao = source.pelotao;
     if (!partial || source.foto !== undefined) row.foto = source.foto;
 
     Object.keys(row).forEach((key) => {
@@ -207,3 +259,5 @@
     deleteMilitar
   };
 })(window);
+
+

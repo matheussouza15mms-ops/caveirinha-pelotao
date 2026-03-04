@@ -1,4 +1,4 @@
-let organizacao = [];
+﻿let organizacao = [];
 let indiceMilitares = [];
 const cardIdToMilitarId = new Map();
 
@@ -95,6 +95,7 @@ const tatEditBtn = document.getElementById("tatEditBtn");
 const tatEditorForm = document.getElementById("tatEditorForm");
 const tatMencaoInput = document.getElementById("tatMencaoInput");
 const tatEditorCancel = document.getElementById("tatEditorCancel");
+const appHeaderLogo = document.querySelector(".app-header .app-brand-logo");
 const loginGate = document.getElementById("loginGate");
 const loginForm = document.getElementById("loginForm");
 const loginEmailInput = document.getElementById("loginEmailInput");
@@ -129,6 +130,15 @@ const mencoesOrdenadas = ["I", "R", "B", "MB", "E"];
 const tiposPunicao = ["ADV", "IMP", "DET", "REP", "PRISAO"];
 const AUTH_REMEMBER_KEY = "caveirinha_auth_remember";
 const AUTH_KEEP_SESSION_KEY = "caveirinha_auth_keep_session";
+const HEADER_IMAGE_SIGNED_TTL_SECONDS = 3600;
+const DEFAULT_HEADER_LOGO = "assets/logo-pelotao.png";
+const PELOTAO_BUCKET_MAP = {
+  "1 pel": "imagens-1pel",
+  "2 pel": "imagens-2pel",
+  "3 pel": "imagens-3pel",
+  "pel ap": "imagens-pelap",
+  "sec cmdo": "imagens-seccmdo"
+};
 const camposDadosMilitar = [
   { key: "nomeCompleto", label: "Nome completo" },
   { key: "nomeGuerra", label: "Nome de guerra" },
@@ -218,6 +228,100 @@ function preencherLoginLembrado() {
   }
 }
 
+function setHeaderLogoBackground(imageUrl) {
+  if (!appHeaderLogo) {
+    return;
+  }
+  const url = String(imageUrl || "").trim() || DEFAULT_HEADER_LOGO;
+  appHeaderLogo.style.backgroundImage = `url("${url}")`;
+}
+
+function normalizarPelotaoBucket(valor) {
+  return String(valor || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[º°]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function bucketPorPelotao(pelotao) {
+  return PELOTAO_BUCKET_MAP[normalizarPelotaoBucket(pelotao)] || "";
+}
+
+function parseHeaderBucketAndPath(path, pelotao) {
+  const raw = String(path || "").trim();
+  if (!raw) {
+    return { bucket: "", path: "" };
+  }
+
+  if (/^https?:\/\//i.test(raw) || /^(\.\/|\/)?assets\//i.test(raw)) {
+    return { bucket: "", path: raw };
+  }
+
+  const matchBucketPrefix = /^(imagens-[^/]+)\/(.+)$/i.exec(raw);
+  if (matchBucketPrefix) {
+    return {
+      bucket: matchBucketPrefix[1],
+      path: matchBucketPrefix[2].replace(/^\/+/, "")
+    };
+  }
+
+  return {
+    bucket: bucketPorPelotao(pelotao),
+    path: raw.replace(/^\/+/, "")
+  };
+}
+
+async function resolverImagemCabecalho(path, pelotao) {
+  const raw = String(path || "").trim();
+  if (!raw) {
+    return DEFAULT_HEADER_LOGO;
+  }
+
+  if (/^https?:\/\//i.test(raw) || /^(\.\/|\/)?assets\//i.test(raw)) {
+    return raw;
+  }
+
+  const client = window.CaveirinhaSupabase?.client;
+  if (!client) {
+    return DEFAULT_HEADER_LOGO;
+  }
+
+  const resolved = parseHeaderBucketAndPath(raw, pelotao);
+  if (!resolved.bucket || !resolved.path) {
+    return DEFAULT_HEADER_LOGO;
+  }
+
+  try {
+    const storage = client.storage.from(resolved.bucket);
+    const { data: signedData, error: signedError } = await storage.createSignedUrl(
+      resolved.path,
+      HEADER_IMAGE_SIGNED_TTL_SECONDS
+    );
+    if (!signedError && signedData?.signedUrl) {
+      return signedData.signedUrl;
+    }
+
+    const { data: publicData } = storage.getPublicUrl(resolved.path);
+    if (publicData?.publicUrl) {
+      return publicData.publicUrl;
+    }
+  } catch (error) {
+    console.error("Falha ao resolver imagem de cabecalho:", error);
+  }
+
+  return DEFAULT_HEADER_LOGO;
+}
+
+async function aplicarConfigVisualUsuario(config) {
+  const imagePath = config?.imagemCabecalho || "";
+  const url = await resolverImagemCabecalho(imagePath, config?.pelotao || "");
+  setHeaderLogoBackground(url);
+}
+
 function abrirTelaLogin() {
   loginGate.classList.add("active");
   loginGate.setAttribute("aria-hidden", "false");
@@ -266,6 +370,7 @@ async function efetuarLogin(event) {
       console.error("Falha ao carregar configuracao do usuario:", configError);
       usuarioConfigAtual = null;
     }
+    await aplicarConfigVisualUsuario(usuarioConfigAtual);
 
     if (loginRememberInput.checked) {
       salvarCredenciaisLembradas(email, senha);
@@ -295,6 +400,7 @@ async function efetuarLogout() {
   setManterSessaoAtivo(false);
   usuarioSessao = null;
   usuarioConfigAtual = null;
+  setHeaderLogoBackground(DEFAULT_HEADER_LOGO);
   appJaInicializado = false;
   abrirTelaLogin();
 }
@@ -315,6 +421,7 @@ async function inicializarAutenticacao() {
           console.error("Falha ao carregar configuracao do usuario:", configError);
           usuarioConfigAtual = null;
         }
+        await aplicarConfigVisualUsuario(usuarioConfigAtual);
       }
     }
   } catch (error) {
@@ -774,7 +881,7 @@ async function carregarPunicoes() {
   try {
     punicoesListaCache = await window.CaveirinhaAPI.getPunicoes();
   } catch (error) {
-    console.error("Falha ao carregar punições:", error);
+    console.error("Falha ao carregar punicoes:", error);
     punicoesListaCache = [];
   }
   renderPunicoesTabela();
@@ -1834,7 +1941,7 @@ tafEditorForm.addEventListener("submit", async (event) => {
     await carregarTafDashboard();
   } catch (error) {
     console.error("Falha ao salvar TAF:", error);
-    window.alert("Nao foi possivel salvar o TAF no Supabase. Verifique permissoes RLS e estrutura da tabela taf.");
+    window.alert("Não foi possível salvar o TAF no Supabase. Verifique permissões RLS e estrutura da tabela taf.");
   }
 });
 
@@ -1947,6 +2054,7 @@ async function inicializarApp() {
         usuarioConfigAtual = null;
       }
     }
+    await aplicarConfigVisualUsuario(usuarioConfigAtual);
   } catch (error) {
     console.error("Falha ao validar sessao antes da inicializacao:", error);
     abrirTelaLogin();
@@ -1985,4 +2093,7 @@ logoutBtn.addEventListener("click", () => {
   void efetuarLogout();
 });
 
+setHeaderLogoBackground(DEFAULT_HEADER_LOGO);
 void inicializarAutenticacao();
+
+
