@@ -25,6 +25,13 @@
     );
   }
 
+  function hasSupabaseUserConfig() {
+    return (
+      Boolean(globalScope.CaveirinhaUserConfigService) &&
+      typeof globalScope.CaveirinhaUserConfigService.getCurrentUserConfig === "function"
+    );
+  }
+
   async function apiRequest(action, payload = {}) {
     if (BASE_URL === "mock") {
       if (!globalScope.CaveirinhaDataService || typeof globalScope.CaveirinhaDataService.handleAction !== "function") {
@@ -204,6 +211,13 @@
     return apiRequest("getSession");
   }
 
+  async function getUserConfig() {
+    if (hasSupabaseUserConfig()) {
+      return globalScope.CaveirinhaUserConfigService.getCurrentUserConfig();
+    }
+    return null;
+  }
+
   globalScope.CaveirinhaAPI = {
     BASE_URL,
     apiRequest,
@@ -237,6 +251,7 @@
     updateTAT,
     login,
     logout,
-    getSession
+    getSession,
+    getUserConfig
   };
 })(window);

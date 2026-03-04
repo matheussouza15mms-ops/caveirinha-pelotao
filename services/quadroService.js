@@ -1,5 +1,7 @@
 (function bootstrapQuadroService(globalScope) {
   const TABLE_NAME = "quadro_organizacional";
+  const FOTO_BUCKET = "militares-fotos";
+  const FOTO_SIGNED_URL_TTL_SECONDS = 3600;
 
   function getClient() {
     const client = globalScope.CaveirinhaSupabase?.client;
@@ -9,7 +11,56 @@
     return client;
   }
 
-  function rowToMilitar(row) {
+  function normalizeFotoPath(path) {
+    const raw = String(path || "").trim();
+    if (!raw) {
+      return "";
+    }
+
+    if (/^https?:\/\//i.test(raw)) {
+      return raw;
+    }
+
+    if (/^(\.\/|\/)?assets\//i.test(raw)) {
+      return raw;
+    }
+
+    const semPrefixoBucket = raw.replace(new RegExp(`^${FOTO_BUCKET}/`, "i"), "");
+    return semPrefixoBucket.replace(/^\/+/, "");
+  }
+
+  async function resolveFotoUrl(path) {
+    const normalized = normalizeFotoPath(path);
+    if (!normalized) {
+      return "";
+    }
+
+    if (/^https?:\/\//i.test(normalized) || /^(\.\/|\/)?assets\//i.test(normalized)) {
+      return normalized;
+    }
+
+    try {
+      const storage = getClient().storage.from(FOTO_BUCKET);
+
+      // Primeiro tenta URL assinada (bucket privado).
+      const { data: signedData, error: signedError } = await storage.createSignedUrl(
+        normalized,
+        FOTO_SIGNED_URL_TTL_SECONDS
+      );
+      if (!signedError && signedData?.signedUrl) {
+        return signedData.signedUrl;
+      }
+
+      // Fallback para bucket publico.
+      const { data: publicData } = storage.getPublicUrl(normalized);
+      return publicData?.publicUrl || "";
+    } catch (error) {
+      console.error("Erro ao montar URL publica da foto no Supabase Storage:", error);
+      return "";
+    }
+  }
+
+  async function rowToMilitar(row) {
     return {
       id: row.id,
       pg: row.pg || "",
@@ -29,7 +80,7 @@
       contatoEmergencia: row.contato_emergencia || "",
       comportamento: row.comportamento || "",
       habilidade: row.habilidade || "",
-      foto: row.foto || "",
+      foto: await resolveFotoUrl(row.foto),
       lastUpdate: row.updated_at || row.last_update || ""
     };
   }
@@ -81,7 +132,7 @@
         throw error;
       }
 
-      return (data || []).map(rowToMilitar);
+      return Promise.all((data || []).map((row) => rowToMilitar(row)));
     } catch (error) {
       console.error("Erro ao carregar quadro no Supabase:", error);
       throw error;

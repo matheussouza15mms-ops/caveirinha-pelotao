@@ -125,13 +125,18 @@
 
   async function persistSchemaA(records) {
     for (const record of records) {
+      const updatePayload = {
+        data: record.data,
+        resultado: record.resultado,
+        observacao: record.observacao
+      };
+      if (record.pelotao) {
+        updatePayload.pelotao = record.pelotao;
+      }
+
       const { data: updatedRows, error: updateError } = await getClient()
         .from(TABLE_NAME)
-        .update({
-          data: record.data,
-          resultado: record.resultado,
-          observacao: record.observacao
-        })
+        .update(updatePayload)
         .eq("id_militar", record.id_militar)
         .eq("tipo_teste", record.tipo_teste)
         .select("id")
@@ -154,13 +159,18 @@
 
   async function persistSchemaB(records) {
     for (const record of records) {
+      const updatePayload = {
+        data: record.data,
+        resultado: record.resultado,
+        observacao: record.observacao
+      };
+      if (record.pelotao) {
+        updatePayload.pelotao = record.pelotao;
+      }
+
       const { data: updatedRows, error: updateError } = await getClient()
         .from(TABLE_NAME)
-        .update({
-          data: record.data,
-          resultado: record.resultado,
-          observacao: record.observacao
-        })
+        .update(updatePayload)
         .eq("id", record.id)
         .eq("tipo_teste", record.tipo_teste)
         .select("taf_id")
@@ -185,6 +195,7 @@
     const idMilitar = String(payload?.idMilitar || "");
     const ciclo = Number(payload?.ciclo || 0);
     const data = String(payload?.data || "").slice(0, 10);
+    const pelotao = String(payload?.pelotao || "").trim();
     const mencoes = payload?.mencoes || {};
 
     if (!idMilitar || !ciclo || !data) {
@@ -198,7 +209,8 @@
         data,
         tipo_teste: `${ciclo}TAF_${teste}`,
         resultado: mencaoNormalizada(mencoes[teste]),
-        observacao: `ciclo:${ciclo}`
+        observacao: `ciclo:${ciclo}`,
+        pelotao
       }));
       await persistSchemaA(recordsA);
     } catch (errorA) {
@@ -209,7 +221,8 @@
           data,
           tipo_teste: `${ciclo}TAF_${teste}`,
           resultado: mencaoNormalizada(mencoes[teste]),
-          observacao: `ciclo:${ciclo}`
+          observacao: `ciclo:${ciclo}`,
+          pelotao
         }));
         await persistSchemaB(recordsB);
       } catch (errorB) {

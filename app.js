@@ -121,6 +121,7 @@ let tatListaCache = [];
 let tatRegistroAtual = null;
 let appJaInicializado = false;
 let usuarioSessao = null;
+let usuarioConfigAtual = null;
 
 const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
 const efetivoState = new Map();
@@ -259,6 +260,12 @@ async function efetuarLogin(event) {
       password: senha
     });
     usuarioSessao = sessao?.user || null;
+    try {
+      usuarioConfigAtual = await window.CaveirinhaAPI.getUserConfig();
+    } catch (configError) {
+      console.error("Falha ao carregar configuracao do usuario:", configError);
+      usuarioConfigAtual = null;
+    }
 
     if (loginRememberInput.checked) {
       salvarCredenciaisLembradas(email, senha);
@@ -287,6 +294,7 @@ async function efetuarLogout() {
   }
   setManterSessaoAtivo(false);
   usuarioSessao = null;
+  usuarioConfigAtual = null;
   appJaInicializado = false;
   abrirTelaLogin();
 }
@@ -301,6 +309,12 @@ async function inicializarAutenticacao() {
         await window.CaveirinhaAPI.logout();
       } else {
         usuarioSessao = sessao.user;
+        try {
+          usuarioConfigAtual = await window.CaveirinhaAPI.getUserConfig();
+        } catch (configError) {
+          console.error("Falha ao carregar configuracao do usuario:", configError);
+          usuarioConfigAtual = null;
+        }
       }
     }
   } catch (error) {
@@ -1808,6 +1822,7 @@ tafEditorForm.addEventListener("submit", async (event) => {
       idMilitar: militarSelecionadoId,
       ciclo: tafEditandoCiclo,
       data: tafDataInput.value,
+      pelotao: usuarioConfigAtual?.pelotao || "",
       mencoes: {
         barra: tafBarraInput.value,
         flexao: tafFlexaoInput.value,
@@ -1923,6 +1938,14 @@ async function inicializarApp() {
     if (!sessao?.user) {
       abrirTelaLogin();
       return;
+    }
+    if (!usuarioConfigAtual) {
+      try {
+        usuarioConfigAtual = await window.CaveirinhaAPI.getUserConfig();
+      } catch (configError) {
+        console.error("Falha ao carregar usuario_config na inicializacao:", configError);
+        usuarioConfigAtual = null;
+      }
     }
   } catch (error) {
     console.error("Falha ao validar sessao antes da inicializacao:", error);
