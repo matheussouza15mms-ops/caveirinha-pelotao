@@ -29,8 +29,13 @@
 - Atualizacao por modal com persistencia no Supabase.
 - Inclusao de `pelotao` no payload de gravacao para compatibilidade com RLS.
 
+## Fatos Observados (FO+/FO-)
+- CRUD com persistencia no Supabase.
+- Vinculo com militar por `id_militar` (FK para quadro).
+- Leitura/escrita protegidas por RLS de pelotao.
+
 ## Modulos CRUD (hibrido)
-- FO, Historico/Obs, Punicoes e partes do Efetivo ainda podem operar via fallback local, dependendo do ambiente.
+- Historico/Obs, Punicoes e partes do Efetivo ainda podem operar via fallback local, dependendo do ambiente.
 
 ## API Layer
 Acoes principais disponiveis:

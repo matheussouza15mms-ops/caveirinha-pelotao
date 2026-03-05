@@ -10,6 +10,7 @@ Separacao de responsabilidades sem framework:
   - Auth: `services/auth.js`
   - Quadro: `services/quadroService.js`
   - TAF: `services/tafService.js`
+  - FO: `services/fatosObservadosService.js`
   - Configuracao por usuario: `services/userConfigService.js`
 - Fallback local (legado/hibrido): `services/dataService.js`
 

@@ -33,6 +33,17 @@
     return PELOTAO_BUCKET_MAP[key] || "";
   }
 
+  function normalizarLabelFracao(valor) {
+    const texto = String(valor || "").trim();
+    if (!texto) {
+      return "";
+    }
+
+    return texto
+      .replace(/^([123])o(\s+)/i, "$1º$2")
+      .replace(/^sec(\s+cmdo)$/i, "Seç$1");
+  }
+
   function parseBucketAndPath(rawPath, pelotao) {
     const trimmed = String(rawPath || "").trim();
     if (!trimmed) {
@@ -117,8 +128,8 @@
       numero: row.numero === null || row.numero === undefined ? "" : row.numero,
       nomeGuerra: row.nome_guerra || "",
       funcao: row.funcao || "",
-      aba: row.fracao || "",
-      fracao: row.fracao || "",
+      aba: normalizarLabelFracao(row.fracao || ""),
+      fracao: normalizarLabelFracao(row.fracao || ""),
       nomeCompleto: row.nome_completo || "",
       dataNascimento: row.data_nascimento || "",
       identidade: row.identidade || "",

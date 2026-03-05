@@ -30,6 +30,15 @@ Campos de negocio:
 - `observacao`
 - `pelotao`
 
+### `public.fatos_observados`
+- `id` (PK)
+- `id_militar` (FK para `quadro_organizacional.id`)
+- `data`
+- `tipo` (`FO+`, `FO-`)
+- `descricao`
+- `autor`
+- `created_at`, `updated_at`
+
 ### `public.usuario_config`
 - `user_id` (FK para `auth.users.id`)
 - `nome_usuario`

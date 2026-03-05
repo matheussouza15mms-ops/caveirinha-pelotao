@@ -25,6 +25,16 @@
     );
   }
 
+  function hasSupabaseFatosObservados() {
+    return (
+      Boolean(globalScope.CaveirinhaFatosObservadosService) &&
+      typeof globalScope.CaveirinhaFatosObservadosService.getFO === "function" &&
+      typeof globalScope.CaveirinhaFatosObservadosService.createFO === "function" &&
+      typeof globalScope.CaveirinhaFatosObservadosService.updateFO === "function" &&
+      typeof globalScope.CaveirinhaFatosObservadosService.deleteFO === "function"
+    );
+  }
+
   function hasSupabaseUserConfig() {
     return (
       Boolean(globalScope.CaveirinhaUserConfigService) &&
@@ -102,18 +112,30 @@
   }
 
   function getFO() {
+    if (hasSupabaseFatosObservados()) {
+      return globalScope.CaveirinhaFatosObservadosService.getFO();
+    }
     return apiRequest("getFO");
   }
 
   function createFO(payload) {
+    if (hasSupabaseFatosObservados()) {
+      return globalScope.CaveirinhaFatosObservadosService.createFO(payload);
+    }
     return apiRequest("createFO", payload);
   }
 
   function updateFO(payload) {
+    if (hasSupabaseFatosObservados()) {
+      return globalScope.CaveirinhaFatosObservadosService.updateFO(payload);
+    }
     return apiRequest("updateFO", payload);
   }
 
   function deleteFO(id) {
+    if (hasSupabaseFatosObservados()) {
+      return globalScope.CaveirinhaFatosObservadosService.deleteFO(id);
+    }
     return apiRequest("deleteFO", { id });
   }
 

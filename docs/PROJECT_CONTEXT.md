@@ -22,6 +22,7 @@ Aplicacao web para gestao do quadro organizacional, efetivo e ficha do militar, 
 - `services/api.js`
 - `services/quadroService.js`
 - `services/tafService.js`
+- `services/fatosObservadosService.js`
 - `services/userConfigService.js`
 - `services/dataService.js` (fallback local)
 - `docs/`
@@ -39,7 +40,7 @@ Aplicacao web para gestao do quadro organizacional, efetivo e ficha do militar, 
 10. Login e sessao
 
 ## Estado Atual
-- Quadro e TAF integrados ao Supabase.
+- Quadro, TAF e FO integrados ao Supabase.
 - Login mock removido; Auth real ativo.
 - `usuario_config` usado para comportamento por usuario.
 - Filtro por pelotao aplicado no banco via RLS.

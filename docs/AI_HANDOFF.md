@@ -17,7 +17,7 @@ Voce esta assumindo o desenvolvimento do Caveirinha App.
 
 ## Estado atual importante
 - Auth real via Supabase (`services/auth.js`).
-- Quadro e TAF operando no Supabase.
+- Quadro, TAF e FO operando no Supabase.
 - `usuario_config` ativo para comportamento por usuario.
 - Imagens por buckets de pelotao.
 - Fallback local em `dataService.js` para modulos nao totalmente migrados.

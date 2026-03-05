@@ -8,6 +8,7 @@ Ja entregue:
 - Auth real no Supabase (login/sessao/logout).
 - Quadro Organizacional no Supabase.
 - TAF Dashboard no Supabase com atualizacao de mencoes.
+- Fatos Observados (FO+/FO-) no Supabase.
 - `usuario_config` para perfil, tema, pelotao e imagem de cabecalho.
 - Controle por pelotao via RLS.
 - Imagens por buckets de pelotao.
@@ -16,7 +17,6 @@ Ja entregue:
 - Padronizar schema final da tabela `taf` (remover variacoes de coluna).
 - Migrar completamente modulos restantes para Supabase:
   - Efetivo
-  - FO
   - Historico/Obs
   - Punicoes
   - TAT
