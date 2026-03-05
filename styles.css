@@ -584,6 +584,30 @@ body {
   border-color: #bad1eb;
 }
 
+.status-select.status-verde {
+  background: #def6e8;
+  color: #1f6f4d;
+  border-color: #8ad0aa;
+}
+
+.status-select.status-azul {
+  background: #e6f1ff;
+  color: #1e4f82;
+  border-color: #9fc1ea;
+}
+
+.status-select.status-laranja {
+  background: #ffefd9;
+  color: #91551a;
+  border-color: #f1be74;
+}
+
+.status-select.status-vermelho {
+  background: #ffe8e8;
+  color: #8f2f2f;
+  border-color: #efb2b2;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;

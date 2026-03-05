@@ -125,7 +125,7 @@ let appJaInicializado = false;
 let usuarioSessao = null;
 let usuarioConfigAtual = null;
 
-const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
+const opcoesSituacao = ["ferias", "dispensado", "missao", "atrasado", "outros", "falta", "baixado"];
 const efetivoState = new Map();
 const mencoesOrdenadas = ["I", "R", "B", "MB", "E"];
 const tiposPunicao = ["ADV", "IMP", "DET", "REP", "PRISAO"];
@@ -488,6 +488,46 @@ function formatarDataExibicao(valorData) {
   }
 
   return parsed.toLocaleDateString("pt-BR");
+}
+
+function normalizarSituacaoEfetivo(valor) {
+  const normalized = String(valor || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (!normalized || normalized === "em_forma") return "";
+  if (normalized === "ferias") return "ferias";
+  if (normalized === "dispensado") return "dispensado";
+  if (normalized === "missao") return "missao";
+  if (normalized === "atrasado") return "atrasado";
+  if (normalized === "outro" || normalized === "outros") return "outros";
+  if (normalized === "falta") return "falta";
+  if (normalized === "baixado") return "baixado";
+  return "";
+}
+
+function classeSituacaoEfetivo(estado) {
+  if (!estado) {
+    return "";
+  }
+
+  if (estado.emForma || estado.situacao === "em_forma") {
+    return "status-verde";
+  }
+
+  const situacao = normalizarSituacaoEfetivo(estado.situacao);
+  if (["ferias", "dispensado", "missao"].includes(situacao)) {
+    return "status-azul";
+  }
+  if (["atrasado", "outros"].includes(situacao)) {
+    return "status-laranja";
+  }
+  if (["falta", "baixado"].includes(situacao)) {
+    return "status-vermelho";
+  }
+  return "";
 }
 
 function normalizarTipoPunicao(valor) {
@@ -1239,13 +1279,13 @@ function sincronizarEfetivoState(efetivoRegistros) {
     const emForma = Boolean(registro.emForma) || registro.situacao === "em_forma";
     efetivoState.set(militar.cardId, {
       emForma,
-      situacao: emForma ? "em_forma" : registro.situacao || "",
+      situacao: emForma ? "em_forma" : normalizarSituacaoEfetivo(registro.situacao),
       dataAtualizacao: registro.dataAtualizacao || ""
     });
   });
 
   const primeiraData = Array.from(efetivoState.values()).find((estado) => estado.dataAtualizacao);
-  efetivoDataInput.value = dataInputFromIso(primeiraData ? primeiraData.dataAtualizacao : "");
+  efetivoDataInput.value = dataInputFromIso(primeiraData ? primeiraData.dataAtualizacao : "") || hojeISODate();
 }
 
 function setScreen(screen) {
@@ -1444,6 +1484,8 @@ function atualizarLinhaEfetivo(cardId) {
       select.options[0].textContent = "Em forma";
     }
     select.disabled = true;
+    select.classList.remove("status-verde", "status-azul", "status-laranja", "status-vermelho");
+    select.classList.add("status-verde");
     return;
   }
 
@@ -1452,7 +1494,12 @@ function atualizarLinhaEfetivo(cardId) {
   if (select.options[0]) {
     select.options[0].textContent = "Selecionar situacao";
   }
-  select.value = estado.situacao;
+  select.value = normalizarSituacaoEfetivo(estado.situacao);
+  select.classList.remove("status-verde", "status-azul", "status-laranja", "status-vermelho");
+  const classe = classeSituacaoEfetivo(estado);
+  if (classe) {
+    select.classList.add(classe);
+  }
 }
 
 function renderEfetivo() {
@@ -1471,11 +1518,13 @@ function renderEfetivo() {
       <td>
         <select class="status-select" data-id="${militar.cardId}" ${estado && estado.emForma ? "disabled" : ""}>
           <option value="">Selecionar situacao</option>
-          <option value="falta">Falta</option>
-          <option value="missao">Missao</option>
-          <option value="baixado">Baixado</option>
           <option value="ferias">Ferias</option>
+          <option value="dispensado">Dispensado</option>
+          <option value="missao">Missao</option>
+          <option value="atrasado">Atrasado</option>
           <option value="outros">Outros</option>
+          <option value="falta">Falta</option>
+          <option value="baixado">Baixado</option>
         </select>
       </td>
     `;
@@ -1494,11 +1543,12 @@ async function persistirEfetivo(cardId) {
   }
 
   try {
+    const dataSelecionada = efetivoDataInput.value || hojeISODate();
     await window.CaveirinhaAPI.updateEfetivo({
       idMilitar,
       emForma: estado.emForma,
-      situacao: estado.situacao,
-      dataAtualizacao: estado.dataAtualizacao || isoDoDia(efetivoDataInput.value || hojeISODate())
+      situacao: estado.emForma ? "em_forma" : normalizarSituacaoEfetivo(estado.situacao),
+      dataAtualizacao: isoDoDia(dataSelecionada)
     });
   } catch (error) {
     console.error("Falha ao atualizar efetivo na API layer:", error);
@@ -1515,6 +1565,8 @@ async function aplicarDataEfetivoParaTodos() {
     if (!atual) {
       return;
     }
+    atual.emForma = false;
+    atual.situacao = "";
     atual.dataAtualizacao = dataIso;
     atualizarLinhaEfetivo(cardId);
   });
@@ -1526,8 +1578,8 @@ async function aplicarDataEfetivoParaTodos() {
     }
     await window.CaveirinhaAPI.updateEfetivo({
       idMilitar,
-      emForma: estado.emForma,
-      situacao: estado.situacao,
+      emForma: false,
+      situacao: "",
       dataAtualizacao: estado.dataAtualizacao
     });
   });
@@ -1559,7 +1611,7 @@ efetivoTableBody.addEventListener("change", (event) => {
       estado.emForma = false;
       estado.situacao = "";
     }
-    estado.dataAtualizacao = estado.dataAtualizacao || isoDoDia(efetivoDataInput.value || hojeISODate());
+    estado.dataAtualizacao = isoDoDia(efetivoDataInput.value || hojeISODate());
 
     atualizarLinhaEfetivo(id);
     atualizarResumoEfetivo();
@@ -1574,9 +1626,9 @@ efetivoTableBody.addEventListener("change", (event) => {
       return;
     }
 
-    estado.situacao = alvo.value;
+    estado.situacao = normalizarSituacaoEfetivo(alvo.value);
     estado.emForma = false;
-    estado.dataAtualizacao = estado.dataAtualizacao || isoDoDia(efetivoDataInput.value || hojeISODate());
+    estado.dataAtualizacao = isoDoDia(efetivoDataInput.value || hojeISODate());
     atualizarLinhaEfetivo(id);
     atualizarResumoEfetivo();
     void persistirEfetivo(id);

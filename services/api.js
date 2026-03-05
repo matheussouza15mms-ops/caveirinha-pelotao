@@ -25,6 +25,14 @@
     );
   }
 
+  function hasSupabaseEfetivo() {
+    return (
+      Boolean(globalScope.CaveirinhaEfetivoService) &&
+      typeof globalScope.CaveirinhaEfetivoService.getEfetivo === "function" &&
+      typeof globalScope.CaveirinhaEfetivoService.updateEfetivo === "function"
+    );
+  }
+
   function hasSupabaseFatosObservados() {
     return (
       Boolean(globalScope.CaveirinhaFatosObservadosService) &&
@@ -121,8 +129,11 @@
     return apiRequest("deleteMilitar", { id });
   }
 
-  function getEfetivo() {
-    return apiRequest("getEfetivo");
+  function getEfetivo(dataReferencia) {
+    if (hasSupabaseEfetivo()) {
+      return globalScope.CaveirinhaEfetivoService.getEfetivo(dataReferencia);
+    }
+    return apiRequest("getEfetivo", { dataReferencia });
   }
 
   async function getMilitarDados(idMilitar) {
@@ -137,6 +148,9 @@
   }
 
   function updateEfetivo(payload) {
+    if (hasSupabaseEfetivo()) {
+      return globalScope.CaveirinhaEfetivoService.updateEfetivo(payload);
+    }
     return apiRequest("updateEfetivo", payload);
   }
 
