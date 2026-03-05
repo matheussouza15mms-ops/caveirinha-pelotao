@@ -54,6 +54,16 @@
     );
   }
 
+  function hasSupabaseHistoricoObs() {
+    return (
+      Boolean(globalScope.CaveirinhaHistoricoObsService) &&
+      typeof globalScope.CaveirinhaHistoricoObsService.getHistoricoObs === "function" &&
+      typeof globalScope.CaveirinhaHistoricoObsService.createHistoricoObs === "function" &&
+      typeof globalScope.CaveirinhaHistoricoObsService.updateHistoricoObs === "function" &&
+      typeof globalScope.CaveirinhaHistoricoObsService.deleteHistoricoObs === "function"
+    );
+  }
+
   function hasSupabaseUserConfig() {
     return (
       Boolean(globalScope.CaveirinhaUserConfigService) &&
@@ -159,18 +169,30 @@
   }
 
   function getHistoricoObs(idMilitar) {
+    if (hasSupabaseHistoricoObs()) {
+      return globalScope.CaveirinhaHistoricoObsService.getHistoricoObs(idMilitar);
+    }
     return apiRequest("getHistoricoObs", { idMilitar });
   }
 
   function createHistoricoObs(payload) {
+    if (hasSupabaseHistoricoObs()) {
+      return globalScope.CaveirinhaHistoricoObsService.createHistoricoObs(payload);
+    }
     return apiRequest("createHistoricoObs", payload);
   }
 
   function updateHistoricoObs(payload) {
+    if (hasSupabaseHistoricoObs()) {
+      return globalScope.CaveirinhaHistoricoObsService.updateHistoricoObs(payload);
+    }
     return apiRequest("updateHistoricoObs", payload);
   }
 
   function deleteHistoricoObs(id) {
+    if (hasSupabaseHistoricoObs()) {
+      return globalScope.CaveirinhaHistoricoObsService.deleteHistoricoObs(id);
+    }
     return apiRequest("deleteHistoricoObs", { id });
   }
 
