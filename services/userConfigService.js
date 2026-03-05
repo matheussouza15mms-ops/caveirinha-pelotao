@@ -19,6 +19,7 @@
       imagemCabecalho: row.imagem_cabecalho || "",
       tema: row.tema || "padrao",
       pelotao: row.pelotao || "",
+      nomePelotao: row.nome_pelotao || "",
       nivelAcesso: row.nivel_acesso || "operador",
       ativo: Boolean(row.ativo)
     };

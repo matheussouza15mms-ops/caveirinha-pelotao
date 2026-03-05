@@ -97,6 +97,7 @@ const tatEditorForm = document.getElementById("tatEditorForm");
 const tatMencaoInput = document.getElementById("tatMencaoInput");
 const tatEditorCancel = document.getElementById("tatEditorCancel");
 const appHeaderLogo = document.querySelector(".app-header .app-brand-logo");
+const appHeaderSubtitle = document.getElementById("appHeaderSubtitle");
 const loginGate = document.getElementById("loginGate");
 const loginForm = document.getElementById("loginForm");
 const loginEmailInput = document.getElementById("loginEmailInput");
@@ -134,6 +135,7 @@ const AUTH_REMEMBER_KEY = "caveirinha_auth_remember";
 const AUTH_KEEP_SESSION_KEY = "caveirinha_auth_keep_session";
 const HEADER_IMAGE_SIGNED_TTL_SECONDS = 3600;
 const DEFAULT_HEADER_LOGO = "assets/logo-pelotao.png";
+const DEFAULT_HEADER_SUBTITLE = "PELOPES";
 const PELOTAO_BUCKET_MAP = {
   "1 pel": "imagens-1pel",
   "2 pel": "imagens-2pel",
@@ -238,6 +240,14 @@ function setHeaderLogoBackground(imageUrl) {
   appHeaderLogo.style.backgroundImage = `url("${url}")`;
 }
 
+function setHeaderSubtitle(text) {
+  if (!appHeaderSubtitle) {
+    return;
+  }
+  const safeText = String(text || "").trim() || DEFAULT_HEADER_SUBTITLE;
+  appHeaderSubtitle.textContent = safeText;
+}
+
 function normalizarPelotaoBucket(valor) {
   return String(valor || "")
     .trim()
@@ -322,6 +332,7 @@ async function aplicarConfigVisualUsuario(config) {
   const imagePath = config?.imagemCabecalho || "";
   const url = await resolverImagemCabecalho(imagePath, config?.pelotao || "");
   setHeaderLogoBackground(url);
+  setHeaderSubtitle(config?.nomePelotao || config?.pelotao || DEFAULT_HEADER_SUBTITLE);
 }
 
 function abrirTelaLogin() {
@@ -403,6 +414,7 @@ async function efetuarLogout() {
   usuarioSessao = null;
   usuarioConfigAtual = null;
   setHeaderLogoBackground(DEFAULT_HEADER_LOGO);
+  setHeaderSubtitle(DEFAULT_HEADER_SUBTITLE);
   appJaInicializado = false;
   abrirTelaLogin();
 }
@@ -2274,6 +2286,7 @@ logoutBtn.addEventListener("click", () => {
 });
 
 setHeaderLogoBackground(DEFAULT_HEADER_LOGO);
+setHeaderSubtitle(DEFAULT_HEADER_SUBTITLE);
 void inicializarAutenticacao();
 
 
