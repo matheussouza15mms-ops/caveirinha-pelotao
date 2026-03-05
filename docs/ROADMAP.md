@@ -1,37 +1,36 @@
-﻿# Roadmap de Evolução - Caveirinha App
+﻿# Roadmap de Evolucao - Caveirinha App
 
-## Objetivo Estratégico
-Consolidar o app como plataforma administrativa conectada, com Google Sheets como base oficial de dados e sincronização bidirecional.
+## Objetivo Estrategico
+Consolidar o app como plataforma administrativa conectada ao Supabase, com controle por pelotao e personalizacao por usuario.
 
-## Status Atual (2026-03-01)
-Base de integração já operacional no frontend:
-- API layer implementada (`apiRequest(action, payload)`)
-- Mock local estruturado
-- CRUD funcional para FO e Histórico/Obs
-- Dashboard TAF funcional com regra de menção final
+## Status Atual (2026-03-04)
+Ja entregue:
+- Auth real no Supabase (login/sessao/logout).
+- Quadro Organizacional no Supabase.
+- TAF Dashboard no Supabase com atualizacao de mencoes.
+- `usuario_config` para perfil, tema, pelotao e imagem de cabecalho.
+- Controle por pelotao via RLS.
+- Imagens por buckets de pelotao.
 
-## Fase 1 - Integração com Google Sheets (em andamento)
-### Já entregue
-- Separação UI x persistência
-- Contrato por ações (`action`)
-- Estruturas de dados compatíveis para evolução
+## Fase 1 - Consolidacao de Dados (em andamento)
+- Padronizar schema final da tabela `taf` (remover variacoes de coluna).
+- Migrar completamente modulos restantes para Supabase:
+  - Efetivo
+  - FO
+  - Historico/Obs
+  - Punicoes
+  - TAT
+- Eliminar fallback local quando tudo estiver migrado.
 
-### Próximo passo técnico
-- Implementar no Apps Script as ações já existentes no frontend:
-  - FO (`get/create/update/delete`)
-  - Histórico/Obs (`get/create/update/delete`)
-  - TAF dashboard (`get/update`)
-  - Efetivo (`get/update`)
-  - Militares (`get`/`update dados`)
+## Fase 2 - Governanca e Seguranca
+- Revisar policies RLS por nivel de acesso.
+- Implementar auditoria (`updated_by`, trilha de alteracoes).
+- Hardening de Storage (policies de leitura/escrita por pelotao).
 
-## Fases seguintes
-- Punições (CRUD e status)
-- TAT (registro e histórico)
-- Ajustes de auditoria e controle de conflito (`lastUpdate`, `updatedBy`)
+## Fase 3 - Experiencia e Operacao
+- Tema dinamico por usuario (`usuario_config.tema`).
+- Personalizacao completa de cabecalho por usuario/pelotao.
+- Painel administrativo para gestao de usuarios e permissoes.
 
-## Troca para produção
-Troca central em `services/api.js`:
-- de: `const BASE_URL = "mock"`
-- para: URL do WebApp Google Apps Script
-
-Sem necessidade de refatorar a interface.
+## Observacao
+A API local (`services/api.js`) deve seguir como camada de contrato unico para manter a UI desacoplada da fonte de dados.

@@ -1,22 +1,47 @@
 ﻿# Arquitetura do Sistema
 
-## Padrão Arquitetural
-Separação de responsabilidades sem framework:
-- UI/Render: `app.js`
+## Padrao Arquitetural
+Separacao de responsabilidades sem framework:
+- UI e renderizacao: `app.js`
 - Estado local de tela: `organizacao`, `indiceMilitares`, `efetivoState`
-- Persistência/integração: `services/api.js`
-- Mock de dados: `mock/db.json`
+- API layer e roteamento: `services/api.js`
+- Integracao Supabase:
+  - Cliente: `services/supabaseClient.js`
+  - Auth: `services/auth.js`
+  - Quadro: `services/quadroService.js`
+  - TAF: `services/tafService.js`
+  - Configuracao por usuario: `services/userConfigService.js`
+- Fallback local (legado/hibrido): `services/dataService.js`
 
-## Fluxo de Dados
-1. `app.js` solicita dados via `CaveirinhaAPI`.
-2. API layer lê/escreve no mock local quando `BASE_URL = "mock"`.
-3. UI renderiza a partir do estado local (sem acessar JSON direto).
+## Fluxo de Dados Atual
+1. `app.js` consome `window.CaveirinhaAPI`.
+2. `services/api.js` roteia para Supabase quando o modulo existe.
+3. Se modulo nao estiver migrado, cai no fallback local (CSV via `dataService`).
+4. A UI renderiza pelo estado local, sem acesso direto ao banco.
 
-## Módulos de Negócio na UI
-- Efetivo (KPIs + atualização + data global por coluna)
-- FO+/FO- (listagem + criar + editar + excluir + copiar)
-- Histórico/Obs (listagem + criar + editar + excluir)
-- Dashboard TAF (1º/2º/3º, menções por teste e menção final)
+## Auth e Sessao
+- Login real com Supabase Auth (`signInWithPassword`).
+- Sessao validada antes da inicializacao da aplicacao.
+- "Manter logado" controlado no cliente.
+- Mesmo com sessao ativa, o usuario precisa clicar em `Entrar`.
+
+## Storage de Imagens
+- Resolucao de imagens por pelotao com buckets dedicados.
+- Mapeamento atual:
+  - `1ºPel -> imagens-1pel`
+  - `2º Pel -> imagens-2pel`
+  - `3º Pel -> imagens-3pel`
+  - `Pel Ap -> imagens-pelap`
+  - `Sec Cmdo -> imagens-seccmdo`
+- Fluxo de URL:
+  - tenta signed URL (bucket privado)
+  - fallback para URL publica
+
+## Controle de Acesso
+- Baseado em `usuario_config` + RLS no Supabase.
+- Usuario visualiza dados do proprio pelotao.
+- `admin` visualiza geral.
+- Perfil `consulta` pode ser configurado como somente leitura.
 
 ## Compatibilidade Preservada
 - `organizacao`
@@ -25,7 +50,3 @@ Separação de responsabilidades sem framework:
 - `renderTabs()`
 - `renderCards()`
 - `renderEfetivo()`
-
-## Portabilidade para Google Sheets
-O contrato central é `apiRequest(action, payload)`.
-A migração para Apps Script deve trocar apenas a origem remota em `services/api.js`, mantendo a UI intacta.

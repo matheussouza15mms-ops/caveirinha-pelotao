@@ -1,37 +1,50 @@
 ﻿# Projeto: Caveirinha App
 
 ## Objetivo
-Aplicação web para gestão do quadro organizacional, efetivo e ficha do militar, com arquitetura preparada para sincronização bidirecional futura com Google Sheets via Google Apps Script.
+Aplicacao web para gestao do quadro organizacional, efetivo e ficha do militar, com autenticacao real e controle de acesso por pelotao.
 
 ## Stack Atual
 - HTML5
 - CSS3
 - JavaScript puro (Vanilla JS)
-- Sem framework
-- API layer local (`services/api.js`)
+- Supabase:
+  - Auth
+  - Postgres
+  - Storage
+- API layer local (`services/api.js`) com roteamento para Supabase
 
-## Estrutura de Arquivos (estado atual)
+## Estrutura de Arquivos Relevante
 - `index.html`
 - `styles.css`
 - `app.js`
+- `services/supabaseClient.js`
+- `services/auth.js`
 - `services/api.js`
-- `mock/db.json`
+- `services/quadroService.js`
+- `services/tafService.js`
+- `services/userConfigService.js`
+- `services/dataService.js` (fallback local)
 - `docs/`
 
-## Telas/Módulos Ativos
+## Modulos Ativos
 1. Quadro Organizacional
 2. Efetivo
 3. Ficha do Militar
 4. Dados do Militar (modal)
 5. Fatos Observados FO+/FO- (CRUD)
-6. Histórico/Obs (CRUD)
-7. Dashboard TAF (1º, 2º e 3º)
+6. Historico/Obs (CRUD)
+7. Punicoes (CRUD)
+8. TAF Dashboard (1º, 2º, 3º)
+9. TAT (edicao de mencao)
+10. Login e sessao
 
 ## Estado Atual
-- Navegação, busca, abas e cards funcionando
-- Persistência da interface abstraída via API layer
-- Mock local com coleções compatíveis com evolução para planilha
-- FO, Histórico/Obs e TAF já operando com ações de API
+- Quadro e TAF integrados ao Supabase.
+- Login mock removido; Auth real ativo.
+- `usuario_config` usado para comportamento por usuario.
+- Filtro por pelotao aplicado no banco via RLS.
+- Imagens resolvidas por bucket de pelotao.
 
 ## Fonte Oficial da Verdade
-O estado oficial do projeto é sempre o último commit válido no Git.
+- Dados de producao: Supabase.
+- Fallback local: CSV em ambiente local/legado.

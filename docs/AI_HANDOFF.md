@@ -1,6 +1,6 @@
 ﻿# AI HANDOFF CONTEXT
 
-Você está assumindo o desenvolvimento do Caveirinha App.
+Voce esta assumindo o desenvolvimento do Caveirinha App.
 
 ## Verdades absolutas
 - `PROJECT_CONTEXT.md`
@@ -10,23 +10,25 @@ Você está assumindo o desenvolvimento do Caveirinha App.
 - `ROADMAP.md`
 
 ## Regras do projeto
-1. Não remover funcionalidades existentes.
-2. Não sugerir frameworks sem solicitação explícita.
-3. Preservar compatibilidade com `organizacao`, `indiceMilitares`, `efetivoState` e padrão `render*`.
-4. Qualquer mudança estrutural deve ter justificativa técnica.
+1. Nao remover funcionalidades existentes sem alinhamento.
+2. Nao introduzir framework sem solicitacao explicita.
+3. Preservar compatibilidade com `organizacao`, `indiceMilitares`, `efetivoState` e fluxo `render*`.
+4. Toda mudanca estrutural deve ser documentada nos arquivos de `docs/`.
 
 ## Estado atual importante
-- Dados e persistência abstraídos em `services/api.js`.
-- UI sem acesso direto a `mock/db.json`.
-- FO e Histórico/Obs com CRUD via API layer.
-- TAF com dashboard por ciclo e atualização de menções via API layer.
+- Auth real via Supabase (`services/auth.js`).
+- Quadro e TAF operando no Supabase.
+- `usuario_config` ativo para comportamento por usuario.
+- Imagens por buckets de pelotao.
+- Fallback local em `dataService.js` para modulos nao totalmente migrados.
 
-## Contrato de integração
-- `apiRequest(action, payload)` é o ponto único.
-- Ações de negócio já modeladas para futura implementação no Apps Script.
+## Contrato de integracao
+- Ponto unico no frontend: `window.CaveirinhaAPI`.
+- `services/api.js` roteia para Supabase quando disponivel, com fallback local quando necessario.
 
 ## Ao propor melhorias
 Sempre explicitar:
 - impacto
 - risco
 - compatibilidade
+- necessidade de migracao de dados/policies

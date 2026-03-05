@@ -1,13 +1,19 @@
-Armazene as fotos dos militares nesta pasta.
+﻿# Imagens Locais (Legado)
 
-Padrao recomendado:
-- Nome do arquivo igual ao `id` do militar no CSV.
-- Extensao preferencial: `.jpg`.
+Esta pasta pode ser usada para testes locais e fallback.
 
-Exemplos:
-- `assets/imagens/mil-001.jpg`
-- `assets/imagens/mil-002.jpg`
+## Fonte principal atual de imagens
+- Supabase Storage, com buckets por pelotao:
+  - `imagens-1pel`
+  - `imagens-2pel`
+  - `imagens-3pel`
+  - `imagens-pelap`
+  - `imagens-seccmdo`
 
-Compatibilidade da aplicacao:
-- Se `foto` no CSV estiver vazio, sera usado `assets/imagens/<id>.jpg`.
-- Se `foto` no CSV tiver apenas nome de arquivo (ex.: `mil-010.png`), sera usado `assets/imagens/mil-010.png`.
+## Quando usar esta pasta
+- Ambiente offline/local sem acesso ao Supabase.
+- Testes rapidos de UI.
+
+## Convencao sugerida (fallback)
+- Nome do arquivo igual ao `id` do militar.
+- Exemplo: `mil-001.png`.
