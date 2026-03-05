@@ -17,6 +17,14 @@ Campos usados pelo app:
 - `pelotao`
 - `created_at`, `updated_at`
 
+### `public.efetivo`
+- `id_efetivo` (PK)
+- `id` (FK para `quadro_organizacional.id`)
+- `data_referencia`
+- `em_forma`
+- `situacao` (`em_forma`, `ferias`, `dispensado`, `missao`, `atrasado`, `outros`, `falta`, `baixado`)
+- `created_at`, `updated_at`
+
 ### `public.taf`
 Variantes encontradas no ambiente:
 - Variante A: `id` (registro), `id_militar` (FK para quadro)
@@ -31,12 +39,35 @@ Campos de negocio:
 - `pelotao`
 
 ### `public.fatos_observados`
-- `id` (PK)
-- `id_militar` (FK para `quadro_organizacional.id`)
+- `id_fo` (PK)
+- `id` (FK para `quadro_organizacional.id`)
 - `data`
 - `tipo` (`FO+`, `FO-`)
 - `descricao`
 - `autor`
+- `created_at`, `updated_at`
+
+### `public.historico_obs`
+- `id_historico` (PK)
+- `id` (FK para `quadro_organizacional.id`)
+- `texto`
+- `autor`
+- `data`
+- `created_at`, `updated_at`
+
+### `public.punicoes`
+- `id_punicao` (PK)
+- `id` (FK para `quadro_organizacional.id`)
+- `fato`
+- `punicao` (`ADV`, `IMP`, `DET`, `REP`, `PRISAO`)
+- `dias`, `data_inicio`, `data_fim`
+- `created_at`, `updated_at`
+
+### `public.tat`
+- `id_tat` (PK)
+- `id` (FK para `quadro_organizacional.id`)
+- `data`, `armamento`, `pontuacao`
+- `mencao`, `classificacao` (`I`, `R`, `B`, `MB`, `E`)
 - `created_at`, `updated_at`
 
 ### `public.usuario_config`
@@ -45,6 +76,7 @@ Campos de negocio:
 - `imagem_cabecalho`
 - `tema`
 - `pelotao`
+- `nome_pelotao` (subtitulo exibido no cabecalho)
 - `nivel_acesso`
 - `ativo`
 - `created_at`, `updated_at`

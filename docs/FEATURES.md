@@ -12,6 +12,17 @@
 - Busca por nome, funcao, posto/grad e numero.
 - Dados do militar em modal.
 
+## Efetivo
+- Persistencia no Supabase por militar e por data (`data_referencia`).
+- Troca de data aplica novo snapshot de efetivo para todos os militares.
+- Ao selecionar nova data no app, marcacoes/situacoes sao reiniciadas para todos.
+- Situacoes suportadas: `ferias`, `dispensado`, `missao`, `atrasado`, `outros`, `falta`, `baixado`.
+- Cores na situacao:
+  - Verde: em forma
+  - Azul: ferias/dispensado/missao
+  - Laranja: atrasado/outros
+  - Vermelho: falta/baixado
+
 ## Controle por Pelotao
 - Perfil do usuario em `usuario_config`.
 - RLS no banco para filtrar por pelotao.
@@ -31,16 +42,39 @@
 
 ## Fatos Observados (FO+/FO-)
 - CRUD com persistencia no Supabase.
-- Vinculo com militar por `id_militar` (FK para quadro).
+- Vinculo com militar por `id` (FK para quadro), com `id_fo` como identificador do registro.
 - Leitura/escrita protegidas por RLS de pelotao.
 
-## Modulos CRUD (hibrido)
-- Historico/Obs, Punicoes e partes do Efetivo ainda podem operar via fallback local, dependendo do ambiente.
+## Historico/Obs
+- CRUD com persistencia no Supabase.
+- Vinculo com militar por `id` (FK para quadro), com `id_historico` como identificador do registro.
+
+## Punicoes
+- CRUD com persistencia no Supabase.
+- Vinculo com militar por `id` (FK para quadro), com `id_punicao` como identificador do registro.
+- Comportamento no modal de punicoes atualizado automaticamente pelas equivalencias:
+  - `2 REP = 1 DET`
+  - `2 DET = 1 PRISAO`
+  - `2 PRISOES equivalentes = INSUFICIENTE`
+  - `> 2 PRISOES equivalentes = MAU`
+
+## TAT
+- Leitura/edicao de mencao persistidas no Supabase.
+- Vinculo com militar por `id` (FK para quadro), com `id_tat` como identificador do registro.
+
+## Header por Usuario
+- Subtitulo do cabecalho definido por `usuario_config.nome_pelotao`.
+- Fallback para `usuario_config.pelotao` e, se vazio, `PELOPES`.
 
 ## API Layer
 Acoes principais disponiveis:
 - Auth: `login`, `logout`, `getSession`
 - Usuario: `getUserConfig`
 - Quadro: `getMilitares`, `getMilitarDados`, `addMilitar`, `updateMilitar`, `deleteMilitar`
+- Efetivo: `getEfetivo`, `updateEfetivo`
+- FO: `getFO`, `createFO`, `updateFO`, `deleteFO`
+- Historico/Obs: `getHistoricoObs`, `createHistoricoObs`, `updateHistoricoObs`, `deleteHistoricoObs`
+- Punicoes: `getPunicoes`, `createPunicao`, `updatePunicao`, `deletePunicao`
 - TAF: `getTAF`, `getTAFDashboard`, `updateTAFDashboard`
+- TAT: `getTAT`, `createTAT`, `updateTAT`
 - Demais modulos mantidos no contrato atual da API.

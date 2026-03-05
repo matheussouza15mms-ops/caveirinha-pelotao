@@ -9,15 +9,19 @@ Separacao de responsabilidades sem framework:
   - Cliente: `services/supabaseClient.js`
   - Auth: `services/auth.js`
   - Quadro: `services/quadroService.js`
-  - TAF: `services/tafService.js`
+  - Efetivo: `services/efetivoService.js`
   - FO: `services/fatosObservadosService.js`
+  - Historico/Obs: `services/historicoObsService.js`
+  - Punicoes: `services/punicoesService.js`
+  - TAF: `services/tafService.js`
+  - TAT: `services/tatService.js`
   - Configuracao por usuario: `services/userConfigService.js`
 - Fallback local (legado/hibrido): `services/dataService.js`
 
 ## Fluxo de Dados Atual
 1. `app.js` consome `window.CaveirinhaAPI`.
 2. `services/api.js` roteia para Supabase quando o modulo existe.
-3. Se modulo nao estiver migrado, cai no fallback local (CSV via `dataService`).
+3. Se modulo/servico Supabase nao estiver disponivel, cai no fallback local (CSV via `dataService`).
 4. A UI renderiza pelo estado local, sem acesso direto ao banco.
 
 ## Auth e Sessao
@@ -43,6 +47,10 @@ Separacao de responsabilidades sem framework:
 - Usuario visualiza dados do proprio pelotao.
 - `admin` visualiza geral.
 - Perfil `consulta` pode ser configurado como somente leitura.
+
+## Personalizacao de Cabecalho
+- `usuario_config.imagem_cabecalho` define a logo do cabecalho.
+- `usuario_config.nome_pelotao` define o subtitulo do cabecalho por usuario.
 
 ## Compatibilidade Preservada
 - `organizacao`
