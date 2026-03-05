@@ -45,6 +45,15 @@
     );
   }
 
+  function hasSupabaseTat() {
+    return (
+      Boolean(globalScope.CaveirinhaTatService) &&
+      typeof globalScope.CaveirinhaTatService.getTAT === "function" &&
+      typeof globalScope.CaveirinhaTatService.createTAT === "function" &&
+      typeof globalScope.CaveirinhaTatService.updateTAT === "function"
+    );
+  }
+
   function hasSupabaseUserConfig() {
     return (
       Boolean(globalScope.CaveirinhaUserConfigService) &&
@@ -223,14 +232,23 @@
   }
 
   function getTAT() {
+    if (hasSupabaseTat()) {
+      return globalScope.CaveirinhaTatService.getTAT();
+    }
     return apiRequest("getTAT");
   }
 
   function createTAT(payload) {
+    if (hasSupabaseTat()) {
+      return globalScope.CaveirinhaTatService.createTAT(payload);
+    }
     return apiRequest("createTAT", payload);
   }
 
   function updateTAT(payload) {
+    if (hasSupabaseTat()) {
+      return globalScope.CaveirinhaTatService.updateTAT(payload);
+    }
     return apiRequest("updateTAT", payload);
   }
 
