@@ -890,6 +890,43 @@ body {
   margin-bottom: 10px;
 }
 
+.punicoes-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.punicoes-comportamento-box {
+  border: 1px solid #eadf9d;
+  background: #fff8d4;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #5d4d17;
+  font-weight: 700;
+}
+
+.punicoes-comportamento-value {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #d8c77a;
+  background: #fff6bf;
+}
+
+.punicoes-comportamento-value.insuficiente,
+.punicoes-comportamento-value.mau {
+  border-color: #efb2b2;
+  background: #ffe8e8;
+  color: #8f2f2f;
+}
+
+.punicoes-comportamento-value.bom {
+  border-color: #8ad0aa;
+  background: #def6e8;
+  color: #1f6f4d;
+}
+
 .taf-modal-card {
   width: min(1020px, 100%);
 }

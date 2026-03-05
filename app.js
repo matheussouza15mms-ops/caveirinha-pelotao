@@ -74,6 +74,7 @@ const punicoesTipoInput = document.getElementById("punicoesTipoInput");
 const punicoesInicioInput = document.getElementById("punicoesInicioInput");
 const punicoesFimInput = document.getElementById("punicoesFimInput");
 const punicoesDiasInput = document.getElementById("punicoesDiasInput");
+const punicoesComportamentoValue = document.getElementById("punicoesComportamentoValue");
 const tafModal = document.getElementById("tafModal");
 const tafModalClose = document.getElementById("tafModalClose");
 const tafCardsWrap = document.getElementById("tafCardsWrap");
@@ -128,6 +129,7 @@ const opcoesSituacao = ["falta", "missao", "baixado", "ferias", "outros"];
 const efetivoState = new Map();
 const mencoesOrdenadas = ["I", "R", "B", "MB", "E"];
 const tiposPunicao = ["ADV", "IMP", "DET", "REP", "PRISAO"];
+const comportamentoCodigos = ["EXCELENTE", "OTIMO", "BOM", "INSUFICIENTE", "MAU"];
 const AUTH_REMEMBER_KEY = "caveirinha_auth_remember";
 const AUTH_KEEP_SESSION_KEY = "caveirinha_auth_keep_session";
 const HEADER_IMAGE_SIGNED_TTL_SECONDS = 3600;
@@ -538,6 +540,90 @@ function calcularDiasPunicao(dataInicio, dataFim) {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
+function normalizarComportamentoCodigo(valor) {
+  const upper = String(valor || "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (upper === "OTIMO") return "OTIMO";
+  if (upper === "EXCELENTE") return "EXCELENTE";
+  if (upper === "BOM") return "BOM";
+  if (upper === "INSUFICIENTE") return "INSUFICIENTE";
+  if (upper === "MAU") return "MAU";
+  return "";
+}
+
+function labelComportamento(codigo) {
+  const normalizado = normalizarComportamentoCodigo(codigo);
+  const labels = {
+    EXCELENTE: "EXCELENTE",
+    OTIMO: "OTIMO",
+    BOM: "BOM",
+    INSUFICIENTE: "INSUFICIENTE",
+    MAU: "MAU"
+  };
+  return labels[normalizado] || "BOM";
+}
+
+function classeComportamento(codigo) {
+  const normalizado = normalizarComportamentoCodigo(codigo);
+  if (normalizado === "MAU") return "mau";
+  if (normalizado === "INSUFICIENTE") return "insuficiente";
+  if (normalizado === "OTIMO" || normalizado === "EXCELENTE") return "bom";
+  return "normal";
+}
+
+function calcularPrisaoEquivalentePunicoes(registros) {
+  let rep = 0;
+  let det = 0;
+  let prisao = 0;
+
+  (registros || []).forEach((registro) => {
+    const tipo = normalizarTipoPunicao(registro.punicao || registro.tipo);
+    if (tipo === "REP") rep += 1;
+    if (tipo === "DET") det += 1;
+    if (tipo === "PRISAO") prisao += 1;
+  });
+
+  return prisao + det / 2 + rep / 4;
+}
+
+function comportamentoAutomaticoPorPunicoes(registros) {
+  const prisaoEquivalente = calcularPrisaoEquivalentePunicoes(registros);
+  if (prisaoEquivalente > 2) {
+    return "MAU";
+  }
+  if (prisaoEquivalente >= 2) {
+    return "INSUFICIENTE";
+  }
+  return "";
+}
+
+function resolverComportamentoMilitar(manualAtual, registrosPunicoes) {
+  const automatico = comportamentoAutomaticoPorPunicoes(registrosPunicoes);
+  if (automatico) {
+    return automatico;
+  }
+
+  const manual = normalizarComportamentoCodigo(manualAtual);
+  if (manual === "EXCELENTE" || manual === "OTIMO") {
+    return manual;
+  }
+  return "BOM";
+}
+
+function renderComportamentoPunicoes(codigo) {
+  if (!punicoesComportamentoValue) {
+    return;
+  }
+  const safeCodigo = comportamentoCodigos.includes(normalizarComportamentoCodigo(codigo))
+    ? normalizarComportamentoCodigo(codigo)
+    : "BOM";
+  punicoesComportamentoValue.textContent = labelComportamento(safeCodigo);
+  punicoesComportamentoValue.className = `punicoes-comportamento-value ${classeComportamento(safeCodigo)}`;
+}
+
 function normalizarMencao(valor) {
   const upper = String(valor || "").toUpperCase();
   return mencoesOrdenadas.includes(upper) ? upper : "B";
@@ -877,6 +963,46 @@ function renderPunicoesTabela() {
   });
 }
 
+async function sincronizarComportamentoPorPunicoes() {
+  if (!militarSelecionadoId) {
+    return;
+  }
+
+  const registrosMilitar = punicoesListaCache.filter((item) => item.idMilitar === militarSelecionadoId);
+  let comportamentoManual = "";
+
+  try {
+    const dadosMilitar = await window.CaveirinhaAPI.getMilitarDados(militarSelecionadoId);
+    comportamentoManual = dadosMilitar?.comportamento || "";
+  } catch (error) {
+    console.error("Falha ao carregar comportamento atual do militar:", error);
+  }
+
+  const comportamentoFinal = resolverComportamentoMilitar(comportamentoManual, registrosMilitar);
+  renderComportamentoPunicoes(comportamentoFinal);
+
+  const comportamentoManualNormalizado = normalizarComportamentoCodigo(comportamentoManual);
+  if (comportamentoManualNormalizado === comportamentoFinal) {
+    return;
+  }
+
+  const payloadPorCodigo = {
+    EXCELENTE: "Excelente",
+    OTIMO: "Otimo",
+    BOM: "Bom",
+    INSUFICIENTE: "Insuficiente",
+    MAU: "Mau"
+  };
+
+  try {
+    await window.CaveirinhaAPI.updateMilitarDados(militarSelecionadoId, {
+      comportamento: payloadPorCodigo[comportamentoFinal] || "Bom"
+    });
+  } catch (error) {
+    console.error("Falha ao persistir comportamento automatico:", error);
+  }
+}
+
 async function carregarPunicoes() {
   try {
     punicoesListaCache = await window.CaveirinhaAPI.getPunicoes();
@@ -885,6 +1011,7 @@ async function carregarPunicoes() {
     punicoesListaCache = [];
   }
   renderPunicoesTabela();
+  await sincronizarComportamentoPorPunicoes();
 }
 
 function abrirPunicoesEditor(registro) {
@@ -912,6 +1039,7 @@ async function abrirPunicoes() {
   if (!militarSelecionadoId) {
     return;
   }
+  renderComportamentoPunicoes("BOM");
   abrirPunicoesModal();
   await carregarPunicoes();
 }

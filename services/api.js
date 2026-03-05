@@ -35,6 +35,16 @@
     );
   }
 
+  function hasSupabasePunicoes() {
+    return (
+      Boolean(globalScope.CaveirinhaPunicoesService) &&
+      typeof globalScope.CaveirinhaPunicoesService.getPunicoes === "function" &&
+      typeof globalScope.CaveirinhaPunicoesService.createPunicao === "function" &&
+      typeof globalScope.CaveirinhaPunicoesService.updatePunicao === "function" &&
+      typeof globalScope.CaveirinhaPunicoesService.deletePunicao === "function"
+    );
+  }
+
   function hasSupabaseUserConfig() {
     return (
       Boolean(globalScope.CaveirinhaUserConfigService) &&
@@ -156,18 +166,30 @@
   }
 
   function getPunicoes() {
+    if (hasSupabasePunicoes()) {
+      return globalScope.CaveirinhaPunicoesService.getPunicoes();
+    }
     return apiRequest("getPunicoes");
   }
 
   function createPunicao(payload) {
+    if (hasSupabasePunicoes()) {
+      return globalScope.CaveirinhaPunicoesService.createPunicao(payload);
+    }
     return apiRequest("createPunicao", payload);
   }
 
   function updatePunicao(payload) {
+    if (hasSupabasePunicoes()) {
+      return globalScope.CaveirinhaPunicoesService.updatePunicao(payload);
+    }
     return apiRequest("updatePunicao", payload);
   }
 
   function deletePunicao(id) {
+    if (hasSupabasePunicoes()) {
+      return globalScope.CaveirinhaPunicoesService.deletePunicao(id);
+    }
     return apiRequest("deletePunicao", { id });
   }
 
