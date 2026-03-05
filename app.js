@@ -26,6 +26,7 @@ const efetivoTableBody = document.getElementById("efetivoTableBody");
 const fichaFoto = document.getElementById("fichaFoto");
 const fichaNome = document.getElementById("fichaNome");
 const fichaFuncao = document.getElementById("fichaFuncao");
+const fichaWhatsappBtn = document.getElementById("fichaWhatsappBtn");
 const fichaDadosBtn = document.getElementById("fichaDadosBtn");
 const fichaTafBtn = document.getElementById("fichaTafBtn");
 const fichaTatBtn = document.getElementById("fichaTatBtn");
@@ -166,6 +167,25 @@ function normalizarEmail(valor) {
   return String(valor || "")
     .trim()
     .toLowerCase();
+}
+
+function normalizarTelefoneWhatsapp(valor) {
+  const digitos = String(valor || "").replace(/\D/g, "");
+  if (!digitos) {
+    return "";
+  }
+  if (digitos.startsWith("55")) {
+    return digitos;
+  }
+  return `55${digitos}`;
+}
+
+function montarLinkWhatsapp(militar) {
+  const telefone = normalizarTelefoneWhatsapp(militar?.celular);
+  if (!telefone) {
+    return "";
+  }
+  return `https://wa.me/${telefone}`;
 }
 
 function setLoginError(mensagem) {
@@ -1242,6 +1262,7 @@ function construirOrganizacao(militares) {
       numero: militar.numero,
       nomeGuerra: militar.nomeGuerra,
       funcao: militar.funcao,
+      celular: militar.celular,
       foto: militar.foto,
       lastUpdate: militar.lastUpdate
     });
@@ -1379,6 +1400,11 @@ function renderCards() {
       fichaFoto.src = militar.foto;
       fichaNome.textContent = militarNomeBase(militar);
       fichaFuncao.textContent = militar.funcao;
+      const whatsappLink = montarLinkWhatsapp(militar);
+      fichaWhatsappBtn.classList.toggle("hidden", !whatsappLink);
+      fichaWhatsappBtn.onclick = whatsappLink
+        ? () => window.open(whatsappLink, "_blank", "noopener")
+        : null;
       setScreen("ficha");
     });
 

@@ -11,6 +11,7 @@
 - Abas por fracao e cards de militar.
 - Busca por nome, funcao, posto/grad e numero.
 - Dados do militar em modal.
+- Botao de WhatsApp na ficha do militar, com abertura de conversa para `quadro_organizacional.celular`.
 
 ## Efetivo
 - Persistencia no Supabase por militar e por data (`data_referencia`).
