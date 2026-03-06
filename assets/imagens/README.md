@@ -17,3 +17,7 @@ Esta pasta pode ser usada para testes locais e fallback.
 ## Convencao sugerida (fallback)
 - Nome do arquivo igual ao `id` do militar.
 - Exemplo: `mil-001.png`.
+
+## Imagens base (fallback automatico)
+- `militar-base.png`: usada quando `quadro_organizacional.foto` estiver vazio/indisponivel.
+- `cabecalho-base.png`: usada quando `usuario_config.imagem_cabecalho` estiver vazio/indisponivel.

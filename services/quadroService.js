@@ -1,6 +1,7 @@
 ﻿(function bootstrapQuadroService(globalScope) {
   const TABLE_NAME = "quadro_organizacional";
   const FOTO_SIGNED_URL_TTL_SECONDS = 3600;
+  const DEFAULT_MILITAR_FOTO = "assets/imagens/militar-base.png";
   const PELOTAO_BUCKET_MAP = {
     "1 pel": "imagens-1pel",
     "2 pel": "imagens-2pel",
@@ -85,10 +86,28 @@
     return raw.replace(/^\/+/, "");
   }
 
+  async function isPublicUrlAvailable(url) {
+    const alvo = String(url || "").trim();
+    if (!alvo) {
+      return false;
+    }
+
+    try {
+      const response = await fetch(alvo, { method: "HEAD" });
+      if (response.ok) {
+        return true;
+      }
+      // Alguns provedores podem nao aceitar HEAD, mas a URL segue valida para <img>.
+      return response.status === 405;
+    } catch (error) {
+      return false;
+    }
+  }
+
   async function resolveFotoUrl(path, pelotao) {
     const normalized = normalizeFotoPath(path);
     if (!normalized) {
-      return "";
+      return DEFAULT_MILITAR_FOTO;
     }
 
     if (/^https?:\/\//i.test(normalized) || /^(\.\/|\/)?assets\//i.test(normalized)) {
@@ -97,7 +116,7 @@
 
     const resolved = parseBucketAndPath(normalized, pelotao);
     if (!resolved.bucket || !resolved.path) {
-      return "";
+      return DEFAULT_MILITAR_FOTO;
     }
 
     try {
@@ -114,10 +133,14 @@
 
       // Fallback para bucket publico.
       const { data: publicData } = storage.getPublicUrl(resolved.path);
-      return publicData?.publicUrl || "";
+      const publicUrl = publicData?.publicUrl || "";
+      if (await isPublicUrlAvailable(publicUrl)) {
+        return publicUrl;
+      }
+      return DEFAULT_MILITAR_FOTO;
     } catch (error) {
       console.error("Erro ao montar URL publica da foto no Supabase Storage:", error);
-      return "";
+      return DEFAULT_MILITAR_FOTO;
     }
   }
 

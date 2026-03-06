@@ -135,7 +135,8 @@ const comportamentoCodigos = ["EXCELENTE", "OTIMO", "BOM", "INSUFICIENTE", "MAU"
 const AUTH_REMEMBER_KEY = "caveirinha_auth_remember";
 const AUTH_KEEP_SESSION_KEY = "caveirinha_auth_keep_session";
 const HEADER_IMAGE_SIGNED_TTL_SECONDS = 3600;
-const DEFAULT_HEADER_LOGO = "assets/logo-pelotao.png";
+const DEFAULT_HEADER_LOGO = "assets/imagens/cabecalho-base.png";
+const DEFAULT_MILITAR_FOTO = "assets/imagens/militar-base.png";
 const DEFAULT_HEADER_SUBTITLE = "PELOPES";
 const PELOTAO_BUCKET_MAP = {
   "1 pel": "imagens-1pel",
@@ -307,6 +308,23 @@ function parseHeaderBucketAndPath(path, pelotao) {
   };
 }
 
+async function isPublicUrlAvailable(url) {
+  const alvo = String(url || "").trim();
+  if (!alvo) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(alvo, { method: "HEAD" });
+    if (response.ok) {
+      return true;
+    }
+    return response.status === 405;
+  } catch (error) {
+    return false;
+  }
+}
+
 async function resolverImagemCabecalho(path, pelotao) {
   const raw = String(path || "").trim();
   if (!raw) {
@@ -338,8 +356,9 @@ async function resolverImagemCabecalho(path, pelotao) {
     }
 
     const { data: publicData } = storage.getPublicUrl(resolved.path);
-    if (publicData?.publicUrl) {
-      return publicData.publicUrl;
+    const publicUrl = publicData?.publicUrl || "";
+    if (await isPublicUrlAvailable(publicUrl)) {
+      return publicUrl;
     }
   } catch (error) {
     console.error("Falha ao resolver imagem de cabecalho:", error);
@@ -1263,7 +1282,7 @@ function construirOrganizacao(militares) {
       nomeGuerra: militar.nomeGuerra,
       funcao: militar.funcao,
       celular: militar.celular,
-      foto: militar.foto,
+      foto: militar.foto || DEFAULT_MILITAR_FOTO,
       lastUpdate: militar.lastUpdate
     });
   });
@@ -1397,7 +1416,7 @@ function renderCards() {
 
     card.addEventListener("click", () => {
       militarSelecionadoId = militar.id;
-      fichaFoto.src = militar.foto;
+      fichaFoto.src = militar.foto || DEFAULT_MILITAR_FOTO;
       fichaNome.textContent = militarNomeBase(militar);
       fichaFuncao.textContent = militar.funcao;
       const whatsappLink = montarLinkWhatsapp(militar);

@@ -9,6 +9,7 @@
   };
   const IMAGENS_DIR = "./assets/imagens";
   const IMAGENS_EXTENSOES = ["jpg", "jpeg", "png", "webp"];
+  const DEFAULT_MILITAR_FOTO = `${IMAGENS_DIR}/militar-base.png`;
 
   const COLLECTION_DEFAULTS = {
     quadroOrganizacional: [],
@@ -152,7 +153,7 @@
 
     const id = String(idMilitar || "").trim();
     if (!id) {
-      return "";
+      return DEFAULT_MILITAR_FOTO;
     }
 
     return `${IMAGENS_DIR}/${id}.${IMAGENS_EXTENSOES[0]}`;
