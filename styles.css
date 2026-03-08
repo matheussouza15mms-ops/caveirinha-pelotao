@@ -203,6 +203,8 @@ body {
   transition: width 0.25s ease;
   padding: 12px;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar.collapsed {
@@ -282,6 +284,24 @@ body {
   text-align: left;
 }
 
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  display: grid;
+  gap: 2px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.app-version,
+.app-author {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sidebar.collapsed .label {
   display: none;
 }
@@ -292,6 +312,15 @@ body {
   gap: 0;
   padding-left: 8px;
   padding-right: 8px;
+}
+
+.sidebar.collapsed .sidebar-footer {
+  text-align: center;
+  font-size: 0.62rem;
+}
+
+.sidebar.collapsed .app-author {
+  display: none;
 }
 
 .search-panel {
@@ -1290,6 +1319,10 @@ body {
 
   .sidebar.collapsed .label {
     display: none;
+  }
+
+  .sidebar-footer {
+    font-size: 0.68rem;
   }
 
   .app-brand-logo {
