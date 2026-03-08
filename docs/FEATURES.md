@@ -15,12 +15,13 @@
 
 ## Efetivo
 - Persistencia no Supabase por militar e por data (`data_referencia`).
-- Troca de data aplica novo snapshot de efetivo para todos os militares.
-- Ao selecionar nova data no app, marcacoes/situacoes sao reiniciadas para todos.
-- Situacoes suportadas: `ferias`, `dispensado`, `missao`, `atrasado`, `outros`, `falta`, `baixado`.
+- Ao abrir o app, a data atual e consultada no Supabase para carregar o efetivo do dia.
+- Ao trocar a data no app, o sistema consulta os registros daquela data (sem reset em massa).
+- O Supabase so e atualizado quando o usuario altera um militar (em forma/situacao).
+- Situacoes suportadas: `ferias`, `dispensado`, `missao`, `servico`, `s_sv (S Sv)`, `atrasado`, `outros`, `falta`, `baixado`.
 - Cores na situacao:
   - Verde: em forma
-  - Azul: ferias/dispensado/missao
+  - Azul: ferias/dispensado/missao/servico/s_sv
   - Laranja: atrasado/outros
   - Vermelho: falta/baixado
 

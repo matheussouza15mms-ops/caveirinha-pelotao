@@ -19,7 +19,7 @@
 
   function mapRow(row) {
     const dataRef = String(row.data_referencia || "");
-    const situacao = String(row.situacao || "");
+    const situacao = normalizarSituacao(row.situacao);
     const emForma = Boolean(row.em_forma) || situacao === "em_forma";
     return {
       idMilitar: row.id,
@@ -29,26 +29,36 @@
     };
   }
 
-  async function getLatestDate() {
-    const { data, error } = await getClient()
-      .from(TABLE_NAME)
-      .select("data_referencia")
-      .order("data_referencia", { ascending: false })
-      .limit(1);
-    if (error) {
-      throw error;
-    }
-    return data?.[0]?.data_referencia || "";
+  function hojeIsoDate() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function normalizarSituacao(valor) {
+    const normalized = String(valor || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    if (!normalized) return "";
+    if (normalized === "em_forma") return "em_forma";
+    if (normalized === "ferias") return "ferias";
+    if (normalized === "dispensado") return "dispensado";
+    if (normalized === "missao") return "missao";
+    if (normalized === "servico") return "servico";
+    if (normalized === "s sv" || normalized === "s_sv" || normalized === "servico; s sv") return "s_sv";
+    if (normalized === "atrasado") return "atrasado";
+    if (normalized === "outro" || normalized === "outros") return "outros";
+    if (normalized === "falta") return "falta";
+    if (normalized === "baixado") return "baixado";
+    return "";
   }
 
   async function getEfetivo(dataReferencia) {
     try {
       let dataRef = String(dataReferencia || "").trim();
       if (!dataRef) {
-        dataRef = await getLatestDate();
-      }
-      if (!dataRef) {
-        return [];
+        dataRef = hojeIsoDate();
       }
 
       const { data, error } = await getClient()
@@ -75,7 +85,7 @@
 
     const dataReferencia = dataReferenciaFromIso(payload?.dataAtualizacao);
     const emForma = Boolean(payload?.emForma);
-    const situacao = emForma ? "em_forma" : String(payload?.situacao || "").trim();
+    const situacao = emForma ? "em_forma" : normalizarSituacao(payload?.situacao);
     const idEfetivo = `ef-${idMilitar}-${dataReferencia}`;
 
     const row = {

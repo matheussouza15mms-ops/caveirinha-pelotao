@@ -12,7 +12,7 @@ create table if not exists public.efetivo (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint efetivo_situacao_check
-    check (situacao in ('', 'em_forma', 'ferias', 'dispensado', 'missao', 'atrasado', 'outros', 'falta', 'baixado'))
+    check (situacao in ('', 'em_forma', 'ferias', 'dispensado', 'missao', 'servico', 's_sv', 'atrasado', 'outros', 'falta', 'baixado'))
 );
 
 alter table public.efetivo add column if not exists id_efetivo text;
@@ -50,7 +50,7 @@ alter table public.efetivo
 alter table public.efetivo drop constraint if exists efetivo_situacao_check;
 alter table public.efetivo
   add constraint efetivo_situacao_check
-  check (situacao in ('', 'em_forma', 'ferias', 'dispensado', 'missao', 'atrasado', 'outros', 'falta', 'baixado'));
+  check (situacao in ('', 'em_forma', 'ferias', 'dispensado', 'missao', 'servico', 's_sv', 'atrasado', 'outros', 'falta', 'baixado'));
 
 create or replace function public.set_updated_at_efetivo()
 returns trigger

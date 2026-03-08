@@ -127,7 +127,7 @@ let appJaInicializado = false;
 let usuarioSessao = null;
 let usuarioConfigAtual = null;
 
-const opcoesSituacao = ["ferias", "dispensado", "missao", "atrasado", "outros", "falta", "baixado"];
+const opcoesSituacao = ["ferias", "dispensado", "missao", "servico", "s_sv", "atrasado", "outros", "falta", "baixado"];
 const efetivoState = new Map();
 const mencoesOrdenadas = ["I", "R", "B", "MB", "E"];
 const tiposPunicao = ["ADV", "IMP", "DET", "REP", "PRISAO"];
@@ -552,6 +552,8 @@ function normalizarSituacaoEfetivo(valor) {
   if (normalized === "ferias") return "ferias";
   if (normalized === "dispensado") return "dispensado";
   if (normalized === "missao") return "missao";
+  if (normalized === "servico") return "servico";
+  if (normalized === "s sv" || normalized === "s_sv" || normalized === "servico; s sv") return "s_sv";
   if (normalized === "atrasado") return "atrasado";
   if (normalized === "outro" || normalized === "outros") return "outros";
   if (normalized === "falta") return "falta";
@@ -569,7 +571,7 @@ function classeSituacaoEfetivo(estado) {
   }
 
   const situacao = normalizarSituacaoEfetivo(estado.situacao);
-  if (["ferias", "dispensado", "missao"].includes(situacao)) {
+  if (["ferias", "dispensado", "missao", "servico", "s_sv"].includes(situacao)) {
     return "status-azul";
   }
   if (["atrasado", "outros"].includes(situacao)) {
@@ -1310,7 +1312,7 @@ function reconstruirIndices() {
   );
 }
 
-function sincronizarEfetivoState(efetivoRegistros) {
+function sincronizarEfetivoState(efetivoRegistros, dataSelecionada) {
   efetivoState.clear();
 
   const efetivoPorMilitar = new Map(
@@ -1337,7 +1339,8 @@ function sincronizarEfetivoState(efetivoRegistros) {
   });
 
   const primeiraData = Array.from(efetivoState.values()).find((estado) => estado.dataAtualizacao);
-  efetivoDataInput.value = dataInputFromIso(primeiraData ? primeiraData.dataAtualizacao : "") || hojeISODate();
+  const dataPadrao = String(dataSelecionada || "").trim();
+  efetivoDataInput.value = dataInputFromIso(primeiraData ? primeiraData.dataAtualizacao : "") || dataPadrao || hojeISODate();
 }
 
 function setScreen(screen) {
@@ -1578,6 +1581,8 @@ function renderEfetivo() {
           <option value="ferias">Ferias</option>
           <option value="dispensado">Dispensado</option>
           <option value="missao">Missao</option>
+          <option value="servico">Servico</option>
+          <option value="s_sv">S Sv</option>
           <option value="atrasado">Atrasado</option>
           <option value="outros">Outros</option>
           <option value="falta">Falta</option>
@@ -1612,39 +1617,16 @@ async function persistirEfetivo(cardId) {
   }
 }
 
-async function aplicarDataEfetivoParaTodos() {
+async function carregarEfetivoDataSelecionada() {
   const dataSelecionada = efetivoDataInput.value || hojeISODate();
-  const dataIso = isoDoDia(dataSelecionada);
   efetivoDataInput.value = dataSelecionada;
 
-  efetivoState.forEach((estado, cardId) => {
-    const atual = efetivoState.get(cardId);
-    if (!atual) {
-      return;
-    }
-    atual.emForma = false;
-    atual.situacao = "";
-    atual.dataAtualizacao = dataIso;
-    atualizarLinhaEfetivo(cardId);
-  });
-
-  const atualizacoes = Array.from(efetivoState.entries()).map(async ([cardId, estado]) => {
-    const idMilitar = cardIdToMilitarId.get(cardId);
-    if (!idMilitar) {
-      return;
-    }
-    await window.CaveirinhaAPI.updateEfetivo({
-      idMilitar,
-      emForma: false,
-      situacao: "",
-      dataAtualizacao: estado.dataAtualizacao
-    });
-  });
-
   try {
-    await Promise.all(atualizacoes);
+    const efetivo = await window.CaveirinhaAPI.getEfetivo(dataSelecionada);
+    sincronizarEfetivoState(efetivo, dataSelecionada);
+    renderEfetivo();
   } catch (error) {
-    console.error("Falha ao aplicar data global do efetivo:", error);
+    console.error("Falha ao consultar efetivo da data selecionada:", error);
   }
 }
 
@@ -1693,7 +1675,7 @@ efetivoTableBody.addEventListener("change", (event) => {
 });
 
 efetivoDataInput.addEventListener("change", () => {
-  void aplicarDataEfetivoParaTodos();
+  void carregarEfetivoDataSelecionada();
 });
 
 toggleSidebar.addEventListener("click", () => {
@@ -2303,8 +2285,9 @@ async function inicializarApp() {
     organizacao = construirOrganizacao(militares);
     reconstruirIndices();
 
-    const efetivo = await window.CaveirinhaAPI.getEfetivo();
-    sincronizarEfetivoState(efetivo);
+    const dataHoje = hojeISODate();
+    const efetivo = await window.CaveirinhaAPI.getEfetivo(dataHoje);
+    sincronizarEfetivoState(efetivo, dataHoje);
   } catch (error) {
     console.error("Falha ao inicializar dados via API layer:", error);
     organizacao = [];
