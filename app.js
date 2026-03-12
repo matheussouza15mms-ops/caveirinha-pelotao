@@ -3,6 +3,7 @@ let indiceMilitares = [];
 const cardIdToMilitarId = new Map();
 
 const sidebar = document.getElementById("sidebar");
+const iconSidebar = document.querySelector(".icon-sidebar");
 const toggleSidebar = document.getElementById("toggleSidebar");
 const menuItems = document.querySelectorAll(".menu-item");
 const screenTitle = document.getElementById("screenTitle");
@@ -129,6 +130,7 @@ let tatRegistroAtual = null;
 let appJaInicializado = false;
 let usuarioSessao = null;
 let usuarioConfigAtual = null;
+let ultimoScrollY = window.scrollY || 0;
 
 const opcoesSituacao = ["ferias", "dispensado", "missao", "servico", "s_sv", "atrasado", "outros", "falta", "baixado"];
 const efetivoState = new Map();
@@ -1274,6 +1276,30 @@ async function abrirTat() {
 
 function construirOrganizacao(militares) {
   const grupos = new Map();
+  const ordemFracoes = [
+    { nome: "cmt pel", match: (v) => v.includes("cmt") && v.includes("pel") },
+    { nome: "tu cmdo", match: (v) => v.includes("tu") && (v.includes("cmdo") || v.includes("cdo") || v.includes("comando")) },
+    { nome: "1 gc", match: (v) => /(^| )1 ?gc($| )/.test(v) },
+    { nome: "2 gc", match: (v) => /(^| )2 ?gc($| )/.test(v) },
+    { nome: "3 gc", match: (v) => /(^| )3 ?gc($| )/.test(v) }
+  ];
+  const normalizarFracao = (valor) =>
+    String(valor || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[º°]/g, "")
+      .replace(/\s+/g, " ");
+
+  const prioridadeFracao = (aba) => {
+    const normalizada = normalizarFracao(aba);
+    const idx = ordemFracoes.findIndex((item) => item.match(normalizada));
+    if (idx >= 0) {
+      return idx;
+    }
+    return ordemFracoes.length + 1;
+  };
 
   militares.forEach((militar) => {
     const aba = militar.aba || "Sem Aba";
@@ -1292,10 +1318,19 @@ function construirOrganizacao(militares) {
     });
   });
 
-  return Array.from(grupos.entries()).map(([aba, militaresDaAba]) => ({
-    aba,
-    militares: militaresDaAba
-  }));
+  return Array.from(grupos.entries())
+    .sort((a, b) => {
+      const prioridadeA = prioridadeFracao(a[0]);
+      const prioridadeB = prioridadeFracao(b[0]);
+      if (prioridadeA !== prioridadeB) {
+        return prioridadeA - prioridadeB;
+      }
+      return String(a[0]).localeCompare(String(b[0]), "pt-BR");
+    })
+    .map(([aba, militaresDaAba]) => ({
+      aba,
+      militares: militaresDaAba
+    }));
 }
 
 function reconstruirIndices() {
@@ -1651,6 +1686,23 @@ async function carregarEfetivoDataSelecionada() {
   }
 }
 
+function atualizarVisibilidadeBarraIcones() {
+  if (!iconSidebar) {
+    return;
+  }
+
+  const scrollAtual = window.scrollY || 0;
+  const delta = scrollAtual - ultimoScrollY;
+
+  if (scrollAtual <= 12 || delta < -6) {
+    iconSidebar.classList.remove("nav-hidden");
+  } else if (delta > 6) {
+    iconSidebar.classList.add("nav-hidden");
+  }
+
+  ultimoScrollY = scrollAtual;
+}
+
 efetivoTableBody.addEventListener("change", (event) => {
   const alvo = event.target;
   if (!(alvo instanceof HTMLElement)) {
@@ -1744,6 +1796,8 @@ document.addEventListener("click", (event) => {
     fecharBusca();
   }
 });
+
+window.addEventListener("scroll", atualizarVisibilidadeBarraIcones, { passive: true });
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {

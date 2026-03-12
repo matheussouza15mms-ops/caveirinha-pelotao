@@ -204,6 +204,19 @@ body {
   margin-bottom: 14px;
 }
 
+.icon-sidebar {
+  position: sticky;
+  top: 8px;
+  z-index: 120;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.icon-sidebar.nav-hidden {
+  transform: translateY(-120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
 .menu {
   display: flex;
   align-items: center;
@@ -213,6 +226,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.16);
   padding: 10px;
   flex-wrap: wrap;
+  box-shadow: 0 10px 24px rgba(8, 24, 42, 0.22);
 }
 
 .menu-item {
@@ -1267,6 +1281,10 @@ body {
   .sidebar {
     width: 100%;
     min-height: auto;
+  }
+
+  .icon-sidebar {
+    top: 6px;
   }
 
   .app-brand-logo {
