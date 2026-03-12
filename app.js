@@ -8,6 +8,9 @@ const menuItems = document.querySelectorAll(".menu-item");
 const screenTitle = document.getElementById("screenTitle");
 const quadroScreen = document.getElementById("quadroScreen");
 const efetivoScreen = document.getElementById("efetivoScreen");
+const controleScreen = document.getElementById("controleScreen");
+const missoesScreen = document.getElementById("missoesScreen");
+const alertasScreen = document.getElementById("alertasScreen");
 const fichaScreen = document.getElementById("fichaScreen");
 const tabsContainer = document.getElementById("tabsContainer");
 const cardsArea = document.getElementById("cardsArea");
@@ -1346,6 +1349,9 @@ function sincronizarEfetivoState(efetivoRegistros, dataSelecionada) {
 function setScreen(screen) {
   quadroScreen.classList.remove("active");
   efetivoScreen.classList.remove("active");
+  controleScreen.classList.remove("active");
+  missoesScreen.classList.remove("active");
+  alertasScreen.classList.remove("active");
   fichaScreen.classList.remove("active");
 
   if (screen === "quadro") {
@@ -1361,6 +1367,21 @@ function setScreen(screen) {
   if (screen === "ficha") {
     fichaScreen.classList.add("active");
     screenTitle.textContent = "Ficha do Militar";
+  }
+
+  if (screen === "controle") {
+    controleScreen.classList.add("active");
+    screenTitle.textContent = "Controle Sanitario";
+  }
+
+  if (screen === "missoes") {
+    missoesScreen.classList.add("active");
+    screenTitle.textContent = "Missoes";
+  }
+
+  if (screen === "alertas") {
+    alertasScreen.classList.add("active");
+    screenTitle.textContent = "Alertas";
   }
 }
 
@@ -1678,9 +1699,11 @@ efetivoDataInput.addEventListener("change", () => {
   void carregarEfetivoDataSelecionada();
 });
 
-toggleSidebar.addEventListener("click", () => {
-  sidebar.classList.toggle("collapsed");
-});
+if (toggleSidebar) {
+  toggleSidebar.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
+  });
+}
 
 menuItems.forEach((item) => {
   item.addEventListener("click", () => {
@@ -2293,10 +2316,6 @@ async function inicializarApp() {
     organizacao = [];
     indiceMilitares = [];
     efetivoState.clear();
-  }
-
-  if (window.matchMedia("(max-width: 900px)").matches) {
-    sidebar.classList.add("collapsed");
   }
 
   renderTabs();

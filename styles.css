@@ -192,54 +192,42 @@ body {
 
 .app-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: block;
 }
 
 .sidebar {
-  width: 260px;
-  background: var(--primary);
-  color: #fff;
-  transition: width 0.25s ease;
-  padding: 12px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar.collapsed {
-  width: var(--sidebar-collapsed-width);
-}
-
-.toggle-btn {
   width: 100%;
-  border: 0;
-  background: #21486f;
+  background: transparent;
   color: #fff;
-  border-radius: 10px;
-  padding: 10px;
-  cursor: pointer;
-  font-size: 18px;
+  padding: 0;
+  position: relative;
+  margin-bottom: 14px;
 }
 
 .menu {
-  margin-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.menu-item {
   display: flex;
   align-items: center;
   gap: 10px;
+  background: #0f2a46;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 10px;
+  flex-wrap: wrap;
+}
+
+.menu-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  padding: 12px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border-radius: 10px;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
 }
 
 .menu-item.active {
@@ -265,69 +253,42 @@ body {
   background-image: url("assets/icons/efetivo.png");
 }
 
+.icon-controle {
+  background-image: url("assets/icons/controle-sanitario.png");
+}
+
+.icon-missoes {
+  background-image: url("assets/icons/missoes.png");
+}
+
+.icon-alertas {
+  background-image: url("assets/icons/alertas.png");
+}
+
 .icon-search {
   background-image: url("assets/icons/pesquisa.png");
 }
 
 .search-toggle {
-  width: 100%;
-  margin-top: 10px;
-  display: flex;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  padding: 12px;
+  padding: 0;
   border-radius: 10px;
   cursor: pointer;
-  text-align: left;
-}
-
-.sidebar-footer {
-  margin-top: auto;
-  padding-top: 12px;
-  display: grid;
-  gap: 2px;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 0.72rem;
-  line-height: 1.2;
-}
-
-.app-version,
-.app-author {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar.collapsed .label {
-  display: none;
-}
-
-.sidebar.collapsed .menu-item,
-.sidebar.collapsed .search-toggle {
-  justify-content: center;
-  gap: 0;
-  padding-left: 8px;
-  padding-right: 8px;
-}
-
-.sidebar.collapsed .sidebar-footer {
   text-align: center;
-  font-size: 0.62rem;
-}
-
-.sidebar.collapsed .app-author {
-  display: none;
 }
 
 .search-panel {
   display: none;
   position: absolute;
-  top: 12px;
-  left: calc(100% + 10px);
+  top: calc(100% + 8px);
+  left: 0;
   width: 290px;
   max-height: 75vh;
   overflow: hidden;
@@ -1300,29 +1261,12 @@ body {
 
 @media (max-width: 900px) {
   .app-shell {
-    grid-template-columns: auto 1fr;
+    display: block;
   }
 
   .sidebar {
-    width: 220px;
-    min-height: 100vh;
-  }
-
-  .sidebar.collapsed {
-    width: var(--sidebar-collapsed-width);
-  }
-
-  .menu {
-    flex-direction: column;
-    overflow-x: visible;
-  }
-
-  .sidebar.collapsed .label {
-    display: none;
-  }
-
-  .sidebar-footer {
-    font-size: 0.68rem;
+    width: 100%;
+    min-height: auto;
   }
 
   .app-brand-logo {
@@ -1331,7 +1275,7 @@ body {
   }
 
   .search-panel {
-    width: min(290px, calc(100vw - 106px));
+    width: min(320px, calc(100vw - 30px));
   }
 
   .quadro-layout {
@@ -1416,5 +1360,4 @@ body {
     margin-top: 2px;
     font-size: 0.96rem;
   }
-}
 }

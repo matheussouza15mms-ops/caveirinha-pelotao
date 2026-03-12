@@ -36,37 +36,6 @@
   </div>
 
   <div class="app-shell">
-    <aside class="sidebar" id="sidebar">
-      <button id="toggleSidebar" class="toggle-btn" aria-label="Expandir ou retrair menu">☰</button>
-      <nav class="menu">
-        <button class="menu-item active" data-screen="quadro">
-          <span class="menu-icon icon-quadro" aria-hidden="true"></span>
-          <span class="label">Quadro Organizacional</span>
-        </button>
-        <button class="menu-item" data-screen="efetivo">
-          <span class="menu-icon icon-efetivo" aria-hidden="true"></span>
-          <span class="label">Efetivo</span>
-        </button>
-      </nav>
-      <button id="searchToggle" class="search-toggle">
-        <span class="menu-icon icon-search" aria-hidden="true"></span>
-        <span class="label">Pesquisar Militar</span>
-      </button>
-      <div id="searchPanel" class="search-panel" aria-hidden="true">
-        <input
-          id="searchInput"
-          type="search"
-          placeholder="Buscar por nome ou função"
-          autocomplete="off"
-        />
-        <div id="searchResults" class="search-results"></div>
-      </div>
-      <div class="sidebar-footer" aria-label="Informacoes da versao do aplicativo">
-        <small class="app-version">v1.000.000</small>
-        <small class="app-author">Criado por: MMS</small>
-      </div>
-    </aside>
-
     <main class="content">
       <header class="topbar">
         <div class="app-header">
@@ -81,6 +50,38 @@
         </div>
         <h2 id="screenTitle">Quadro Organizacional</h2>
       </header>
+
+      <aside class="sidebar icon-sidebar" id="sidebar">
+        <nav class="menu" aria-label="Navegacao principal">
+          <button class="menu-item active" data-screen="quadro" title="Quadro Organizacional" aria-label="Quadro Organizacional">
+            <span class="menu-icon icon-quadro" aria-hidden="true"></span>
+          </button>
+          <button class="menu-item" data-screen="efetivo" title="Efetivo" aria-label="Efetivo">
+            <span class="menu-icon icon-efetivo" aria-hidden="true"></span>
+          </button>
+          <button class="menu-item" data-screen="controle" title="Controle Sanitario" aria-label="Controle Sanitario">
+            <span class="menu-icon icon-controle" aria-hidden="true"></span>
+          </button>
+          <button class="menu-item" data-screen="missoes" title="Missoes" aria-label="Missoes">
+            <span class="menu-icon icon-missoes" aria-hidden="true"></span>
+          </button>
+          <button class="menu-item" data-screen="alertas" title="Alertas" aria-label="Alertas">
+            <span class="menu-icon icon-alertas" aria-hidden="true"></span>
+          </button>
+          <button id="searchToggle" class="search-toggle" title="Pesquisar Militar" aria-label="Pesquisar Militar">
+            <span class="menu-icon icon-search" aria-hidden="true"></span>
+          </button>
+        </nav>
+        <div id="searchPanel" class="search-panel" aria-hidden="true">
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Buscar por nome ou funcao"
+            autocomplete="off"
+          />
+          <div id="searchResults" class="search-results"></div>
+        </div>
+      </aside>
 
       <section id="quadroScreen" class="screen active">
         <div class="quadro-layout">
@@ -122,6 +123,33 @@
             </thead>
             <tbody id="efetivoTableBody"></tbody>
           </table>
+        </div>
+      </section>
+
+      <section id="controleScreen" class="screen">
+        <div class="efetivo-table-wrap">
+          <div style="padding: 18px;">
+            <h3 style="margin: 0 0 6px;">Controle Sanitario</h3>
+            <p style="margin: 0; color: #4a6076;">Modulo pronto para receber as regras do controle sanitario.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="missoesScreen" class="screen">
+        <div class="efetivo-table-wrap">
+          <div style="padding: 18px;">
+            <h3 style="margin: 0 0 6px;">Missoes</h3>
+            <p style="margin: 0; color: #4a6076;">Tela base criada para gestao de missoes.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="alertasScreen" class="screen">
+        <div class="efetivo-table-wrap">
+          <div style="padding: 18px;">
+            <h3 style="margin: 0 0 6px;">Alertas</h3>
+            <p style="margin: 0; color: #4a6076;">Tela base criada para central de alertas.</p>
+          </div>
         </div>
       </section>
 
