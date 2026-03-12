@@ -20,10 +20,12 @@ const searchToggle = document.getElementById("searchToggle");
 const searchPanel = document.getElementById("searchPanel");
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
+const kpiTotalLabel = document.getElementById("kpiTotalLabel");
 const kpiTotalPelotao = document.getElementById("kpiTotalPelotao");
 const kpiEmForma = document.getElementById("kpiEmForma");
 const kpiDestinos = document.getElementById("kpiDestinos");
 const kpiBaixados = document.getElementById("kpiBaixados");
+const efetivoTabsContainer = document.getElementById("efetivoTabsContainer");
 const efetivoDataInput = document.getElementById("efetivoDataInput");
 const efetivoTableBody = document.getElementById("efetivoTableBody");
 
@@ -131,6 +133,7 @@ let appJaInicializado = false;
 let usuarioSessao = null;
 let usuarioConfigAtual = null;
 let ultimoScrollY = window.scrollY || 0;
+let efetivoPelotaoAtivo = "__todos__";
 
 const opcoesSituacao = ["ferias", "dispensado", "missao", "servico", "s_sv", "atrasado", "outros", "falta", "baixado"];
 const efetivoState = new Map();
@@ -287,6 +290,24 @@ function normalizarPelotaoBucket(valor) {
 
 function bucketPorPelotao(pelotao) {
   return PELOTAO_BUCKET_MAP[normalizarPelotaoBucket(pelotao)] || "";
+}
+
+function usuarioEhComando() {
+  const nivel = String(usuarioConfigAtual?.nivelAcesso || "")
+    .trim()
+    .toLowerCase();
+  return nivel === "comando" || nivel === "admin";
+}
+
+function normalizarLabelPelotao(valor) {
+  const normalizado = normalizarPelotaoBucket(valor);
+  if (!normalizado) return "Sem Pelotao";
+  if (normalizado.includes("sec") || normalizado.includes("cmdo") || normalizado.includes("comando")) return "Seç Cmdo";
+  if (normalizado.includes("1") && normalizado.includes("pel")) return "1º Pel";
+  if (normalizado.includes("2") && normalizado.includes("pel")) return "2º Pel";
+  if (normalizado.includes("3") && normalizado.includes("pel")) return "3º Pel";
+  if (normalizado.includes("ap")) return "Pel Ap";
+  return String(valor || "Sem Pelotao").trim() || "Sem Pelotao";
 }
 
 function parseHeaderBucketAndPath(path, pelotao) {
@@ -1277,11 +1298,18 @@ async function abrirTat() {
 function construirOrganizacao(militares) {
   const grupos = new Map();
   const ordemFracoes = [
-    { nome: "cmt pel", match: (v) => v.includes("cmt") && v.includes("pel") },
-    { nome: "tu cmdo", match: (v) => v.includes("tu") && (v.includes("cmdo") || v.includes("cdo") || v.includes("comando")) },
-    { nome: "1 gc", match: (v) => /(^| )1 ?gc($| )/.test(v) },
-    { nome: "2 gc", match: (v) => /(^| )2 ?gc($| )/.test(v) },
-    { nome: "3 gc", match: (v) => /(^| )3 ?gc($| )/.test(v) }
+    { match: (v) => v.includes("cmt") && v.includes("pel") },
+    { match: (v) => v.includes("tu") && (v.includes("cmdo") || v.includes("cdo") || v.includes("comando")) },
+    { match: (v) => /(^| )1 ?gc($| )/.test(v) },
+    { match: (v) => /(^| )2 ?gc($| )/.test(v) },
+    { match: (v) => /(^| )3 ?gc($| )/.test(v) }
+  ];
+  const ordemPelotoes = [
+    { match: (v) => v.includes("sec") || v.includes("cmdo") || v.includes("comando") },
+    { match: (v) => v.includes("1") && v.includes("pel") },
+    { match: (v) => v.includes("2") && v.includes("pel") },
+    { match: (v) => v.includes("3") && v.includes("pel") },
+    { match: (v) => v.includes("ap") }
   ];
   const normalizarFracao = (valor) =>
     String(valor || "")
@@ -1301,8 +1329,20 @@ function construirOrganizacao(militares) {
     return ordemFracoes.length + 1;
   };
 
+  const prioridadePelotao = (aba) => {
+    const normalizada = normalizarPelotaoBucket(aba);
+    const idx = ordemPelotoes.findIndex((item) => item.match(normalizada));
+    if (idx >= 0) {
+      return idx;
+    }
+    return ordemPelotoes.length + 1;
+  };
+
   militares.forEach((militar) => {
-    const aba = militar.aba || "Sem Aba";
+    const aba = usuarioEhComando()
+      ? normalizarLabelPelotao(militar.pelotao)
+      : (militar.aba || "Sem Aba");
+
     if (!grupos.has(aba)) {
       grupos.set(aba, []);
     }
@@ -1312,6 +1352,8 @@ function construirOrganizacao(militares) {
       numero: militar.numero,
       nomeGuerra: militar.nomeGuerra,
       funcao: militar.funcao,
+      fracao: militar.fracao,
+      pelotao: normalizarLabelPelotao(militar.pelotao),
       celular: militar.celular,
       foto: militar.foto || DEFAULT_MILITAR_FOTO,
       lastUpdate: militar.lastUpdate
@@ -1320,8 +1362,8 @@ function construirOrganizacao(militares) {
 
   return Array.from(grupos.entries())
     .sort((a, b) => {
-      const prioridadeA = prioridadeFracao(a[0]);
-      const prioridadeB = prioridadeFracao(b[0]);
+      const prioridadeA = usuarioEhComando() ? prioridadePelotao(a[0]) : prioridadeFracao(a[0]);
+      const prioridadeB = usuarioEhComando() ? prioridadePelotao(b[0]) : prioridadeFracao(b[0]);
       if (prioridadeA !== prioridadeB) {
         return prioridadeA - prioridadeB;
       }
@@ -1397,6 +1439,7 @@ function setScreen(screen) {
   if (screen === "efetivo") {
     efetivoScreen.classList.add("active");
     screenTitle.textContent = "Efetivo";
+    renderEfetivoTabs();
   }
 
   if (screen === "ficha") {
@@ -1561,6 +1604,10 @@ function fecharBusca() {
 }
 
 function atualizarResumoEfetivo() {
+  if (kpiTotalLabel) {
+    kpiTotalLabel.textContent = usuarioEhComando() ? "Total na Cia" : "Total no pelotão";
+  }
+
   const total = indiceMilitares.length;
   let emForma = 0;
   let destinos = 0;
@@ -1583,6 +1630,66 @@ function atualizarResumoEfetivo() {
   kpiEmForma.textContent = String(emForma);
   kpiDestinos.textContent = String(destinos);
   kpiBaixados.textContent = `Baixados: ${baixados}`;
+}
+
+function militaresFiltradosEfetivo() {
+  if (!usuarioEhComando() || efetivoPelotaoAtivo === "__todos__") {
+    return indiceMilitares;
+  }
+  return indiceMilitares.filter(
+    (militar) => normalizarLabelPelotao(militar.pelotao) === efetivoPelotaoAtivo
+  );
+}
+
+function renderEfetivoTabs() {
+  if (!efetivoTabsContainer) {
+    return;
+  }
+
+  if (!usuarioEhComando()) {
+    efetivoTabsContainer.classList.remove("active");
+    efetivoTabsContainer.innerHTML = "";
+    efetivoPelotaoAtivo = "__todos__";
+    return;
+  }
+
+  const pelotoes = Array.from(
+    new Set(indiceMilitares.map((militar) => normalizarLabelPelotao(militar.pelotao)))
+  );
+
+  const ordem = ["Seç Cmdo", "1º Pel", "2º Pel", "3º Pel", "Pel Ap"];
+  pelotoes.sort((a, b) => {
+    const ia = ordem.indexOf(a);
+    const ib = ordem.indexOf(b);
+    const pa = ia >= 0 ? ia : ordem.length + 1;
+    const pb = ib >= 0 ? ib : ordem.length + 1;
+    if (pa !== pb) return pa - pb;
+    return a.localeCompare(b, "pt-BR");
+  });
+
+  if (
+    efetivoPelotaoAtivo !== "__todos__" &&
+    !pelotoes.includes(efetivoPelotaoAtivo)
+  ) {
+    efetivoPelotaoAtivo = "__todos__";
+  }
+
+  efetivoTabsContainer.innerHTML = "";
+  efetivoTabsContainer.classList.add("active");
+
+  const botoes = ["__todos__", ...pelotoes];
+  botoes.forEach((pelotao) => {
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = `efetivo-tab-btn ${efetivoPelotaoAtivo === pelotao ? "active" : ""}`;
+    botao.textContent = pelotao === "__todos__" ? "Todos" : pelotao;
+    botao.addEventListener("click", () => {
+      efetivoPelotaoAtivo = pelotao;
+      renderEfetivoTabs();
+      renderEfetivo();
+    });
+    efetivoTabsContainer.appendChild(botao);
+  });
 }
 
 function atualizarLinhaEfetivo(cardId) {
@@ -1620,8 +1727,9 @@ function atualizarLinhaEfetivo(cardId) {
 
 function renderEfetivo() {
   efetivoTableBody.innerHTML = "";
+  const militaresVisiveis = militaresFiltradosEfetivo();
 
-  indiceMilitares.forEach((militar) => {
+  militaresVisiveis.forEach((militar) => {
     const estado = efetivoState.get(militar.cardId);
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -1680,6 +1788,7 @@ async function carregarEfetivoDataSelecionada() {
   try {
     const efetivo = await window.CaveirinhaAPI.getEfetivo(dataSelecionada);
     sincronizarEfetivoState(efetivo, dataSelecionada);
+    renderEfetivoTabs();
     renderEfetivo();
   } catch (error) {
     console.error("Falha ao consultar efetivo da data selecionada:", error);
@@ -2374,6 +2483,7 @@ async function inicializarApp() {
 
   renderTabs();
   renderCards();
+  renderEfetivoTabs();
   renderEfetivo();
   appJaInicializado = true;
 }

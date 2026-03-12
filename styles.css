@@ -610,6 +610,34 @@ body {
   padding: 10px 12px;
 }
 
+.efetivo-tabs-container {
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.efetivo-tabs-container.active {
+  display: flex;
+}
+
+.efetivo-tab-btn {
+  border: 1px solid #cddaea;
+  background: #edf4fc;
+  color: #1f4b73;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.efetivo-tab-btn.active {
+  background: #2b7fff;
+  border-color: #2b7fff;
+  color: #ffffff;
+}
+
 .efetivo-date-label {
   font-size: 0.88rem;
   color: #2d4864;
