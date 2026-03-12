@@ -23,7 +23,18 @@ Campos usados pelo app:
 - `data_referencia`
 - `em_forma`
 - `situacao` (`em_forma`, `ferias`, `dispensado`, `missao`, `atrasado`, `outros`, `falta`, `baixado`)
+- `pelotao`
 - `created_at`, `updated_at`
+
+Regras recomendadas/implantadas para consistencia:
+- `id_efetivo` fixo por militar: `ef-<id_militar>`
+- indice unico em `id` para manter 1 linha por militar no `efetivo`
+- atualizacao por UPSERT (nao por INSERT puro) para evitar duplicidade
+
+Funcoes/automacoes de apoio:
+- `public.seed_efetivo_dia(p_data date)` para preparar o efetivo diario
+- `public.upsert_efetivo(p_id, p_data, p_situacao, p_em_forma)` para atualizacao segura
+- trigger `tg_sync_quadro_dependentes` em `quadro_organizacional` para propagar campos em comum por `id`
 
 ### `public.taf`
 Variantes encontradas no ambiente:

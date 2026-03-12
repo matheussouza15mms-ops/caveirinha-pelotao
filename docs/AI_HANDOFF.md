@@ -8,6 +8,7 @@ Voce esta assumindo o desenvolvimento do Caveirinha App.
 - `DATA_MODEL.md`
 - `FEATURES.md`
 - `ROADMAP.md`
+- `SUPABASE_GOOGLE_SHEETS.md`
 
 ## Regras do projeto
 1. Nao remover funcionalidades existentes sem alinhamento.
@@ -22,6 +23,7 @@ Voce esta assumindo o desenvolvimento do Caveirinha App.
 - Imagens por buckets de pelotao.
 - Subtitulo do cabecalho sincronizado por usuario via `usuario_config.nome_pelotao`.
 - Fallback local em `dataService.js` mantido como contingencia.
+- Integracao Google Sheets + Supabase documentada em `SUPABASE_GOOGLE_SHEETS.md`.
 
 ## Contrato de integracao
 - Ponto unico no frontend: `window.CaveirinhaAPI`.

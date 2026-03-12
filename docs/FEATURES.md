@@ -80,3 +80,20 @@ Acoes principais disponiveis:
 - TAF: `getTAF`, `getTAFDashboard`, `updateTAFDashboard`
 - TAT: `getTAT`, `createTAT`, `updateTAT`
 - Demais modulos mantidos no contrato atual da API.
+
+## Integracao Supabase + Google Sheets
+- Script no Google Apps Script para:
+  - sincronizar o efetivo do dia (`sincronizarEfetivoHoje`)
+  - montar layout do mapa da forca (`montarMapaDaForca`)
+  - gerar PDF (`gerarMapaDaForcaPDF`)
+- Menu customizado na planilha: `Mapa da Forca`.
+- Fluxo de atualizacao diario:
+  - prepara base no Supabase por RPC (`seed_efetivo_dia`)
+  - le `v_efetivo_hoje`
+  - atualiza aba `EFETIVO_BASE`
+  - renderiza aba `MAPA_FORCA`
+
+## Automacao entre tabelas
+- Atualizacoes em `quadro_organizacional` propagam para tabelas dependentes por trigger no banco.
+- Propagacao por `id` apenas para colunas em comum (ex.: `pelotao`, `fracao`, `funcao`, etc.).
+- Evita necessidade de manutencao manual de dados replicados.
