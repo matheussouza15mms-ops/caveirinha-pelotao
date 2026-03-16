@@ -1449,12 +1449,12 @@ function setScreen(screen) {
 
   if (screen === "controle") {
     controleScreen.classList.add("active");
-    screenTitle.textContent = "Controle Sanitario";
+    screenTitle.textContent = "Controle Sanitário";
   }
 
   if (screen === "missoes") {
     missoesScreen.classList.add("active");
-    screenTitle.textContent = "Missoes";
+    screenTitle.textContent = "Missões";
   }
 
   if (screen === "alertas") {
