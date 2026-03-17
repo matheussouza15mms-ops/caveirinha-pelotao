@@ -2,6 +2,17 @@
   const TABLE_NAME = "quadro_organizacional";
   const FOTO_SIGNED_URL_TTL_SECONDS = 3600;
   const DEFAULT_MILITAR_FOTO = "assets/imagens/militar-base.png";
+  const QUADRO_LIST_SELECT = [
+    "id",
+    "pg",
+    "numero",
+    "nome_guerra",
+    "funcao",
+    "fracao",
+    "pelotao",
+    "celular",
+    "updated_at"
+  ].join(",");
   const PELOTAO_BUCKET_MAP = {
     "1 pel": "imagens-1pel",
     "2 pel": "imagens-2pel",
@@ -213,7 +224,7 @@
     try {
       const { data, error } = await getClient()
         .from(TABLE_NAME)
-        .select("*")
+        .select(QUADRO_LIST_SELECT)
         .order("pg", { ascending: true })
         .order("nome_guerra", { ascending: true });
 

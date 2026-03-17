@@ -181,6 +181,10 @@ const DEFAULT_HEADER_LOGO = "assets/imagens/cabecalho-base.png";
 const DEFAULT_MILITAR_FOTO = "assets/imagens/militar-base.png";
 const DEFAULT_HEADER_SUBTITLE = "PELOPES";
 const APP_SETTINGS_STORAGE_KEY = "caveirinha_app_settings";
+const APP_CACHE_PREFIX = "caveirinha_cache_v1";
+const CACHE_TTL_USUARIO_CONFIG_MS = 5 * 60 * 1000;
+const CACHE_TTL_QUADRO_MS = 5 * 60 * 1000;
+const CACHE_TTL_EFETIVO_MS = 2 * 60 * 1000;
 const APP_VERSION = "1.5.0";
 const DEV_WHATSAPP_NUMBER = "5524981130508";
 const PELOTAO_BUCKET_MAP = {
@@ -354,6 +358,130 @@ function lerAppSettingsSalvos() {
   } catch (error) {
     return null;
   }
+}
+
+function cacheNamespaceUsuario() {
+  return normalizarEmail(usuarioSessao?.email || "anon");
+}
+
+function cacheKeyUsuarioConfig() {
+  return `${APP_CACHE_PREFIX}:usuario_config:${cacheNamespaceUsuario()}`;
+}
+
+function cacheKeyQuadro() {
+  return `${APP_CACHE_PREFIX}:quadro:${cacheNamespaceUsuario()}`;
+}
+
+function cacheKeyEfetivo(dataReferencia) {
+  return `${APP_CACHE_PREFIX}:efetivo:${cacheNamespaceUsuario()}:${String(dataReferencia || "").trim()}`;
+}
+
+function salvarCacheLocal(chave, dados) {
+  try {
+    localStorage.setItem(
+      chave,
+      JSON.stringify({
+        savedAt: Date.now(),
+        data: dados
+      })
+    );
+  } catch (error) {
+    // no-op
+  }
+}
+
+function lerCacheLocal(chave, ttlMs) {
+  try {
+    const raw = localStorage.getItem(chave);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+
+    const savedAt = Number(parsed.savedAt || 0);
+    if (!savedAt || Date.now() - savedAt > ttlMs) {
+      localStorage.removeItem(chave);
+      return null;
+    }
+
+    return parsed.data ?? null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function limparCacheSessaoAtual() {
+  try {
+    const prefixo = `${APP_CACHE_PREFIX}:`;
+    const namespace = cacheNamespaceUsuario();
+    const remover = [];
+
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const chave = localStorage.key(index);
+      if (!chave || !chave.startsWith(prefixo) || !chave.includes(`:${namespace}`)) {
+        continue;
+      }
+      remover.push(chave);
+    }
+
+    remover.forEach((chave) => localStorage.removeItem(chave));
+  } catch (error) {
+    // no-op
+  }
+}
+
+async function obterUsuarioConfigComCache(options = {}) {
+  const force = Boolean(options.force);
+  const cacheKey = cacheKeyUsuarioConfig();
+
+  if (!force) {
+    const cached = lerCacheLocal(cacheKey, CACHE_TTL_USUARIO_CONFIG_MS);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  const config = await window.CaveirinhaAPI.getUserConfig();
+  if (config) {
+    salvarCacheLocal(cacheKey, config);
+  }
+  return config;
+}
+
+async function obterMilitaresComCache(options = {}) {
+  const force = Boolean(options.force);
+  const cacheKey = cacheKeyQuadro();
+
+  if (!force) {
+    const cached = lerCacheLocal(cacheKey, CACHE_TTL_QUADRO_MS);
+    if (Array.isArray(cached) && cached.length) {
+      return cached;
+    }
+  }
+
+  const militares = await window.CaveirinhaAPI.getMilitares();
+  salvarCacheLocal(cacheKey, militares || []);
+  return militares;
+}
+
+async function obterEfetivoComCache(dataReferencia, options = {}) {
+  const force = Boolean(options.force);
+  const cacheKey = cacheKeyEfetivo(dataReferencia);
+
+  if (!force) {
+    const cached = lerCacheLocal(cacheKey, CACHE_TTL_EFETIVO_MS);
+    if (Array.isArray(cached)) {
+      return cached;
+    }
+  }
+
+  const efetivo = await window.CaveirinhaAPI.getEfetivo(dataReferencia);
+  salvarCacheLocal(cacheKey, efetivo || []);
+  return efetivo;
 }
 
 function salvarAppSettings() {
@@ -624,6 +752,7 @@ async function efetuarLogin(event) {
 
 async function efetuarLogout() {
   encerrarSincronizacaoRealtime();
+  limparCacheSessaoAtual();
   try {
     await window.CaveirinhaAPI.logout();
   } catch (error) {
@@ -2368,7 +2497,7 @@ async function carregarEfetivoDataSelecionada() {
   efetivoDataInput.value = dataSelecionada;
 
   try {
-    const efetivo = await window.CaveirinhaAPI.getEfetivo(dataSelecionada);
+    const efetivo = await obterEfetivoComCache(dataSelecionada, { force: true });
     sincronizarEfetivoState(efetivo, dataSelecionada);
     renderEfetivoTabs();
     renderEfetivo();
@@ -2377,14 +2506,26 @@ async function carregarEfetivoDataSelecionada() {
   }
 }
 
-async function recarregarDadosSincronizados() {
+async function recarregarEfetivoSincronizado() {
   try {
-    const militares = await window.CaveirinhaAPI.getMilitares();
+    const dataSelecionada = efetivoDataInput.value || hojeISODate();
+    const efetivo = await obterEfetivoComCache(dataSelecionada, { force: true });
+    sincronizarEfetivoState(efetivo, dataSelecionada);
+    renderEfetivoTabs();
+    renderEfetivo();
+  } catch (error) {
+    console.error("Falha ao recarregar efetivo sincronizado:", error);
+  }
+}
+
+async function recarregarQuadroSincronizado() {
+  try {
+    const militares = await obterMilitaresComCache({ force: true });
     organizacao = construirOrganizacao(militares);
     reconstruirIndices();
 
     const dataSelecionada = efetivoDataInput.value || hojeISODate();
-    const efetivo = await window.CaveirinhaAPI.getEfetivo(dataSelecionada);
+    const efetivo = await obterEfetivoComCache(dataSelecionada, { force: true });
     sincronizarEfetivoState(efetivo, dataSelecionada);
 
     renderTabs();
@@ -2392,18 +2533,22 @@ async function recarregarDadosSincronizados() {
     renderEfetivoTabs();
     renderEfetivo();
   } catch (error) {
-    console.error("Falha ao recarregar dados sincronizados:", error);
+    console.error("Falha ao recarregar quadro sincronizado:", error);
   }
 }
 
-function agendarRecarregamentoRealtime() {
+function agendarRecarregamentoRealtime(tipo) {
   if (realtimeRefreshHandle) {
     window.clearTimeout(realtimeRefreshHandle);
   }
 
   realtimeRefreshHandle = window.setTimeout(() => {
     realtimeRefreshHandle = null;
-    void recarregarDadosSincronizados();
+    if (tipo === "quadro") {
+      void recarregarQuadroSincronizado();
+      return;
+    }
+    void recarregarEfetivoSincronizado();
   }, 250);
 }
 
@@ -2415,11 +2560,12 @@ function inicializarSincronizacaoRealtime() {
     return;
   }
 
-  window.CaveirinhaEfetivoService.subscribeRealtime(() => {
+  window.CaveirinhaEfetivoService.subscribeRealtime((evento) => {
     if (!appJaInicializado || !usuarioSessao) {
       return;
     }
-    agendarRecarregamentoRealtime();
+    const tipo = evento?.origem === "quadro_organizacional" ? "quadro" : "efetivo";
+    agendarRecarregamentoRealtime(tipo);
   });
 }
 
@@ -3230,7 +3376,7 @@ async function inicializarApp() {
     }
     if (!usuarioConfigAtual) {
       try {
-        usuarioConfigAtual = await window.CaveirinhaAPI.getUserConfig();
+        usuarioConfigAtual = await obterUsuarioConfigComCache();
       } catch (configError) {
         console.error("Falha ao carregar usuario_config na inicializacao:", configError);
         usuarioConfigAtual = null;
@@ -3243,23 +3389,43 @@ async function inicializarApp() {
     return;
   }
 
+  const dataHoje = hojeISODate();
+  const militaresCache = lerCacheLocal(cacheKeyQuadro(), CACHE_TTL_QUADRO_MS);
+  if (Array.isArray(militaresCache) && militaresCache.length) {
+    organizacao = construirOrganizacao(militaresCache);
+    reconstruirIndices();
+  }
+
+  const efetivoCache = lerCacheLocal(cacheKeyEfetivo(dataHoje), CACHE_TTL_EFETIVO_MS);
+  if (Array.isArray(efetivoCache)) {
+    sincronizarEfetivoState(efetivoCache, dataHoje);
+  }
+
+  renderTabs();
+  renderCards();
+  renderEfetivoTabs();
+  renderEfetivo();
+
   try {
-    const militares = await window.CaveirinhaAPI.getMilitares();
+    const militares = await obterMilitaresComCache({ force: true });
     organizacao = construirOrganizacao(militares);
     reconstruirIndices();
   } catch (error) {
     console.error("Falha ao carregar quadro organizacional na inicializacao:", error);
-    organizacao = [];
-    indiceMilitares = [];
+    if (!Array.isArray(militaresCache) || !militaresCache.length) {
+      organizacao = [];
+      indiceMilitares = [];
+    }
   }
 
   try {
-    const dataHoje = hojeISODate();
-    const efetivo = await window.CaveirinhaAPI.getEfetivo(dataHoje);
+    const efetivo = await obterEfetivoComCache(dataHoje, { force: true });
     sincronizarEfetivoState(efetivo, dataHoje);
   } catch (error) {
     console.error("Falha ao carregar efetivo na inicializacao:", error);
-    efetivoState.clear();
+    if (!Array.isArray(efetivoCache)) {
+      efetivoState.clear();
+    }
   }
 
   renderTabs();
