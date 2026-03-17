@@ -167,6 +167,7 @@ let usuarioSessao = null;
 let usuarioConfigAtual = null;
 let ultimoScrollY = window.scrollY || 0;
 let efetivoPelotaoAtivo = "__todos__";
+let realtimeRefreshHandle = null;
 
 const opcoesSituacao = ["ferias", "dispensado", "missao", "servico", "s_sv", "atrasado", "outros", "falta", "baixado"];
 const efetivoState = new Map();
@@ -628,6 +629,7 @@ async function efetuarLogin(event) {
 }
 
 async function efetuarLogout() {
+  encerrarSincronizacaoRealtime();
   try {
     await window.CaveirinhaAPI.logout();
   } catch (error) {
@@ -689,7 +691,15 @@ function valorCampoExibicao(valor) {
 }
 
 function hojeISODate() {
-  return new Date().toISOString().slice(0, 10);
+  if (window.CaveirinhaEfetivoService?.hojeIsoDate) {
+    return window.CaveirinhaEfetivoService.hojeIsoDate();
+  }
+
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = String(agora.getMonth() + 1).padStart(2, "0");
+  const dia = String(agora.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
 }
 
 function isoDoDia(valorData) {
@@ -2345,6 +2355,7 @@ async function persistirEfetivo(cardId) {
     });
   } catch (error) {
     console.error("Falha ao atualizar efetivo na API layer:", error);
+    window.alert("Nao foi possivel sincronizar o efetivo com o Supabase. Verifique as funcoes SQL, o RLS da tabela efetivo e tente novamente.");
   }
 }
 
@@ -2359,6 +2370,66 @@ async function carregarEfetivoDataSelecionada() {
     renderEfetivo();
   } catch (error) {
     console.error("Falha ao consultar efetivo da data selecionada:", error);
+  }
+}
+
+async function recarregarDadosSincronizados() {
+  try {
+    const militares = await window.CaveirinhaAPI.getMilitares();
+    organizacao = construirOrganizacao(militares);
+    reconstruirIndices();
+
+    const dataSelecionada = efetivoDataInput.value || hojeISODate();
+    const efetivo = await window.CaveirinhaAPI.getEfetivo(dataSelecionada);
+    sincronizarEfetivoState(efetivo, dataSelecionada);
+
+    renderTabs();
+    renderCards();
+    renderEfetivoTabs();
+    renderEfetivo();
+  } catch (error) {
+    console.error("Falha ao recarregar dados sincronizados:", error);
+  }
+}
+
+function agendarRecarregamentoRealtime() {
+  if (realtimeRefreshHandle) {
+    window.clearTimeout(realtimeRefreshHandle);
+  }
+
+  realtimeRefreshHandle = window.setTimeout(() => {
+    realtimeRefreshHandle = null;
+    void recarregarDadosSincronizados();
+  }, 250);
+}
+
+function inicializarSincronizacaoRealtime() {
+  if (
+    !window.CaveirinhaEfetivoService ||
+    typeof window.CaveirinhaEfetivoService.subscribeRealtime !== "function"
+  ) {
+    return;
+  }
+
+  window.CaveirinhaEfetivoService.subscribeRealtime(() => {
+    if (!appJaInicializado || !usuarioSessao) {
+      return;
+    }
+    agendarRecarregamentoRealtime();
+  });
+}
+
+function encerrarSincronizacaoRealtime() {
+  if (realtimeRefreshHandle) {
+    window.clearTimeout(realtimeRefreshHandle);
+    realtimeRefreshHandle = null;
+  }
+
+  if (
+    window.CaveirinhaEfetivoService &&
+    typeof window.CaveirinhaEfetivoService.unsubscribeRealtime === "function"
+  ) {
+    window.CaveirinhaEfetivoService.unsubscribeRealtime();
   }
 }
 
@@ -3172,14 +3243,18 @@ async function inicializarApp() {
     const militares = await window.CaveirinhaAPI.getMilitares();
     organizacao = construirOrganizacao(militares);
     reconstruirIndices();
+  } catch (error) {
+    console.error("Falha ao carregar quadro organizacional na inicializacao:", error);
+    organizacao = [];
+    indiceMilitares = [];
+  }
 
+  try {
     const dataHoje = hojeISODate();
     const efetivo = await window.CaveirinhaAPI.getEfetivo(dataHoje);
     sincronizarEfetivoState(efetivo, dataHoje);
   } catch (error) {
-    console.error("Falha ao inicializar dados via API layer:", error);
-    organizacao = [];
-    indiceMilitares = [];
+    console.error("Falha ao carregar efetivo na inicializacao:", error);
     efetivoState.clear();
   }
 
@@ -3187,6 +3262,7 @@ async function inicializarApp() {
   renderCards();
   renderEfetivoTabs();
   renderEfetivo();
+  inicializarSincronizacaoRealtime();
   appJaInicializado = true;
 }
 

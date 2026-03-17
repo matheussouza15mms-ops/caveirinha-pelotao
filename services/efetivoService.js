@@ -1,5 +1,8 @@
 (function bootstrapEfetivoService(globalScope) {
   const TABLE_NAME = "efetivo";
+  const DEFAULT_TIMEZONE = "America/Sao_Paulo";
+  let efetivoSubscription = null;
+  let quadroSubscription = null;
 
   function getClient() {
     const client = globalScope.CaveirinhaSupabase?.client;
@@ -14,7 +17,7 @@
     if (match) {
       return match[1];
     }
-    return new Date().toISOString().slice(0, 10);
+    return hojeIsoDate();
   }
 
   function mapRow(row) {
@@ -30,7 +33,13 @@
   }
 
   function hojeIsoDate() {
-    return new Date().toISOString().slice(0, 10);
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: DEFAULT_TIMEZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    return formatter.format(new Date());
   }
 
   function normalizarSituacao(valor) {
@@ -61,6 +70,12 @@
         dataRef = hojeIsoDate();
       }
 
+      try {
+        await prepararEfetivoDia(dataRef);
+      } catch (seedError) {
+        console.warn("Nao foi possivel preparar o efetivo do dia no Supabase:", seedError);
+      }
+
       const { data, error } = await getClient()
         .from(TABLE_NAME)
         .select("id,data_referencia,em_forma,situacao")
@@ -86,35 +101,135 @@
     const dataReferencia = dataReferenciaFromIso(payload?.dataAtualizacao);
     const emForma = Boolean(payload?.emForma);
     const situacao = emForma ? "em_forma" : normalizarSituacao(payload?.situacao);
-    const idEfetivo = `ef-${idMilitar}-${dataReferencia}`;
-
-    const row = {
-      id_efetivo: idEfetivo,
-      id: idMilitar,
-      data_referencia: dataReferencia,
-      em_forma: emForma,
-      situacao
-    };
 
     try {
-      const { data, error } = await getClient()
-        .from(TABLE_NAME)
-        .upsert(row, { onConflict: "id,data_referencia" })
-        .select("id,data_referencia,em_forma,situacao")
-        .single();
+      const { error } = await getClient().rpc("upsert_efetivo", {
+        p_id: idMilitar,
+        p_data: dataReferencia,
+        p_situacao: situacao,
+        p_em_forma: emForma
+      });
       if (error) {
-        throw error;
+        return updateEfetivoFallback({
+          idMilitar,
+          dataReferencia,
+          emForma,
+          situacao
+        });
       }
-      return mapRow(data);
+
+      return carregarRegistroEfetivo(idMilitar, dataReferencia);
     } catch (error) {
       console.error("Erro ao atualizar efetivo no Supabase:", error);
       throw error;
     }
   }
 
+  async function prepararEfetivoDia(dataReferencia) {
+    const dataRef = String(dataReferencia || "").trim() || hojeIsoDate();
+    const { error } = await getClient().rpc("seed_efetivo_dia", {
+      p_data: dataRef
+    });
+
+    if (error) {
+      const message = String(error.message || "").toLowerCase();
+      if (message.includes("could not find the function") || message.includes("function public.seed_efetivo_dia")) {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  async function carregarRegistroEfetivo(idMilitar, dataReferencia) {
+    const { data, error } = await getClient()
+      .from(TABLE_NAME)
+      .select("id,data_referencia,em_forma,situacao")
+      .eq("id", idMilitar)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    const registro = mapRow(data);
+    if (dataReferencia) {
+      registro.dataAtualizacao = `${dataReferencia}T00:00:00.000Z`;
+    }
+    return registro;
+  }
+
+  async function updateEfetivoFallback({ idMilitar, dataReferencia, emForma, situacao }) {
+    const row = {
+      id_efetivo: `ef-${idMilitar}`,
+      id: idMilitar,
+      data_referencia: dataReferencia,
+      em_forma: emForma,
+      situacao
+    };
+
+    const { data, error } = await getClient()
+      .from(TABLE_NAME)
+      .upsert(row, { onConflict: "id" })
+      .select("id,data_referencia,em_forma,situacao")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return mapRow(data);
+  }
+
+  function subscribeRealtime(handler) {
+    unsubscribeRealtime();
+
+    const client = getClient();
+    const callback = typeof handler === "function" ? handler : () => {};
+
+    efetivoSubscription = client
+      .channel("caveirinha-efetivo-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: TABLE_NAME },
+        (payload) => callback({ origem: "efetivo", payload })
+      )
+      .subscribe();
+
+    quadroSubscription = client
+      .channel("caveirinha-quadro-efetivo-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "quadro_organizacional" },
+        (payload) => callback({ origem: "quadro_organizacional", payload })
+      )
+      .subscribe();
+  }
+
+  function unsubscribeRealtime() {
+    const client = globalScope.CaveirinhaSupabase?.client;
+    if (!client) {
+      efetivoSubscription = null;
+      quadroSubscription = null;
+      return;
+    }
+
+    if (efetivoSubscription) {
+      client.removeChannel(efetivoSubscription);
+      efetivoSubscription = null;
+    }
+
+    if (quadroSubscription) {
+      client.removeChannel(quadroSubscription);
+      quadroSubscription = null;
+    }
+  }
+
   globalScope.CaveirinhaEfetivoService = {
     getEfetivo,
-    updateEfetivo
+    updateEfetivo,
+    subscribeRealtime,
+    unsubscribeRealtime,
+    hojeIsoDate
   };
 })(window);
 
