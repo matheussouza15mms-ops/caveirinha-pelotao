@@ -144,7 +144,8 @@
     }
   }
 
-  async function rowToMilitar(row) {
+  async function rowToMilitar(row, options = {}) {
+    const includeFoto = Boolean(options.includeFoto);
     return {
       id: row.id,
       pg: row.pg || "",
@@ -165,7 +166,9 @@
       comportamento: row.comportamento || "",
       habilidade: row.habilidade || "",
       pelotao: row.pelotao || "",
-      foto: await resolveFotoUrl(row.foto, row.pelotao || row.fracao || ""),
+      foto: includeFoto
+        ? await resolveFotoUrl(row.foto, row.pelotao || row.fracao || "")
+        : DEFAULT_MILITAR_FOTO,
       lastUpdate: row.updated_at || row.last_update || ""
     };
   }
@@ -218,7 +221,7 @@
         throw error;
       }
 
-      return Promise.all((data || []).map((row) => rowToMilitar(row)));
+      return Promise.all((data || []).map((row) => rowToMilitar(row, { includeFoto: false })));
     } catch (error) {
       console.error("Erro ao carregar quadro no Supabase:", error);
       throw error;
@@ -231,7 +234,7 @@
       if (error) {
         throw error;
       }
-      return rowToMilitar(data);
+      return rowToMilitar(data, { includeFoto: true });
     } catch (error) {
       console.error("Erro ao buscar militar por id no Supabase:", error);
       throw error;
@@ -245,7 +248,7 @@
       if (error) {
         throw error;
       }
-      return rowToMilitar(inserted);
+      return rowToMilitar(inserted, { includeFoto: false });
     } catch (error) {
       console.error("Erro ao adicionar militar no Supabase:", error);
       throw error;
@@ -265,7 +268,7 @@
       if (error) {
         throw error;
       }
-      return rowToMilitar(updated);
+      return rowToMilitar(updated, { includeFoto: false });
     } catch (error) {
       console.error("Erro ao atualizar militar no Supabase:", error);
       throw error;

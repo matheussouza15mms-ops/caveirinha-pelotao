@@ -509,39 +509,70 @@ body[data-color-scheme="red"] {
 
 .cards-area {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
   align-content: start;
 }
 
 .card-militar {
-  display: grid;
-  grid-template-columns: 68px 1fr;
-  gap: 12px;
-  align-items: center;
+  display: block;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--surface);
-  padding: 10px;
+  padding: 10px 12px;
   cursor: pointer;
   transform: translateY(12px);
   opacity: 0;
   animation: cardIn 0.35s ease forwards;
   align-self: start;
+  min-height: 76px;
+  text-align: left;
 }
 
-.militar-meta {
+.card-militar > div {
+  min-width: 0;
+}
+
+.militar-linha-principal {
   display: flex;
+  align-items: baseline;
   gap: 8px;
-  flex-wrap: wrap;
+  min-width: 0;
   margin-bottom: 4px;
 }
 
-.militar-meta span {
-  font-size: 0.75rem;
-  color: #42576d;
-  background: #eef3f9;
-  border-radius: 999px;
-  padding: 3px 8px;
+.militar-pg,
+.militar-nome {
+  margin: 0;
+  color: #12314f;
+}
+
+.militar-pg {
+  flex: 0 0 auto;
+  font-size: 0.94rem;
+  line-height: 1.15;
+}
+
+.militar-numero {
+  flex: 0 0 auto;
+  font-size: 0.98rem;
+  line-height: 1.15;
+  color: #12314f;
+  font-weight: 700;
+}
+
+.militar-nome {
+  min-width: 0;
+  font-size: 0.98rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-militar p {
+  font-size: 0.8rem;
+  line-height: 1.25;
 }
 
 .card-militar.found {
@@ -561,6 +592,18 @@ body[data-color-scheme="red"] {
 .ficha-header p {
   margin: 4px 0 0;
   color: var(--muted);
+}
+
+@media (min-width: 1100px) {
+  .cards-area {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .card-militar {
+    min-height: 72px;
+    padding: 9px 12px;
+  }
 }
 
 .back-btn {
@@ -1797,6 +1840,10 @@ body[data-theme="dark"] .config-about-item {
     padding: 14px;
   }
 
+  .cards-area {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .menu-item-with-label {
     width: 44px;
     justify-content: center;
@@ -1903,6 +1950,37 @@ body[data-theme="dark"] .config-about-item {
 @media (max-width: 600px) {
   .content {
     padding: 10px;
+  }
+
+  .cards-area {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .card-militar {
+    min-height: 72px;
+    padding: 9px 11px;
+  }
+
+  .militar-linha-principal {
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+
+  .militar-pg {
+    font-size: 0.88rem;
+  }
+
+  .militar-numero {
+    font-size: 0.92rem;
+  }
+
+  .militar-nome {
+    font-size: 0.92rem;
+  }
+
+  .card-militar p {
+    font-size: 0.8rem;
   }
 
   .back-btn {

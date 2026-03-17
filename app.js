@@ -581,12 +581,6 @@ async function efetuarLogin(event) {
     return;
   }
 
-  if (!senha && usuarioSessao?.email && normalizarEmail(usuarioSessao.email) === email) {
-    fecharTelaLogin();
-    await inicializarApp();
-    return;
-  }
-
   if (!senha) {
     setLoginError("Informe a senha para entrar.");
     return;
@@ -650,22 +644,14 @@ async function inicializarAutenticacao() {
   try {
     const sessao = await window.CaveirinhaAPI.getSession();
     if (sessao?.user) {
-      usuarioSessao = sessao.user;
-      try {
-        usuarioConfigAtual = await window.CaveirinhaAPI.getUserConfig();
-      } catch (configError) {
-        console.error("Falha ao carregar configuracao do usuario:", configError);
-        usuarioConfigAtual = null;
-      }
-      await aplicarConfigVisualUsuario(usuarioConfigAtual);
-      fecharTelaLogin();
-      await inicializarApp();
-      return;
+      await window.CaveirinhaAPI.logout();
     }
   } catch (error) {
     console.error("Falha ao recuperar sessao:", error);
   }
 
+  usuarioSessao = null;
+  usuarioConfigAtual = null;
   abrirTelaLogin();
 }
 
@@ -946,6 +932,26 @@ function selecionarMilitarNaFicha(militar) {
     ? () => window.open(whatsappLink, "_blank", "noopener")
     : null;
   setScreen("ficha");
+
+  void (async () => {
+    try {
+      const militarAtualizado = await window.CaveirinhaAPI.getMilitarDados(militar.id);
+      if (!militarAtualizado || militarSelecionadoId !== militar.id) {
+        return;
+      }
+
+      fichaFoto.src = militarAtualizado.foto || DEFAULT_MILITAR_FOTO;
+      fichaNome.textContent = militarNomeBase(militarAtualizado);
+      fichaFuncao.textContent = militarAtualizado.funcao;
+      const whatsappAtualizado = montarLinkWhatsapp(militarAtualizado);
+      fichaWhatsappBtn.classList.toggle("hidden", !whatsappAtualizado);
+      fichaWhatsappBtn.onclick = whatsappAtualizado
+        ? () => window.open(whatsappAtualizado, "_blank", "noopener")
+        : null;
+    } catch (error) {
+      console.error("Falha ao carregar foto completa da ficha do militar:", error);
+    }
+  })();
 }
 
 function montarResumoControleSanitario() {
@@ -1956,15 +1962,14 @@ function renderCards() {
     card.dataset.cardId = `${abaAtiva}-${index}`;
     card.style.animationDelay = `${index * 0.08}s`;
 
-    const numeroCard = isSdEv(militar) && militar.numero ? String(militar.numero) : "--";
+    const numeroCard = militar.numero ? String(militar.numero) : "";
     card.innerHTML = `
-      <img src="${militar.foto}" alt="Foto de ${militarNomeBase(militar)}" />
       <div>
-        <div class="militar-meta">
-          <span><b>No:</b> ${numeroCard}</span>
-          <span><b>P/G:</b> ${militar.pg}</span>
+        <div class="militar-linha-principal">
+          <strong class="militar-pg">${militar.pg}</strong>
+          ${numeroCard ? `<span class="militar-numero">${numeroCard}</span>` : ""}
+          <strong class="militar-nome">${militar.nomeGuerra}</strong>
         </div>
-        <strong>${militar.nomeGuerra}</strong>
         <p>${militar.funcao}</p>
       </div>
     `;
