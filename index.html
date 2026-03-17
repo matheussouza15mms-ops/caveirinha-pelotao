@@ -41,7 +41,7 @@
         <div class="app-header">
           <div class="app-brand-logo" aria-label="Logo do pelotão"></div>
           <div class="app-brand-text">
-            <h1>Caveirinha do Pelotão</h1>
+            <h1 id="appHeaderGreeting">Caveirinha do Pelotão</h1>
             <p id="appHeaderSubtitle">PELOPES</p>
           </div>
           <div class="topbar-actions">
@@ -72,6 +72,10 @@
           <button id="searchToggle" class="search-toggle menu-item-with-label" title="Pesquisar Militar" aria-label="Pesquisar Militar">
             <span class="menu-icon icon-search" aria-hidden="true"></span>
             <span class="menu-label">Pesquisar Militar</span>
+          </button>
+          <button class="menu-item menu-item-with-label" data-screen="config" title="Configurações" aria-label="Configurações">
+            <span class="menu-icon icon-configuracoes" aria-hidden="true"></span>
+            <span class="menu-label">Configurações</span>
           </button>
         </nav>
         <div id="searchPanel" class="search-panel" aria-hidden="true">
@@ -186,11 +190,81 @@
         </div>
       </section>
 
-      <section id="alertasScreen" class="screen">
-        <div class="efetivo-table-wrap">
-          <div style="padding: 18px;">
-            <h3 style="margin: 0 0 6px;">Alertas</h3>
-            <p style="margin: 0; color: #4a6076;">Tela base criada para central de alertas.</p>
+      <section id="configScreen" class="screen">
+        <div class="config-screen-shell">
+          <div class="config-screen-profile">
+            <div class="config-screen-avatar-wrap">
+              <img id="configProfilePreview" src="assets/imagens/militar-base.png" alt="Foto de perfil" class="config-profile-avatar config-screen-avatar" />
+              <button id="configChangePhotoBtn" type="button" class="config-avatar-edit-btn" aria-label="Trocar foto">✎</button>
+              <input id="configProfileInput" type="file" accept="image/*" class="hidden" />
+            </div>
+            <div class="config-screen-name-wrap">
+              <strong id="configScreenDisplayName">Usuário</strong>
+              <div class="config-inline-field">
+                <input id="configDisplayNameInput" type="text" placeholder="Nome do usuário" />
+                <button id="configSaveNameBtn" type="button" class="fo-save-btn">Salvar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-screen-group">
+            <p class="config-screen-group-title">Meu App</p>
+            <div class="config-card-list">
+              <section class="config-section">
+                <div class="config-section-head">
+                  <strong>Personalização</strong>
+                  <p>Tema e identidade visual do app</p>
+                </div>
+                <label class="config-field">
+                  Tema
+                  <select id="configThemeSelect">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </label>
+                <div class="config-field">
+                  Cor do app
+                  <div id="configColorOptions" class="config-color-options">
+                    <button type="button" class="config-color-btn active" data-color-scheme="classic">Classic</button>
+                    <button type="button" class="config-color-btn" data-color-scheme="olive">Verde Oliva</button>
+                    <button type="button" class="config-color-btn" data-color-scheme="black">Preto</button>
+                    <button type="button" class="config-color-btn" data-color-scheme="red">Vermelho</button>
+                  </div>
+                </div>
+                <label class="config-switch-row">
+                  <span>Enviar notificações</span>
+                  <button id="configNotificationsToggle" type="button" class="config-toggle-btn active" aria-pressed="true">Ligado</button>
+                </label>
+              </section>
+            </div>
+          </div>
+
+          <div class="config-screen-group">
+            <p class="config-screen-group-title">Conta</p>
+            <div class="config-card-list">
+              <button id="configHelpBtn" type="button" class="config-nav-card">Ajuda e suporte</button>
+              <button id="configReportBtn" type="button" class="config-nav-card">Relatar um problema</button>
+              <button id="configSecurityBtn" type="button" class="config-nav-card">Segurança</button>
+              <button id="configTermsBtn" type="button" class="config-nav-card">Termos e políticas</button>
+            </div>
+          </div>
+
+          <div class="config-screen-group">
+            <p class="config-screen-group-title">Sobre</p>
+            <div class="config-card-list">
+              <section class="config-section config-about-section">
+                <div class="config-about-grid">
+                  <div class="config-about-item">
+                    <span>Versão do app</span>
+                    <strong id="configAppVersion">v1.5.0</strong>
+                  </div>
+                  <div class="config-about-item">
+                    <span>Desenvolvedor do app</span>
+                    <strong>Matheus Miranda de Souza</strong>
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       </section>
@@ -237,6 +311,30 @@
       <div id="dadosModalBody" class="dados-grid"></div>
     </div>
   </div>
+
+  <div id="reportProblemModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card report-problem-card" role="dialog" aria-modal="true" aria-labelledby="reportProblemTitle">
+      <div class="modal-header">
+        <h3 id="reportProblemTitle">Relatar um problema</h3>
+        <button id="reportProblemClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+      <form id="reportProblemForm" class="fo-form">
+        <label>
+          Data
+          <input id="reportProblemDate" type="date" required />
+        </label>
+        <label>
+          Descreva o problema
+          <textarea id="reportProblemMessage" rows="6" required></textarea>
+        </label>
+        <div class="fo-form-actions">
+          <button id="reportProblemCancel" type="button" class="ficha-action">Cancelar</button>
+          <button type="submit" class="fo-save-btn">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 
   <div id="fichaMedicaModal" class="modal-overlay" aria-hidden="true">
     <div class="modal-card ficha-medica-modal-card" role="dialog" aria-modal="true" aria-labelledby="fichaMedicaModalTitle">

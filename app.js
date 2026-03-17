@@ -11,7 +11,7 @@ const quadroScreen = document.getElementById("quadroScreen");
 const efetivoScreen = document.getElementById("efetivoScreen");
 const controleScreen = document.getElementById("controleScreen");
 const missoesScreen = document.getElementById("missoesScreen");
-const alertasScreen = document.getElementById("alertasScreen");
+const configScreen = document.getElementById("configScreen");
 const fichaScreen = document.getElementById("fichaScreen");
 const tabsContainer = document.getElementById("tabsContainer");
 const cardsArea = document.getElementById("cardsArea");
@@ -48,6 +48,26 @@ const fichaFoBtn = document.getElementById("fichaFoBtn");
 const dadosModal = document.getElementById("dadosModal");
 const dadosModalClose = document.getElementById("dadosModalClose");
 const dadosModalBody = document.getElementById("dadosModalBody");
+const configProfilePreview = document.getElementById("configProfilePreview");
+const configProfileInput = document.getElementById("configProfileInput");
+const configChangePhotoBtn = document.getElementById("configChangePhotoBtn");
+const configDisplayNameInput = document.getElementById("configDisplayNameInput");
+const configScreenDisplayName = document.getElementById("configScreenDisplayName");
+const configSaveNameBtn = document.getElementById("configSaveNameBtn");
+const configThemeSelect = document.getElementById("configThemeSelect");
+const configColorOptions = document.getElementById("configColorOptions");
+const configNotificationsToggle = document.getElementById("configNotificationsToggle");
+const configHelpBtn = document.getElementById("configHelpBtn");
+const configReportBtn = document.getElementById("configReportBtn");
+const configSecurityBtn = document.getElementById("configSecurityBtn");
+const configTermsBtn = document.getElementById("configTermsBtn");
+const configAppVersion = document.getElementById("configAppVersion");
+const reportProblemModal = document.getElementById("reportProblemModal");
+const reportProblemClose = document.getElementById("reportProblemClose");
+const reportProblemCancel = document.getElementById("reportProblemCancel");
+const reportProblemForm = document.getElementById("reportProblemForm");
+const reportProblemDate = document.getElementById("reportProblemDate");
+const reportProblemMessage = document.getElementById("reportProblemMessage");
 const fichaMedicaModal = document.getElementById("fichaMedicaModal");
 const fichaMedicaModalClose = document.getElementById("fichaMedicaModalClose");
 const fichaMedicaStatusBadge = document.getElementById("fichaMedicaStatusBadge");
@@ -115,6 +135,7 @@ const tatEditorForm = document.getElementById("tatEditorForm");
 const tatMencaoInput = document.getElementById("tatMencaoInput");
 const tatEditorCancel = document.getElementById("tatEditorCancel");
 const appHeaderLogo = document.querySelector(".app-header .app-brand-logo");
+const appHeaderGreeting = document.getElementById("appHeaderGreeting");
 const appHeaderSubtitle = document.getElementById("appHeaderSubtitle");
 const loginGate = document.getElementById("loginGate");
 const loginForm = document.getElementById("loginForm");
@@ -158,6 +179,9 @@ const HEADER_IMAGE_SIGNED_TTL_SECONDS = 3600;
 const DEFAULT_HEADER_LOGO = "assets/imagens/cabecalho-base.png";
 const DEFAULT_MILITAR_FOTO = "assets/imagens/militar-base.png";
 const DEFAULT_HEADER_SUBTITLE = "PELOPES";
+const APP_SETTINGS_STORAGE_KEY = "caveirinha_app_settings";
+const APP_VERSION = "1.5.0";
+const DEV_WHATSAPP_NUMBER = "5524981130508";
 const PELOTAO_BUCKET_MAP = {
   "1 pel": "imagens-1pel",
   "2 pel": "imagens-2pel",
@@ -183,6 +207,14 @@ const camposDadosMilitar = [
   { key: "comportamento", label: "Comportamento" },
   { key: "habilidade", label: "Habilidade" }
 ];
+
+let appSettings = {
+  displayName: "",
+  profilePhoto: DEFAULT_MILITAR_FOTO,
+  theme: "light",
+  colorScheme: "classic",
+  notificationsEnabled: true
+};
 
 function normalizarEmail(valor) {
   return String(valor || "")
@@ -287,6 +319,120 @@ function setHeaderSubtitle(text) {
   }
   const safeText = String(text || "").trim() || DEFAULT_HEADER_SUBTITLE;
   appHeaderSubtitle.textContent = safeText;
+}
+
+function saudacaoPorHorario() {
+  const horaAtual = new Date().getHours();
+  if (horaAtual < 12) {
+    return "Bom dia";
+  }
+  if (horaAtual < 18) {
+    return "Boa tarde";
+  }
+  return "Boa noite";
+}
+
+function atualizarCabecalhoUsuario() {
+  if (!appHeaderGreeting) {
+    return;
+  }
+  appHeaderGreeting.textContent = `${saudacaoPorHorario()}, ${nomeUsuarioConfigurado()}`;
+}
+
+function lerAppSettingsSalvos() {
+  try {
+    const raw = localStorage.getItem(APP_SETTINGS_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    return null;
+  }
+}
+
+function salvarAppSettings() {
+  try {
+    localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify(appSettings));
+  } catch (error) {
+    // no-op
+  }
+}
+
+function nomeUsuarioConfigurado() {
+  return (
+    String(appSettings.displayName || "").trim() ||
+    String(usuarioConfigAtual?.nomeUsuario || "").trim() ||
+    String(usuarioSessao?.email || "Usuário").split("@")[0]
+  );
+}
+
+function aplicarAppSettingsNaInterface() {
+  document.body.dataset.theme = appSettings.theme || "light";
+  document.body.dataset.colorScheme = appSettings.colorScheme || "classic";
+
+  if (configDisplayNameInput) {
+    configDisplayNameInput.value = nomeUsuarioConfigurado();
+  }
+  if (configScreenDisplayName) {
+    configScreenDisplayName.textContent = nomeUsuarioConfigurado();
+  }
+  if (configProfilePreview) {
+    configProfilePreview.src = appSettings.profilePhoto || DEFAULT_MILITAR_FOTO;
+  }
+  if (configThemeSelect) {
+    configThemeSelect.value = appSettings.theme || "light";
+  }
+  if (configNotificationsToggle) {
+    const ativo = Boolean(appSettings.notificationsEnabled);
+    configNotificationsToggle.textContent = ativo ? "Ligado" : "Desligado";
+    configNotificationsToggle.classList.toggle("active", ativo);
+    configNotificationsToggle.setAttribute("aria-pressed", ativo ? "true" : "false");
+  }
+  if (configAppVersion) {
+    configAppVersion.textContent = `v${APP_VERSION}`;
+  }
+
+  const activeScheme = appSettings.colorScheme || "classic";
+  if (configColorOptions) {
+    Array.from(configColorOptions.querySelectorAll(".config-color-btn")).forEach((button) => {
+      button.classList.toggle("active", button.dataset.colorScheme === activeScheme);
+    });
+  }
+
+  atualizarCabecalhoUsuario();
+}
+
+function carregarAppSettings() {
+  const salvos = lerAppSettingsSalvos();
+  appSettings = {
+    displayName: String(salvos?.displayName || "").trim(),
+    profilePhoto: String(salvos?.profilePhoto || DEFAULT_MILITAR_FOTO).trim() || DEFAULT_MILITAR_FOTO,
+    theme: String(salvos?.theme || "light").trim() || "light",
+    colorScheme: String(salvos?.colorScheme || "classic").trim() || "classic",
+    notificationsEnabled: salvos?.notificationsEnabled !== false
+  };
+  aplicarAppSettingsNaInterface();
+}
+
+function abrirReportProblemModal() {
+  reportProblemDate.value = hojeISODate();
+  reportProblemMessage.value = "";
+  reportProblemModal.classList.add("active");
+  reportProblemModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharReportProblemModal() {
+  reportProblemModal.classList.remove("active");
+  reportProblemModal.setAttribute("aria-hidden", "true");
+}
+
+function mostrarPlaceholderConfiguracoes(assunto) {
+  window.alert(`${assunto} já ficou preparado no menu e será detalhado na próxima etapa.`);
 }
 
 function normalizarPelotaoBucket(valor) {
@@ -1724,7 +1870,7 @@ function setScreen(screen) {
   efetivoScreen.classList.remove("active");
   controleScreen.classList.remove("active");
   missoesScreen.classList.remove("active");
-  alertasScreen.classList.remove("active");
+  configScreen.classList.remove("active");
   fichaScreen.classList.remove("active");
 
   if (screen === "quadro") {
@@ -1754,9 +1900,10 @@ function setScreen(screen) {
     screenTitle.textContent = "Missões";
   }
 
-  if (screen === "alertas") {
-    alertasScreen.classList.add("active");
-    screenTitle.textContent = "Alertas";
+  if (screen === "config") {
+    configScreen.classList.add("active");
+    screenTitle.textContent = "Configurações";
+    aplicarAppSettingsNaInterface();
   }
 }
 
@@ -2349,6 +2496,10 @@ window.addEventListener("scroll", atualizarVisibilidadeBarraIcones, { passive: t
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    if (reportProblemModal.classList.contains("active")) {
+      fecharReportProblemModal();
+      return;
+    }
     if (fichaMedicaModal.classList.contains("active")) {
       fecharFichaMedicaModal();
       return;
@@ -2433,6 +2584,100 @@ dadosModal.addEventListener("click", (event) => {
   if (event.target === dadosModal) {
     fecharModalDados();
   }
+});
+
+configChangePhotoBtn.addEventListener("click", () => {
+  configProfileInput.click();
+});
+
+configProfileInput.addEventListener("change", () => {
+  const [file] = Array.from(configProfileInput.files || []);
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    appSettings.profilePhoto = String(reader.result || DEFAULT_MILITAR_FOTO);
+    salvarAppSettings();
+    aplicarAppSettingsNaInterface();
+  };
+  reader.readAsDataURL(file);
+});
+
+configSaveNameBtn.addEventListener("click", () => {
+  appSettings.displayName = String(configDisplayNameInput.value || "").trim();
+  salvarAppSettings();
+  aplicarAppSettingsNaInterface();
+});
+
+configThemeSelect.addEventListener("change", () => {
+  appSettings.theme = configThemeSelect.value === "dark" ? "dark" : "light";
+  salvarAppSettings();
+  aplicarAppSettingsNaInterface();
+});
+
+configNotificationsToggle.addEventListener("click", () => {
+  appSettings.notificationsEnabled = !appSettings.notificationsEnabled;
+  salvarAppSettings();
+  aplicarAppSettingsNaInterface();
+});
+
+configColorOptions.addEventListener("click", (event) => {
+  const alvo = event.target;
+  if (!(alvo instanceof HTMLElement) || !alvo.dataset.colorScheme) {
+    return;
+  }
+  appSettings.colorScheme = alvo.dataset.colorScheme;
+  salvarAppSettings();
+  aplicarAppSettingsNaInterface();
+});
+
+[configHelpBtn, configSecurityBtn, configTermsBtn].forEach((button) => {
+  button.addEventListener("click", () => {
+    mostrarPlaceholderConfiguracoes(button.textContent || "Configuração");
+  });
+});
+
+configReportBtn.addEventListener("click", () => {
+  abrirReportProblemModal();
+});
+
+reportProblemClose.addEventListener("click", () => {
+  fecharReportProblemModal();
+});
+
+reportProblemCancel.addEventListener("click", () => {
+  fecharReportProblemModal();
+});
+
+reportProblemModal.addEventListener("click", (event) => {
+  if (event.target === reportProblemModal) {
+    fecharReportProblemModal();
+  }
+});
+
+reportProblemForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const data = reportProblemDate.value || hojeISODate();
+  const mensagem = String(reportProblemMessage.value || "").trim();
+  if (!mensagem) {
+    return;
+  }
+
+  const texto = [
+    "Relatar um problema - Caveirinha App",
+    `Data: ${formatarDataExibicao(data)}`,
+    `Usuário: ${nomeUsuarioConfigurado()}`,
+    "",
+    "Descrição:",
+    mensagem
+  ].join("\n");
+
+  const link = `https://wa.me/${DEV_WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`;
+  window.open(link, "_blank", "noopener");
+  fecharReportProblemModal();
 });
 
 fichaMedicaModalClose.addEventListener("click", () => {
@@ -2955,6 +3200,7 @@ logoutBtn.addEventListener("click", () => {
 
 setHeaderLogoBackground(DEFAULT_HEADER_LOGO);
 setHeaderSubtitle(DEFAULT_HEADER_SUBTITLE);
+carregarAppSettings();
 void inicializarAutenticacao();
 
 

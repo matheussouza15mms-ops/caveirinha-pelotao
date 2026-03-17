@@ -1,4 +1,4 @@
-﻿# Funcionalidades Implementadas
+# Funcionalidades Implementadas
 
 ## Login e Sessao
 - Login por email/senha via Supabase Auth.
@@ -8,27 +8,49 @@
 
 ## Quadro Organizacional
 - Carregamento via Supabase (`quadro_organizacional`).
-- Abas por fracao e cards de militar.
+- Abas por fracao ou por pelotao, conforme nivel de acesso do usuario.
 - Busca por nome, funcao, posto/grad e numero.
-- Dados do militar em modal.
+- Ficha do militar com acesso aos modulos administrativos.
 - Botao de WhatsApp na ficha do militar, com abertura de conversa para `quadro_organizacional.celular`.
 
 ## Efetivo
-- Persistencia no Supabase por militar e por data (`data_referencia`).
-- Ao abrir o app, a data atual e consultada no Supabase para carregar o efetivo do dia.
-- Ao trocar a data no app, o sistema consulta os registros daquela data (sem reset em massa).
-- O Supabase so e atualizado quando o usuario altera um militar (em forma/situacao).
-- Situacoes suportadas: `ferias`, `dispensado`, `missao`, `servico`, `s_sv (S Sv)`, `atrasado`, `outros`, `falta`, `baixado`.
+- Persistencia no Supabase por militar e por data.
+- Consulta da data atual ao abrir o app.
+- Consulta por data sem reset em massa.
+- Atualizacao pontual apenas quando o usuario altera um militar.
+- Situacoes suportadas: `ferias`, `dispensado`, `missao`, `servico`, `s_sv`, `atrasado`, `outros`, `falta`, `baixado`.
 - Cores na situacao:
   - Verde: em forma
   - Azul: ferias/dispensado/missao/servico/s_sv
   - Laranja: atrasado/outros
   - Vermelho: falta/baixado
 
+## Controle Sanitario
+- Leitura da tabela `public.controle_sanitario` via `services/controleSanitarioService.js`.
+- Dashboard com cards de `Dispensados`, `Baixados` e `Internados`.
+- Regras de contagem:
+  - `Dispensado de atividade fisica` e `Outros` contam como `Dispensado`
+  - demais situacoes diferentes de `Normalidade` contam como `Baixado`
+  - registros com inicio/fim/dias preenchidos tambem entram na analise do dashboard
+- Filtro por perfil:
+  - `comando/admin` ve todos os pelotoes
+  - demais usuarios veem apenas militares do proprio pelotao
+- Tabela de militares fora da normalidade com destaque visual por proximidade do termino.
+- Coluna `Pelotao` exibida para perfil `comando/admin`.
+- Acao `Ficha Medica` por militar.
+
+## Ficha Medica
+- Popup com historico de atendimentos do militar.
+- Exibe situacao atual com badge:
+  - `Normalidade` em verde
+  - `Dispensado`, `Baixado` e `Internado` em vermelho
+- Tabela com data da visita, situacao, motivo, prescricao, inicio, termino, dias, atendido por e observacao.
+- Layout responsivo com rolagem horizontal e vertical em mobile.
+
 ## Controle por Pelotao
 - Perfil do usuario em `usuario_config`.
 - RLS no banco para filtrar por pelotao.
-- Perfis de nivel de acesso (admin/comando/operador/consulta).
+- Perfis de nivel de acesso (`admin`, `comando`, `operador`, `consulta`).
 
 ## Imagens
 - Foto do militar por bucket de pelotao.
@@ -36,7 +58,7 @@
 - Resolucao por signed URL (privado) com fallback publico.
 
 ## TAF Dashboard
-- Dashboard por ciclo (1º, 2º, 3º).
+- Dashboard por ciclo (1o, 2o, 3o).
 - Testes: barra, flexao, abdominal, corrida.
 - Mencao final calculada pela menor mencao do ciclo.
 - Atualizacao por modal com persistencia no Supabase.
@@ -64,9 +86,32 @@
 - Leitura/edicao de mencao persistidas no Supabase.
 - Vinculo com militar por `id` (FK para quadro), com `id_tat` como identificador do registro.
 
+## Configuracoes do App
+- Tela dedicada de configuracoes integrada ao fluxo principal do app.
+- Nome do usuario com edicao local.
+- Foto de perfil local com troca por upload no navegador.
+- Tema `light/dark`.
+- Personalizacao de cor:
+  - `Classic`
+  - `Verde Oliva`
+  - `Preto`
+  - `Vermelho`
+- Alteracao da cor do cabecalho e da barra do menu conforme personalizacao.
+- Botao `Ligado/Desligado` para notificacoes.
+- `Relatar um problema` com popup e envio para WhatsApp do desenvolvedor.
+- Itens preparados para proxima fase:
+  - Ajuda e suporte
+  - Seguranca
+  - Termos e politicas
+
 ## Header por Usuario
 - Subtitulo do cabecalho definido por `usuario_config.nome_pelotao`.
 - Fallback para `usuario_config.pelotao` e, se vazio, `PELOPES`.
+- Saudacao dinamica por horario:
+  - `Bom dia`
+  - `Boa tarde`
+  - `Boa noite`
+- Nome exibido no cabecalho vem do nome configurado pelo usuario.
 
 ## API Layer
 Acoes principais disponiveis:
@@ -74,12 +119,12 @@ Acoes principais disponiveis:
 - Usuario: `getUserConfig`
 - Quadro: `getMilitares`, `getMilitarDados`, `addMilitar`, `updateMilitar`, `deleteMilitar`
 - Efetivo: `getEfetivo`, `updateEfetivo`
+- Controle Sanitario: `getControleSanitario`
 - FO: `getFO`, `createFO`, `updateFO`, `deleteFO`
 - Historico/Obs: `getHistoricoObs`, `createHistoricoObs`, `updateHistoricoObs`, `deleteHistoricoObs`
 - Punicoes: `getPunicoes`, `createPunicao`, `updatePunicao`, `deletePunicao`
 - TAF: `getTAF`, `getTAFDashboard`, `updateTAFDashboard`
 - TAT: `getTAT`, `createTAT`, `updateTAT`
-- Demais modulos mantidos no contrato atual da API.
 
 ## Integracao Supabase + Google Sheets
 - Script no Google Apps Script para:
@@ -95,5 +140,5 @@ Acoes principais disponiveis:
 
 ## Automacao entre tabelas
 - Atualizacoes em `quadro_organizacional` propagam para tabelas dependentes por trigger no banco.
-- Propagacao por `id` apenas para colunas em comum (ex.: `pelotao`, `fracao`, `funcao`, etc.).
-- Evita necessidade de manutencao manual de dados replicados.
+- Propagacao por `id` apenas para colunas em comum.
+- Evita manutencao manual de dados replicados.

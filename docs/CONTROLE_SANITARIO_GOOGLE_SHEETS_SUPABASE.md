@@ -8,6 +8,24 @@ Objetivo:
 - manter cada atendimento vinculado ao mesmo `id` da tabela `public.quadro_organizacional`
 - respeitar o acesso por pelotao via RLS
 
+## Status no App
+Ja implementado no frontend do Caveirinha App:
+- leitura da tabela `public.controle_sanitario` por `services/controleSanitarioService.js`
+- dashboard com cards de `Dispensados`, `Baixados` e `Internados`
+- regras de classificacao para o dashboard:
+  - `Dispensado de atividade fisica` e `Outros` contam como `Dispensado`
+  - demais situacoes diferentes de `Normalidade` contam como `Baixado`
+- visibilidade por perfil:
+  - `comando/admin` ve todos os pelotoes
+  - demais usuarios veem apenas o proprio pelotao
+- tabela de militares fora da normalidade com destaque por proximidade do termino
+- popup de `Ficha Medica` por militar
+
+Ainda pendente nesta integracao:
+- concluir o fluxo operacional Google Sheets/App Script escrevendo e atualizando no Supabase
+- fechar o contrato final do `Code.gs`
+- validar policies e RPCs definitivas para escrita segura
+
 ## Escopo
 - Origem operacional: Google Sheets + Google Apps Script
 - Banco principal: Supabase
