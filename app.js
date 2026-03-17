@@ -650,18 +650,17 @@ async function inicializarAutenticacao() {
   try {
     const sessao = await window.CaveirinhaAPI.getSession();
     if (sessao?.user) {
-      if (!isManterSessaoAtivo()) {
-        await window.CaveirinhaAPI.logout();
-      } else {
-        usuarioSessao = sessao.user;
-        try {
-          usuarioConfigAtual = await window.CaveirinhaAPI.getUserConfig();
-        } catch (configError) {
-          console.error("Falha ao carregar configuracao do usuario:", configError);
-          usuarioConfigAtual = null;
-        }
-        await aplicarConfigVisualUsuario(usuarioConfigAtual);
+      usuarioSessao = sessao.user;
+      try {
+        usuarioConfigAtual = await window.CaveirinhaAPI.getUserConfig();
+      } catch (configError) {
+        console.error("Falha ao carregar configuracao do usuario:", configError);
+        usuarioConfigAtual = null;
       }
+      await aplicarConfigVisualUsuario(usuarioConfigAtual);
+      fecharTelaLogin();
+      await inicializarApp();
+      return;
     }
   } catch (error) {
     console.error("Falha ao recuperar sessao:", error);
