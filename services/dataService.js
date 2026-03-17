@@ -14,6 +14,7 @@
   const COLLECTION_DEFAULTS = {
     quadroOrganizacional: [],
     efetivo: [],
+    controleSanitario: [],
     fatosObservados: [],
     historicoObs: [],
     punicoes: [],
@@ -517,6 +518,8 @@
       }
       case "getFO":
         return clone(db.fatosObservados);
+      case "getControleSanitario":
+        return clone(db.controleSanitario);
       case "createFO": {
         assertRequired(payload.idMilitar, "idMilitar");
         const record = {

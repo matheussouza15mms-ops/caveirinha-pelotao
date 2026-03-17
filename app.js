@@ -28,12 +28,19 @@ const kpiBaixados = document.getElementById("kpiBaixados");
 const efetivoTabsContainer = document.getElementById("efetivoTabsContainer");
 const efetivoDataInput = document.getElementById("efetivoDataInput");
 const efetivoTableBody = document.getElementById("efetivoTableBody");
+const controleKpiDispensados = document.getElementById("controleKpiDispensados");
+const controleKpiBaixados = document.getElementById("controleKpiBaixados");
+const controleKpiInternados = document.getElementById("controleKpiInternados");
+const controleRefreshBtn = document.getElementById("controleRefreshBtn");
+const controleTableBody = document.getElementById("controleTableBody");
+const controlePelotaoHead = document.getElementById("controlePelotaoHead");
 
 const fichaFoto = document.getElementById("fichaFoto");
 const fichaNome = document.getElementById("fichaNome");
 const fichaFuncao = document.getElementById("fichaFuncao");
 const fichaWhatsappBtn = document.getElementById("fichaWhatsappBtn");
 const fichaDadosBtn = document.getElementById("fichaDadosBtn");
+const fichaMedicaBtn = document.getElementById("fichaMedicaBtn");
 const fichaTafBtn = document.getElementById("fichaTafBtn");
 const fichaTatBtn = document.getElementById("fichaTatBtn");
 const fichaPunicoesBtn = document.getElementById("fichaPunicoesBtn");
@@ -41,6 +48,10 @@ const fichaFoBtn = document.getElementById("fichaFoBtn");
 const dadosModal = document.getElementById("dadosModal");
 const dadosModalClose = document.getElementById("dadosModalClose");
 const dadosModalBody = document.getElementById("dadosModalBody");
+const fichaMedicaModal = document.getElementById("fichaMedicaModal");
+const fichaMedicaModalClose = document.getElementById("fichaMedicaModalClose");
+const fichaMedicaStatusBadge = document.getElementById("fichaMedicaStatusBadge");
+const fichaMedicaTableBody = document.getElementById("fichaMedicaTableBody");
 const foModal = document.getElementById("foModal");
 const foModalClose = document.getElementById("foModalClose");
 const foTabPlus = document.getElementById("foTabPlus");
@@ -125,6 +136,7 @@ let historicoListaCache = [];
 let historicoEditandoId = null;
 let punicoesListaCache = [];
 let punicoesEditandoId = null;
+let controleSanitarioListaCache = [];
 let tafDashboardCache = [];
 let tafEditandoCiclo = 1;
 let tatListaCache = [];
@@ -565,6 +577,290 @@ function formatarDataExibicao(valorData) {
   }
 
   return parsed.toLocaleDateString("pt-BR");
+}
+
+function normalizarTextoBusca(valor) {
+  return String(valor || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function parseDateOnly(valorData) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(valorData || ""));
+  if (!match) {
+    return null;
+  }
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
+function diferencaDiasEntreDatas(dataA, dataB) {
+  if (!(dataA instanceof Date) || Number.isNaN(dataA.getTime())) {
+    return null;
+  }
+  if (!(dataB instanceof Date) || Number.isNaN(dataB.getTime())) {
+    return null;
+  }
+  const diaA = new Date(dataA.getFullYear(), dataA.getMonth(), dataA.getDate());
+  const diaB = new Date(dataB.getFullYear(), dataB.getMonth(), dataB.getDate());
+  return Math.round((diaA.getTime() - diaB.getTime()) / 86400000);
+}
+
+function formatarDiasExibicao(valor) {
+  const dias = Number(valor || 0);
+  return dias > 0 ? String(dias) : "--";
+}
+
+function normalizarSituacaoControle(valor) {
+  const normalizado = normalizarTextoBusca(valor);
+  if (!normalizado) {
+    return "";
+  }
+  if (normalizado.includes("atividade fisica")) {
+    return "dispensado_atividade_fisica";
+  }
+  if (normalizado === "outros" || normalizado === "outro") {
+    return "outros";
+  }
+  if (normalizado.includes("baix")) {
+    return "baixado";
+  }
+  if (normalizado.includes("disp")) {
+    return "dispensado";
+  }
+  if (normalizado.includes("intern")) {
+    return "internado";
+  }
+  if (normalizado.includes("normal")) {
+    return "normalidade";
+  }
+  return normalizado;
+}
+
+function statusControleDoRegistro(registro) {
+  const situacao = normalizarSituacaoControle(registro?.situacao);
+  if (registro?.internado || situacao === "internado") {
+    return "internado";
+  }
+  if (situacao === "dispensado_atividade_fisica" || situacao === "outros") {
+    return "dispensado";
+  }
+  if (registro?.baixado || situacao === "baixado") {
+    return "baixado";
+  }
+  if (registro?.dispensado || situacao === "dispensado") {
+    return "dispensado";
+  }
+  if (situacao === "normalidade") {
+    return "normalidade";
+  }
+  return situacao || "normalidade";
+}
+
+function statusDashboardControle(registro) {
+  const situacao = normalizarSituacaoControle(registro?.situacao);
+  if (situacao === "normalidade" && !registro?.dataInicioAfastamento && !registro?.dataFimAfastamento && !registro?.diasAfastamento) {
+    return "normalidade";
+  }
+  if (situacao === "dispensado" || situacao === "dispensado_atividade_fisica" || situacao === "outros" || registro?.dispensado) {
+    return "dispensado";
+  }
+  if (situacao === "normalidade") {
+    return "normalidade";
+  }
+  if (registro?.internado) {
+    return "internado";
+  }
+  if (situacao) {
+    return "baixado";
+  }
+  if (registro?.dataInicioAfastamento || registro?.dataFimAfastamento || Number(registro?.diasAfastamento || 0) > 0) {
+    return "baixado";
+  }
+  return "normalidade";
+}
+
+function labelStatusControle(status) {
+  const safeStatus = String(status || "normalidade");
+  if (safeStatus === "baixado") return "Baixado";
+  if (safeStatus === "dispensado") return "Dispensado";
+  if (safeStatus === "internado") return "Internado";
+  return "Normalidade";
+}
+
+function classeStatusControle(status) {
+  const safeStatus = String(status || "normalidade");
+  if (safeStatus === "normalidade") return "status-normalidade";
+  if (safeStatus === "dispensado") return "status-alerta";
+  if (safeStatus === "baixado") return "status-alerta";
+  if (safeStatus === "internado") return "status-alerta";
+  return "status-alerta";
+}
+
+function dataReferenciaControle(registro) {
+  return (
+    registro?.dataInicioAfastamento ||
+    registro?.dataVisita ||
+    registro?.createdAt ||
+    ""
+  );
+}
+
+function compararRegistrosControle(a, b) {
+  const dataA = parseDateOnly(dataReferenciaControle(a)) || new Date(0);
+  const dataB = parseDateOnly(dataReferenciaControle(b)) || new Date(0);
+  return dataB.getTime() - dataA.getTime();
+}
+
+function statusControleAtual(registro, hoje = new Date()) {
+  const status = statusDashboardControle(registro);
+  if (status === "normalidade") {
+    return "normalidade";
+  }
+  const dataFim = parseDateOnly(registro?.dataFimAfastamento);
+  if (dataFim && diferencaDiasEntreDatas(dataFim, hoje) < 0) {
+    return "normalidade";
+  }
+  return status;
+}
+
+function registroControleDefineStatus(registro) {
+  return Boolean(
+    statusDashboardControle(registro) !== "normalidade" ||
+    registro?.dataInicioAfastamento ||
+    registro?.dataFimAfastamento ||
+    Number(registro?.diasAfastamento || 0) > 0
+  );
+}
+
+function usuarioPodeVerRegistroControle(registro, militar) {
+  if (usuarioEhComando()) {
+    return true;
+  }
+  const pelotaoUsuario = normalizarLabelPelotao(usuarioConfigAtual?.pelotao || "");
+  const pelotaoRegistro = normalizarLabelPelotao(
+    registro?.pelotao ||
+    registro?.rawPayload?.pelotao ||
+    registro?.rawPayload?.pel ||
+    militar?.pelotao ||
+    ""
+  );
+  return pelotaoUsuario === pelotaoRegistro;
+}
+
+function classeProximidadeControle(dataFim, hoje = new Date()) {
+  const parsed = parseDateOnly(dataFim);
+  if (!parsed) {
+    return "";
+  }
+  const dias = diferencaDiasEntreDatas(parsed, hoje);
+  if (dias === null) {
+    return "";
+  }
+  if (dias < 0) {
+    return "controle-vencimento-critico";
+  }
+  if (dias <= 1) {
+    return "controle-vencimento-alerta";
+  }
+  if (dias <= 3) {
+    return "controle-vencimento-atencao";
+  }
+  if (dias <= 7) {
+    return "controle-vencimento-proximo";
+  }
+  return "";
+}
+
+function militarPorId(idMilitar) {
+  return indiceMilitares.find((item) => item.id === idMilitar) || null;
+}
+
+function selecionarMilitarNaFicha(militar) {
+  if (!militar) {
+    return;
+  }
+  militarSelecionadoId = militar.id;
+  fichaFoto.src = militar.foto || DEFAULT_MILITAR_FOTO;
+  fichaNome.textContent = militarNomeBase(militar);
+  fichaFuncao.textContent = militar.funcao;
+  const whatsappLink = montarLinkWhatsapp(militar);
+  fichaWhatsappBtn.classList.toggle("hidden", !whatsappLink);
+  fichaWhatsappBtn.onclick = whatsappLink
+    ? () => window.open(whatsappLink, "_blank", "noopener")
+    : null;
+  setScreen("ficha");
+}
+
+function montarResumoControleSanitario() {
+  const grupos = new Map();
+  controleSanitarioListaCache.forEach((registro) => {
+    if (!registro?.idMilitar) {
+      return;
+    }
+    if (!grupos.has(registro.idMilitar)) {
+      grupos.set(registro.idMilitar, []);
+    }
+    grupos.get(registro.idMilitar).push(registro);
+  });
+
+  const hoje = new Date();
+  const linhas = [];
+  const contagem = {
+    dispensado: 0,
+    baixado: 0,
+    internado: 0
+  };
+
+  grupos.forEach((registros, idMilitar) => {
+    const ordenados = registros.slice().sort(compararRegistrosControle);
+    const registroAtual = ordenados.find((item) => registroControleDefineStatus(item)) || ordenados[0];
+    if (!registroAtual) {
+      return;
+    }
+
+    const militar = militarPorId(idMilitar);
+    if (!usuarioPodeVerRegistroControle(registroAtual, militar)) {
+      return;
+    }
+
+    const statusAtual = statusControleAtual(registroAtual, hoje);
+    if (statusAtual === "normalidade") {
+      return;
+    }
+
+    contagem[statusAtual] = Number(contagem[statusAtual] || 0) + 1;
+    linhas.push({
+      militar,
+      registro: registroAtual,
+      statusAtual
+    });
+  });
+
+  linhas.sort((a, b) => {
+    const classeA = classeProximidadeControle(a.registro?.dataFimAfastamento);
+    const classeB = classeProximidadeControle(b.registro?.dataFimAfastamento);
+    const peso = {
+      "controle-vencimento-critico": 0,
+      "controle-vencimento-alerta": 1,
+      "controle-vencimento-atencao": 2,
+      "controle-vencimento-proximo": 3,
+      "": 4
+    };
+    const pesoA = peso[classeA] ?? 4;
+    const pesoB = peso[classeB] ?? 4;
+    if (pesoA !== pesoB) {
+      return pesoA - pesoB;
+    }
+    return compararRegistrosControle(a.registro, b.registro);
+  });
+
+  return {
+    linhas,
+    contagem,
+    totalAlterados: linhas.length
+  };
 }
 
 function normalizarSituacaoEfetivo(valor) {
@@ -1450,6 +1746,7 @@ function setScreen(screen) {
   if (screen === "controle") {
     controleScreen.classList.add("active");
     screenTitle.textContent = "Controle Sanitário";
+    void carregarControleSanitario();
   }
 
   if (screen === "missoes") {
@@ -1517,16 +1814,7 @@ function renderCards() {
     `;
 
     card.addEventListener("click", () => {
-      militarSelecionadoId = militar.id;
-      fichaFoto.src = militar.foto || DEFAULT_MILITAR_FOTO;
-      fichaNome.textContent = militarNomeBase(militar);
-      fichaFuncao.textContent = militar.funcao;
-      const whatsappLink = montarLinkWhatsapp(militar);
-      fichaWhatsappBtn.classList.toggle("hidden", !whatsappLink);
-      fichaWhatsappBtn.onclick = whatsappLink
-        ? () => window.open(whatsappLink, "_blank", "noopener")
-        : null;
-      setScreen("ficha");
+      selecionarMilitarNaFicha(militar);
     });
 
     cardsArea.appendChild(card);
@@ -1761,6 +2049,138 @@ function renderEfetivo() {
   atualizarResumoEfetivo();
 }
 
+function renderControleSanitario() {
+  if (!controleTableBody) {
+    return;
+  }
+
+  const resumo = montarResumoControleSanitario();
+
+  if (controleKpiDispensados) {
+    controleKpiDispensados.textContent = String(resumo.contagem.dispensado || 0);
+  }
+  if (controleKpiBaixados) {
+    controleKpiBaixados.textContent = String(resumo.contagem.baixado || 0);
+  }
+  if (controleKpiInternados) {
+    controleKpiInternados.textContent = String(resumo.contagem.internado || 0);
+  }
+  if (controlePelotaoHead) {
+    controlePelotaoHead.hidden = !usuarioEhComando();
+  }
+  controleTableBody.innerHTML = "";
+
+  if (!resumo.linhas.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="${usuarioEhComando() ? 9 : 8}" class="fo-empty-row">Nenhum militar fora da normalidade.</td>`;
+    controleTableBody.appendChild(tr);
+    return;
+  }
+
+  resumo.linhas.forEach(({ militar, registro, statusAtual }) => {
+    const tr = document.createElement("tr");
+    const classeProximidade = classeProximidadeControle(registro.dataFimAfastamento);
+    if (classeProximidade) {
+      tr.classList.add(classeProximidade);
+    }
+
+    tr.innerHTML = `
+      <td>${militar?.pg || "--"}</td>
+      <td>${militar?.nomeGuerra || registro.rawPayload?.nomeGuerra || "--"}</td>
+      ${usuarioEhComando() ? `<td>${militar?.pelotao || registro.pelotao || "--"}</td>` : ""}
+      <td>${registro.motivo || "--"}</td>
+      <td><span class="controle-status-badge ${classeStatusControle(statusAtual)}">${labelStatusControle(statusAtual)}</span></td>
+      <td>${formatarDataExibicao(registro.dataInicioAfastamento || registro.dataVisita)}</td>
+      <td>${formatarDataExibicao(registro.dataFimAfastamento)}</td>
+      <td>${formatarDiasExibicao(registro.diasAfastamento)}</td>
+      <td>
+        <div class="fo-actions-cell">
+          <button type="button" class="fo-action-btn" data-action="ficha-medica" data-id="${registro.idMilitar}">Ficha Médica</button>
+        </div>
+      </td>
+    `;
+    controleTableBody.appendChild(tr);
+  });
+}
+
+async function carregarControleSanitario(options = {}) {
+  const force = Boolean(options.force);
+  if (!force && controleSanitarioListaCache.length) {
+    renderControleSanitario();
+    return;
+  }
+
+  try {
+    controleSanitarioListaCache = await window.CaveirinhaAPI.getControleSanitario();
+  } catch (error) {
+    console.error("Falha ao carregar controle sanitario:", error);
+    controleSanitarioListaCache = [];
+  }
+
+  renderControleSanitario();
+}
+
+function abrirFichaMedicaModal() {
+  fichaMedicaModal.classList.add("active");
+  fichaMedicaModal.setAttribute("aria-hidden", "false");
+}
+
+function fecharFichaMedicaModal() {
+  fichaMedicaModal.classList.remove("active");
+  fichaMedicaModal.setAttribute("aria-hidden", "true");
+}
+
+async function abrirFichaMedica(idMilitar = militarSelecionadoId) {
+  const safeId = String(idMilitar || "").trim();
+  if (!safeId) {
+    return;
+  }
+
+  if (!controleSanitarioListaCache.length) {
+    await carregarControleSanitario({ force: true });
+  }
+
+  const registros = controleSanitarioListaCache
+    .filter((item) => item.idMilitar === safeId)
+    .filter((item) => usuarioPodeVerRegistroControle(item, militarPorId(safeId)))
+    .sort(compararRegistrosControle);
+
+  const registroAtual = registros.find((item) => registroControleDefineStatus(item)) || null;
+  const statusAtual = registroAtual ? statusControleAtual(registroAtual) : "normalidade";
+
+  fichaMedicaStatusBadge.textContent = labelStatusControle(statusAtual);
+  fichaMedicaStatusBadge.className = `controle-status-badge ${classeStatusControle(statusAtual)}`;
+
+  fichaMedicaTableBody.innerHTML = "";
+
+  if (!registros.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = '<td colspan="9" class="fo-empty-row">Nenhum atendimento encontrado para este militar.</td>';
+    fichaMedicaTableBody.appendChild(tr);
+    abrirFichaMedicaModal();
+    return;
+  }
+
+  registros.forEach((registro) => {
+    const tr = document.createElement("tr");
+    const statusLinha = statusDashboardControle(registro);
+    tr.innerHTML = `
+      <td>${formatarDataExibicao(registro.dataVisita)}</td>
+      <td><span class="controle-status-badge ${classeStatusControle(statusLinha)}">${labelStatusControle(statusLinha)}</span></td>
+      <td>${registro.motivo || "--"}</td>
+      <td>${registro.prescricao || "--"}</td>
+      <td>${formatarDataExibicao(registro.dataInicioAfastamento)}</td>
+      <td>${formatarDataExibicao(registro.dataFimAfastamento)}</td>
+      <td>${formatarDiasExibicao(registro.diasAfastamento)}</td>
+      <td>${registro.atendidoPor || "--"}</td>
+      <td>${registro.observacao || "--"}</td>
+    `;
+    fichaMedicaTableBody.appendChild(tr);
+  });
+
+  abrirFichaMedicaModal();
+}
+
 async function persistirEfetivo(cardId) {
   const estado = efetivoState.get(cardId);
   const idMilitar = cardIdToMilitarId.get(cardId);
@@ -1873,6 +2293,25 @@ menuItems.forEach((item) => {
   });
 });
 
+if (controleRefreshBtn) {
+  controleRefreshBtn.addEventListener("click", () => {
+    void carregarControleSanitario({ force: true });
+  });
+}
+
+if (controleTableBody) {
+  controleTableBody.addEventListener("click", (event) => {
+    const alvo = event.target;
+    if (!(alvo instanceof HTMLElement) || !alvo.dataset.id) {
+      return;
+    }
+
+    if (alvo.dataset.action === "ficha-medica") {
+      void abrirFichaMedica(alvo.dataset.id);
+    }
+  });
+}
+
 backToQuadro.addEventListener("click", () => {
   setMenuAtivo("quadro");
   setScreen("quadro");
@@ -1910,6 +2349,10 @@ window.addEventListener("scroll", atualizarVisibilidadeBarraIcones, { passive: t
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    if (fichaMedicaModal.classList.contains("active")) {
+      fecharFichaMedicaModal();
+      return;
+    }
     if (tafEditorModal.classList.contains("active")) {
       fecharTafEditorModal();
       return;
@@ -1958,6 +2401,10 @@ fichaDadosBtn.addEventListener("click", () => {
   void abrirDadosMilitar();
 });
 
+fichaMedicaBtn.addEventListener("click", () => {
+  void abrirFichaMedica();
+});
+
 fichaTafBtn.addEventListener("click", () => {
   void abrirDashboardTaf();
 });
@@ -1985,6 +2432,16 @@ dadosModalClose.addEventListener("click", () => {
 dadosModal.addEventListener("click", (event) => {
   if (event.target === dadosModal) {
     fecharModalDados();
+  }
+});
+
+fichaMedicaModalClose.addEventListener("click", () => {
+  fecharFichaMedicaModal();
+});
+
+fichaMedicaModal.addEventListener("click", (event) => {
+  if (event.target === fichaMedicaModal) {
+    fecharFichaMedicaModal();
   }
 });
 

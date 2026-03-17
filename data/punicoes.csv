@@ -1,9 +1,0 @@
-punicaoId,id,fato,punicao,dias,dataInicio,dataFim,lastUpdate
-pun-001,mil-004,Atraso na formatura matinal,ADV,0,2026-02-03,2026-02-03,2026-03-01T09:10:00.000Z
-pun-002,mil-006,Uniforme em desacordo com o padrao,IMP,1,2026-02-06,2026-02-07,2026-03-01T09:12:00.000Z
-pun-003,mil-009,Falta injustificada ao servico,DET,2,2026-02-10,2026-02-12,2026-03-01T09:15:00.000Z
-pun-004,mil-010,Desrespeito a ordem de superior,REP,3,2026-02-11,2026-02-14,2026-03-01T09:18:00.000Z
-pun-005,mil-011,Ausencia sem autorizacao em escala,PRISAO,5,2026-02-15,2026-02-20,2026-03-01T09:22:00.000Z
-pun-006,mil-013,Falha em posto de sentinela,DET,1,2026-02-18,2026-02-19,2026-03-01T09:25:00.000Z
-pun-007,mil-014,Conduta inadequada em atividade externa,REP,2,2026-02-21,2026-02-23,2026-03-01T09:28:00.000Z
-pun-008,mil-008,Uso indevido de equipamento do pelotao,IMP,0,2026-02-24,2026-02-24,2026-03-01T09:30:00.000Z

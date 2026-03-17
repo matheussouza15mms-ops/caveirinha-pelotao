@@ -69,10 +69,6 @@
             <span class="menu-icon icon-missoes" aria-hidden="true"></span>
             <span class="menu-label">Missões</span>
           </button>
-          <button class="menu-item menu-item-with-label" data-screen="alertas" title="Alertas" aria-label="Alertas">
-            <span class="menu-icon icon-alertas" aria-hidden="true"></span>
-            <span class="menu-label">Alertas</span>
-          </button>
           <button id="searchToggle" class="search-toggle menu-item-with-label" title="Pesquisar Militar" aria-label="Pesquisar Militar">
             <span class="menu-icon icon-search" aria-hidden="true"></span>
             <span class="menu-label">Pesquisar Militar</span>
@@ -135,10 +131,48 @@
       </section>
 
       <section id="controleScreen" class="screen">
-        <div class="efetivo-table-wrap">
-          <div style="padding: 18px;">
-            <h3 style="margin: 0 0 6px;">Controle Sanitário</h3>
-            <p style="margin: 0; color: #4a6076;">Módulo pronto para receber as regras do controle sanitário.</p>
+        <div class="controle-layout">
+          <div class="controle-summary">
+            <article class="controle-kpi">
+              <p>Dispensados</p>
+              <strong id="controleKpiDispensados">0</strong>
+            </article>
+            <article class="controle-kpi">
+              <p>Baixados</p>
+              <strong id="controleKpiBaixados">0</strong>
+            </article>
+            <article class="controle-kpi">
+              <p>Internados</p>
+              <strong id="controleKpiInternados">0</strong>
+            </article>
+          </div>
+
+          <div class="controle-panel">
+            <div class="controle-panel-head">
+              <div>
+                <h3>Militares fora da normalidade</h3>
+                <p>Mostra o estado atual e destaca dispensas próximas do término.</p>
+              </div>
+              <button id="controleRefreshBtn" type="button" class="fo-new-btn">Atualizar</button>
+            </div>
+            <div class="fo-table-wrap">
+              <table class="fo-table controle-table">
+                <thead>
+                  <tr>
+                    <th>P/G</th>
+                    <th>Nome de Guerra</th>
+                    <th id="controlePelotaoHead">Pelotão</th>
+                    <th>Motivo</th>
+                    <th>Situação</th>
+                    <th>Início</th>
+                    <th>Término</th>
+                    <th>Dias</th>
+                    <th>Ficha Médica</th>
+                  </tr>
+                </thead>
+                <tbody id="controleTableBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -183,6 +217,7 @@
         </div>
         <div class="ficha-actions">
           <button id="fichaDadosBtn" class="ficha-action">Dados</button>
+          <button id="fichaMedicaBtn" class="ficha-action">Ficha Médica</button>
           <button id="fichaTafBtn" class="ficha-action">TAF</button>
           <button id="fichaTatBtn" class="ficha-action">TAT</button>
           <button id="fichaPunicoesBtn" class="ficha-action">Punições</button>
@@ -200,6 +235,39 @@
         <button id="dadosModalClose" class="modal-close" aria-label="Fechar janela">×</button>
       </div>
       <div id="dadosModalBody" class="dados-grid"></div>
+    </div>
+  </div>
+
+  <div id="fichaMedicaModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card ficha-medica-modal-card" role="dialog" aria-modal="true" aria-labelledby="fichaMedicaModalTitle">
+      <div class="modal-header">
+        <h3 id="fichaMedicaModalTitle">Ficha Médica</h3>
+        <button id="fichaMedicaModalClose" class="modal-close" aria-label="Fechar janela">×</button>
+      </div>
+      <div class="ficha-medica-content">
+        <div class="ficha-medica-status-bar">
+          <span>Situação atual</span>
+          <strong id="fichaMedicaStatusBadge" class="controle-status-badge status-normalidade">Normalidade</strong>
+        </div>
+        <div class="fo-table-wrap">
+          <table class="fo-table controle-atendimentos-table">
+            <thead>
+              <tr>
+                <th>Data da visita</th>
+                <th>Situação</th>
+                <th>Motivo</th>
+                <th>Prescrição</th>
+                <th>Início</th>
+                <th>Término</th>
+                <th>Dias</th>
+                <th>Atendido por</th>
+                <th>Observação</th>
+              </tr>
+            </thead>
+            <tbody id="fichaMedicaTableBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -511,6 +579,7 @@
   <script src="services/fatosObservadosService.js"></script>
   <script src="services/historicoObsService.js"></script>
   <script src="services/punicoesService.js"></script>
+  <script src="services/controleSanitarioService.js"></script>
   <script src="services/dataService.js"></script>
   <script src="services/api.js"></script>
   <script src="app.js"></script>

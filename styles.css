@@ -617,6 +617,66 @@ body {
   font-weight: 600;
 }
 
+.controle-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.controle-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.controle-kpi {
+  border: 1px solid #d9e5f3;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff, #f6faff);
+  padding: 14px;
+  box-shadow: 0 10px 24px rgba(13, 34, 57, 0.08);
+}
+
+.controle-kpi p {
+  margin: 0;
+  color: #5c7692;
+  font-size: 0.92rem;
+}
+
+.controle-kpi strong {
+  display: block;
+  margin-top: 8px;
+  color: #173a5b;
+  font-size: 1.8rem;
+}
+
+.controle-panel {
+  border: 1px solid #d9e5f3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(13, 34, 57, 0.08);
+  padding: 14px;
+  overflow: hidden;
+}
+
+.controle-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.controle-panel-head h3 {
+  margin: 0 0 4px;
+  color: #183857;
+}
+
+.controle-panel-head p {
+  margin: 0;
+  color: #5d7893;
+  font-size: 0.9rem;
+}
+
 .efetivo-toolbar {
   display: flex;
   align-items: center;
@@ -938,6 +998,11 @@ body {
   background: #fff;
 }
 
+.controle-panel .fo-table-wrap {
+  max-height: min(56vh, 520px);
+  overflow: auto;
+}
+
 .fo-table {
   width: 100%;
   border-collapse: collapse;
@@ -955,6 +1020,22 @@ body {
   background: #f6f9fd;
   color: #2a4a6a;
   font-size: 0.9rem;
+}
+
+.controle-table tr.controle-vencimento-proximo td {
+  background: #fff4e0;
+}
+
+.controle-table tr.controle-vencimento-atencao td {
+  background: #ffe7c9;
+}
+
+.controle-table tr.controle-vencimento-alerta td {
+  background: #ffd8d1;
+}
+
+.controle-table tr.controle-vencimento-critico td {
+  background: #ffc7c7;
 }
 
 .fo-empty-row {
@@ -983,6 +1064,32 @@ body {
   border-color: #e9c2c2;
   background: #fff2f2;
   color: #8c2e2e;
+}
+
+.controle-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  border-radius: 999px;
+  border: 1px solid #a6d6b3;
+  background: #e3f8ea;
+  color: #1c7149;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.controle-status-badge.status-normalidade {
+  border-color: #a6d6b3;
+  background: #e3f8ea;
+  color: #1c7149;
+}
+
+.controle-status-badge.status-alerta {
+  border-color: #efb2b2;
+  background: #ffe8e8;
+  color: #922f2f;
 }
 
 .fo-editor-card {
@@ -1072,6 +1179,37 @@ body {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
+}
+
+.ficha-medica-modal-card {
+  width: min(1080px, 100%);
+  overflow: hidden;
+}
+
+.ficha-medica-content {
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+  max-height: calc(86vh - 72px);
+  overflow: hidden;
+}
+
+.ficha-medica-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #dbe6f2;
+  border-radius: 12px;
+  background: #f9fbfe;
+  padding: 12px;
+  color: #214262;
+  font-weight: 700;
+}
+
+.ficha-medica-content .fo-table-wrap {
+  max-height: 100%;
+  overflow: auto;
 }
 
 .punicoes-topbar {
@@ -1437,6 +1575,29 @@ body {
     padding: 11px;
   }
 
+  .controle-panel,
+  .controle-kpi {
+    padding: 12px;
+  }
+
+  .controle-panel-head,
+  .ficha-medica-status-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .controle-panel .fo-table-wrap {
+    max-height: 52vh;
+  }
+
+  .ficha-medica-modal-card {
+    width: min(96vw, 760px);
+  }
+
+  .ficha-medica-content {
+    max-height: calc(82vh - 72px);
+  }
+
   .efetivo-table th:nth-child(3),
   .efetivo-table td:nth-child(3) {
     width: 150px;
@@ -1468,6 +1629,77 @@ body {
   .ficha-header p {
     margin-top: 2px;
     font-size: 0.96rem;
+  }
+
+  .controle-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .controle-kpi strong {
+    font-size: 1.6rem;
+  }
+
+  .controle-panel {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .controle-panel-head {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .controle-panel-head h3 {
+    font-size: 1.05rem;
+  }
+
+  .controle-panel-head p {
+    font-size: 0.88rem;
+    line-height: 1.35;
+  }
+
+  .controle-panel .fo-table-wrap {
+    max-height: 48vh;
+    border-radius: 12px;
+  }
+
+  .controle-table {
+    min-width: 760px;
+  }
+
+  .ficha-medica-modal-card {
+    width: min(94vw, 560px);
+    border-radius: 18px;
+  }
+
+  .ficha-medica-content {
+    padding: 10px;
+    gap: 10px;
+    max-height: calc(78vh - 68px);
+  }
+
+  .ficha-medica-status-bar {
+    padding: 10px 12px;
+    border-radius: 14px;
+    gap: 8px;
+  }
+
+  .ficha-medica-status-bar span {
+    font-size: 0.86rem;
+  }
+
+  .ficha-medica-content .fo-table-wrap {
+    border-radius: 14px;
+  }
+
+  .controle-atendimentos-table {
+    min-width: 920px;
+  }
+
+  .controle-status-badge {
+    min-width: 0;
+    max-width: 100%;
+    white-space: nowrap;
   }
 
   .efetivo-table th,

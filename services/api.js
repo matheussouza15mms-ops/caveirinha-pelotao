@@ -62,6 +62,13 @@
     );
   }
 
+  function hasSupabaseControleSanitario() {
+    return (
+      Boolean(globalScope.CaveirinhaControleSanitarioService) &&
+      typeof globalScope.CaveirinhaControleSanitarioService.getControleSanitario === "function"
+    );
+  }
+
   function hasSupabaseHistoricoObs() {
     return (
       Boolean(globalScope.CaveirinhaHistoricoObsService) &&
@@ -245,6 +252,13 @@
     return apiRequest("getTAF");
   }
 
+  function getControleSanitario() {
+    if (hasSupabaseControleSanitario()) {
+      return globalScope.CaveirinhaControleSanitarioService.getControleSanitario();
+    }
+    return apiRequest("getControleSanitario");
+  }
+
   function createTAF(payload) {
     return apiRequest("createTAF", payload);
   }
@@ -339,6 +353,7 @@
     createPunicao,
     updatePunicao,
     deletePunicao,
+    getControleSanitario,
     getTAF,
     createTAF,
     updateTAF,
