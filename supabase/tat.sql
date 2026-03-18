@@ -40,6 +40,7 @@ alter table public.tat add column if not exists updated_at timestamptz not null 
 
 create index if not exists idx_tat_id on public.tat (id);
 create index if not exists idx_tat_data on public.tat (data desc);
+create index if not exists idx_tat_id_data_created_at on public.tat (id, data desc, created_at desc);
 
 do $$
 begin

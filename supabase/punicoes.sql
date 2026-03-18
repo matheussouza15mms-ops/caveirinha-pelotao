@@ -61,6 +61,8 @@ alter table public.punicoes add column if not exists updated_at timestamptz not 
 
 create index if not exists idx_punicoes_id on public.punicoes (id);
 create index if not exists idx_punicoes_data_inicio on public.punicoes (data_inicio desc);
+create index if not exists idx_punicoes_id_data_inicio_created_at
+  on public.punicoes (id, data_inicio desc, created_at desc);
 
 do $$
 begin

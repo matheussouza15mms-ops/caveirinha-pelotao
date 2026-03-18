@@ -80,6 +80,7 @@ end $$;
 
 create index if not exists idx_taf_id on public.taf (id);
 create index if not exists idx_taf_pelotao on public.taf (pelotao);
+create index if not exists idx_taf_id_data_created_at on public.taf (id, data desc, created_at desc);
 create unique index if not exists uq_taf_id_tipo_teste on public.taf (id, tipo_teste);
 
 alter table public.taf drop constraint if exists fk_taf_quadro_id;

@@ -67,6 +67,8 @@ alter table public.fatos_observados add column if not exists updated_at timestam
 
 create index if not exists idx_fatos_observados_id on public.fatos_observados (id);
 create index if not exists idx_fatos_observados_data on public.fatos_observados (data desc);
+create index if not exists idx_fatos_observados_id_tipo_data_created_at
+  on public.fatos_observados (id, tipo, data desc, created_at desc);
 
 do $$
 begin

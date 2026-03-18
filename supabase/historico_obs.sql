@@ -37,6 +37,8 @@ alter table public.historico_obs add column if not exists updated_at timestamptz
 
 create index if not exists idx_historico_obs_id on public.historico_obs (id);
 create index if not exists idx_historico_obs_data on public.historico_obs (data desc);
+create index if not exists idx_historico_obs_id_data_created_at
+  on public.historico_obs (id, data desc, created_at desc);
 
 do $$
 begin

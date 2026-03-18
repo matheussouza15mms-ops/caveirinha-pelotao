@@ -81,6 +81,10 @@ create index if not exists idx_controle_sanitario_id on public.controle_sanitari
 create index if not exists idx_controle_sanitario_data_visita on public.controle_sanitario (data_visita desc nulls last);
 create index if not exists idx_controle_sanitario_pelotao on public.controle_sanitario (pelotao);
 create index if not exists idx_controle_sanitario_situacao on public.controle_sanitario (situacao);
+create index if not exists idx_controle_sanitario_id_data_visita_created_at
+  on public.controle_sanitario (id, data_visita desc nulls last, created_at desc);
+create index if not exists idx_controle_sanitario_pelotao_data_visita
+  on public.controle_sanitario (pelotao, data_visita desc nulls last);
 create unique index if not exists uq_controle_sanitario_sheet_row on public.controle_sanitario (sheet_row_id);
 
 alter table public.controle_sanitario drop constraint if exists controle_sanitario_id_fkey;

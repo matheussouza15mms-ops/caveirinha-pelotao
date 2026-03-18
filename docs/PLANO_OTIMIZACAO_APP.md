@@ -53,6 +53,8 @@ Ja concluido:
 - remocao de verificacoes `HEAD` desnecessarias no fluxo de imagens.
 - filtros por `idMilitar` em telas secundarias para evitar leitura de colecoes inteiras no Supabase.
 - dashboard TAF e ficha medica do controle sanitario ajustados para leitura direcionada por militar quando aplicavel.
+- indices compostos locais e migration incremental para filtros reais por `id`, `tipo`, `data` e `pelotao`.
+- migration incremental preparada para consolidar helpers de RLS e reduzir repeticao de subqueries por pelotao.
 
 Em andamento:
 
@@ -207,6 +209,7 @@ Para ficha:
 
 - revisar e simplificar policies RLS;
 - revisar indices;
+- aplicar indices compostos alinhados aos filtros mais usados do app;
 - medir tempos reais de consulta;
 - criar estrategia de invalidacao de cache;
 - aplicar atualizacao parcial de componentes.
@@ -225,7 +228,7 @@ Para ficha:
 - [x] separar atualizacao de `efetivo` e `quadro`
 - [x] revisar custo inicial do realtime
 - [ ] padronizar comparacao de pelotao
-- [ ] revisar indices no Supabase
+- [x] revisar indices no Supabase
 - [ ] revisar RLS com foco em performance
 - [x] adicionar cache local por sessao
 - [x] reduzir chamadas repetidas ao Storage e detalhes individuais
