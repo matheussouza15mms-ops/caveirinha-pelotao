@@ -43,16 +43,22 @@ Ja concluido:
 - login manual obrigatorio, sem entrada automatica ao abrir o app;
 - remocao da foto dos cards do quadro organizacional;
 - foto real carregada apenas ao abrir a ficha do militar;
+- cache local do detalhe do militar para reduzir leituras repetidas da ficha;
 - consulta inicial do quadro reduzida para colunas minimas;
 - cards do quadro reorganizados para layout mais compacto;
 - realtime separado para reduzir recarregamento total em mudancas de `efetivo`.
 - cache local por sessao para `usuario_config`, `quadro` resumido e `efetivo` por data.
+- debounce e indice de busca pre-processado para reduzir trabalho a cada digitacao.
+- cache curto para URLs de imagens no Storage.
+- remocao de verificacoes `HEAD` desnecessarias no fluxo de imagens.
+- filtros por `idMilitar` em telas secundarias para evitar leitura de colecoes inteiras no Supabase.
 
 Em andamento:
 
 - reduzir ainda mais o custo do realtime em mudancas de `quadro_organizacional`;
 - medir gargalos por tela.
 - revisar invalidacao de cache por tipo de evento.
+- revisar interacoes do Supabase em telas secundarias que ainda carregam colecoes inteiras.
 
 ## Frente 1: Otimizacao do Frontend
 
@@ -191,6 +197,8 @@ Para ficha:
 
 - [x] otimizar realtime para nao recarregar tudo em mudancas de `efetivo`;
 - [x] cachear `quadro` e `efetivo` por sessao;
+- [x] reduzir custo da busca local com debounce e indice pre-processado;
+- [x] reduzir repeticao de leituras de detalhe e URLs de imagem;
 - [ ] separar melhor o carregamento inicial do carregamento secundario;
 - [ ] criar views/RPCs enxutas para telas pesadas.
 
@@ -219,6 +227,7 @@ Para ficha:
 - [ ] revisar indices no Supabase
 - [ ] revisar RLS com foco em performance
 - [x] adicionar cache local por sessao
+- [x] reduzir chamadas repetidas ao Storage e detalhes individuais
 - [ ] adicionar indicadores de carregamento
 - [ ] medir gargalos por tela
 

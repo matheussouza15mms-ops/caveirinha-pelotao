@@ -2,6 +2,7 @@
   const TABLE_NAME = "quadro_organizacional";
   const FOTO_SIGNED_URL_TTL_SECONDS = 3600;
   const DEFAULT_MILITAR_FOTO = "assets/imagens/militar-base.png";
+  const FOTO_URL_CACHE_MS = 55 * 60 * 1000;
   const QUADRO_LIST_SELECT = [
     "id",
     "pg",
@@ -34,6 +35,7 @@
     "pel ap": "imagens-pelap",
     "sec cmdo": "imagens-seccmdo"
   };
+  const fotoUrlCache = new Map();
 
   function getClient() {
     const client = globalScope.CaveirinhaSupabase?.client;
@@ -111,22 +113,36 @@
     return raw.replace(/^\/+/, "");
   }
 
-  async function isPublicUrlAvailable(url) {
-    const alvo = String(url || "").trim();
-    if (!alvo) {
-      return false;
+  function fotoUrlCacheKey(bucket, path) {
+    return `${String(bucket || "").trim()}::${String(path || "").trim()}`;
+  }
+
+  function lerFotoUrlCache(bucket, path) {
+    const key = fotoUrlCacheKey(bucket, path);
+    const atual = fotoUrlCache.get(key);
+    if (!atual) {
+      return "";
     }
 
-    try {
-      const response = await fetch(alvo, { method: "HEAD" });
-      if (response.ok) {
-        return true;
-      }
-      // Alguns provedores podem nao aceitar HEAD, mas a URL segue valida para <img>.
-      return response.status === 405;
-    } catch (error) {
-      return false;
+    if (Date.now() >= atual.expiresAt) {
+      fotoUrlCache.delete(key);
+      return "";
     }
+
+    return atual.url || "";
+  }
+
+  function salvarFotoUrlCache(bucket, path, url) {
+    const safeUrl = String(url || "").trim();
+    if (!safeUrl) {
+      return "";
+    }
+
+    fotoUrlCache.set(fotoUrlCacheKey(bucket, path), {
+      url: safeUrl,
+      expiresAt: Date.now() + FOTO_URL_CACHE_MS
+    });
+    return safeUrl;
   }
 
   async function resolveFotoUrl(path, pelotao) {
@@ -144,6 +160,11 @@
       return DEFAULT_MILITAR_FOTO;
     }
 
+    const cachedUrl = lerFotoUrlCache(resolved.bucket, resolved.path);
+    if (cachedUrl) {
+      return cachedUrl;
+    }
+
     try {
       const storage = getClient().storage.from(resolved.bucket);
 
@@ -153,14 +174,14 @@
         FOTO_SIGNED_URL_TTL_SECONDS
       );
       if (!signedError && signedData?.signedUrl) {
-        return signedData.signedUrl;
+        return salvarFotoUrlCache(resolved.bucket, resolved.path, signedData.signedUrl);
       }
 
       // Fallback para bucket publico.
       const { data: publicData } = storage.getPublicUrl(resolved.path);
       const publicUrl = publicData?.publicUrl || "";
-      if (await isPublicUrlAvailable(publicUrl)) {
-        return publicUrl;
+      if (publicUrl) {
+        return salvarFotoUrlCache(resolved.bucket, resolved.path, publicUrl);
       }
       return DEFAULT_MILITAR_FOTO;
     } catch (error) {

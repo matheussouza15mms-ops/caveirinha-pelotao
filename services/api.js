@@ -161,11 +161,11 @@
     return apiRequest("updateEfetivo", payload);
   }
 
-  function getFO() {
+  function getFO(idMilitar) {
     if (hasSupabaseFatosObservados()) {
-      return globalScope.CaveirinhaFatosObservadosService.getFO();
+      return globalScope.CaveirinhaFatosObservadosService.getFO(idMilitar);
     }
-    return apiRequest("getFO");
+    return apiRequest("getFO", { idMilitar });
   }
 
   function createFO(payload) {
@@ -217,11 +217,11 @@
     return apiRequest("deleteHistoricoObs", { id });
   }
 
-  function getPunicoes() {
+  function getPunicoes(idMilitar) {
     if (hasSupabasePunicoes()) {
-      return globalScope.CaveirinhaPunicoesService.getPunicoes();
+      return globalScope.CaveirinhaPunicoesService.getPunicoes(idMilitar);
     }
-    return apiRequest("getPunicoes");
+    return apiRequest("getPunicoes", { idMilitar });
   }
 
   function createPunicao(payload) {
@@ -281,11 +281,11 @@
     return apiRequest("updateTAFDashboard", payload);
   }
 
-  function getTAT() {
+  function getTAT(idMilitar) {
     if (hasSupabaseTat()) {
-      return globalScope.CaveirinhaTatService.getTAT();
+      return globalScope.CaveirinhaTatService.getTAT(idMilitar);
     }
-    return apiRequest("getTAT");
+    return apiRequest("getTAT", { idMilitar });
   }
 
   function createTAT(payload) {

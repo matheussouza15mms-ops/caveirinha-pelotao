@@ -168,6 +168,7 @@ let usuarioConfigAtual = null;
 let ultimoScrollY = window.scrollY || 0;
 let efetivoPelotaoAtivo = "__todos__";
 let realtimeRefreshHandle = null;
+let searchRenderHandle = null;
 
 const opcoesSituacao = ["ferias", "dispensado", "missao", "servico", "s_sv", "atrasado", "outros", "falta", "baixado"];
 const efetivoState = new Map();
@@ -185,6 +186,9 @@ const APP_CACHE_PREFIX = "caveirinha_cache_v1";
 const CACHE_TTL_USUARIO_CONFIG_MS = 5 * 60 * 1000;
 const CACHE_TTL_QUADRO_MS = 5 * 60 * 1000;
 const CACHE_TTL_EFETIVO_MS = 2 * 60 * 1000;
+const CACHE_TTL_MILITAR_DETALHE_MS = 10 * 60 * 1000;
+const CACHE_TTL_STORAGE_URL_MS = 55 * 60 * 1000;
+const SEARCH_DEBOUNCE_MS = 120;
 const APP_VERSION = "1.5.0";
 const DEV_WHATSAPP_NUMBER = "5524981130508";
 const PELOTAO_BUCKET_MAP = {
@@ -225,6 +229,15 @@ function normalizarEmail(valor) {
   return String(valor || "")
     .trim()
     .toLowerCase();
+}
+
+function normalizarTextoBusca(valor) {
+  return String(valor || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
 }
 
 function normalizarTelefoneWhatsapp(valor) {
@@ -376,6 +389,16 @@ function cacheKeyEfetivo(dataReferencia) {
   return `${APP_CACHE_PREFIX}:efetivo:${cacheNamespaceUsuario()}:${String(dataReferencia || "").trim()}`;
 }
 
+function cacheKeyMilitarDetalhe(idMilitar) {
+  return `${APP_CACHE_PREFIX}:militar_detalhe:${cacheNamespaceUsuario()}:${String(idMilitar || "").trim()}`;
+}
+
+function cacheKeyStorageUrl(tipo, path, pelotao) {
+  return `${APP_CACHE_PREFIX}:storage_url:${cacheNamespaceUsuario()}:${String(tipo || "").trim()}:${encodeURIComponent(
+    `${String(pelotao || "").trim()}::${String(path || "").trim()}`
+  )}`;
+}
+
 function salvarCacheLocal(chave, dados) {
   try {
     localStorage.setItem(
@@ -482,6 +505,30 @@ async function obterEfetivoComCache(dataReferencia, options = {}) {
   const efetivo = await window.CaveirinhaAPI.getEfetivo(dataReferencia);
   salvarCacheLocal(cacheKey, efetivo || []);
   return efetivo;
+}
+
+async function obterMilitarDetalhadoComCache(idMilitar, options = {}) {
+  const force = Boolean(options.force);
+  const cacheKey = cacheKeyMilitarDetalhe(idMilitar);
+
+  if (!force) {
+    const cached = lerCacheLocal(cacheKey, CACHE_TTL_MILITAR_DETALHE_MS);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  const militar = await window.CaveirinhaAPI.getMilitarDados(idMilitar);
+  if (militar) {
+    salvarCacheLocal(cacheKey, militar);
+  }
+  return militar;
+}
+
+function atualizarCacheMilitarDetalhado(idMilitar, dados) {
+  const cacheKey = cacheKeyMilitarDetalhe(idMilitar);
+  const atual = lerCacheLocal(cacheKey, CACHE_TTL_MILITAR_DETALHE_MS) || {};
+  salvarCacheLocal(cacheKey, { ...atual, ...(dados || {}) });
 }
 
 function dataEfetivoSelecionada() {
@@ -780,23 +827,6 @@ function parseHeaderBucketAndPath(path, pelotao) {
   };
 }
 
-async function isPublicUrlAvailable(url) {
-  const alvo = String(url || "").trim();
-  if (!alvo) {
-    return false;
-  }
-
-  try {
-    const response = await fetch(alvo, { method: "HEAD" });
-    if (response.ok) {
-      return true;
-    }
-    return response.status === 405;
-  } catch (error) {
-    return false;
-  }
-}
-
 async function resolverImagemCabecalho(path, pelotao) {
   const raw = String(path || "").trim();
   if (!raw) {
@@ -817,6 +847,12 @@ async function resolverImagemCabecalho(path, pelotao) {
     return DEFAULT_HEADER_LOGO;
   }
 
+  const cacheKey = cacheKeyStorageUrl("header", resolved.path, resolved.bucket);
+  const cached = lerCacheLocal(cacheKey, CACHE_TTL_STORAGE_URL_MS);
+  if (cached) {
+    return cached;
+  }
+
   try {
     const storage = client.storage.from(resolved.bucket);
     const { data: signedData, error: signedError } = await storage.createSignedUrl(
@@ -824,12 +860,14 @@ async function resolverImagemCabecalho(path, pelotao) {
       HEADER_IMAGE_SIGNED_TTL_SECONDS
     );
     if (!signedError && signedData?.signedUrl) {
+      salvarCacheLocal(cacheKey, signedData.signedUrl);
       return signedData.signedUrl;
     }
 
     const { data: publicData } = storage.getPublicUrl(resolved.path);
     const publicUrl = publicData?.publicUrl || "";
-    if (await isPublicUrlAvailable(publicUrl)) {
+    if (publicUrl) {
+      salvarCacheLocal(cacheKey, publicUrl);
       return publicUrl;
     }
   } catch (error) {
@@ -1223,7 +1261,7 @@ function selecionarMilitarNaFicha(militar) {
 
   void (async () => {
     try {
-      const militarAtualizado = await window.CaveirinhaAPI.getMilitarDados(militar.id);
+      const militarAtualizado = await obterMilitarDetalhadoComCache(militar.id);
       if (!militarAtualizado || militarSelecionadoId !== militar.id) {
         return;
       }
@@ -1579,7 +1617,7 @@ async function abrirDadosMilitar() {
   }
 
   try {
-    const dadosMilitar = await window.CaveirinhaAPI.getMilitarDados(militarSelecionadoId);
+    const dadosMilitar = await obterMilitarDetalhadoComCache(militarSelecionadoId);
     renderDadosMilitarModal(dadosMilitar);
     abrirModalDados();
   } catch (error) {
@@ -1646,7 +1684,7 @@ function renderFoTabela() {
 
 async function carregarFo() {
   try {
-    foListaCache = await window.CaveirinhaAPI.getFO();
+    foListaCache = await window.CaveirinhaAPI.getFO(militarSelecionadoId);
   } catch (error) {
     console.error("Falha ao carregar FO:", error);
     foListaCache = [];
@@ -1836,7 +1874,7 @@ async function sincronizarComportamentoPorPunicoes() {
   let comportamentoManual = "";
 
   try {
-    const dadosMilitar = await window.CaveirinhaAPI.getMilitarDados(militarSelecionadoId);
+    const dadosMilitar = await obterMilitarDetalhadoComCache(militarSelecionadoId);
     comportamentoManual = dadosMilitar?.comportamento || "";
   } catch (error) {
     console.error("Falha ao carregar comportamento atual do militar:", error);
@@ -1862,6 +1900,9 @@ async function sincronizarComportamentoPorPunicoes() {
     await window.CaveirinhaAPI.updateMilitarDados(militarSelecionadoId, {
       comportamento: payloadPorCodigo[comportamentoFinal] || "Bom"
     });
+    atualizarCacheMilitarDetalhado(militarSelecionadoId, {
+      comportamento: payloadPorCodigo[comportamentoFinal] || "Bom"
+    });
   } catch (error) {
     console.error("Falha ao persistir comportamento automatico:", error);
   }
@@ -1869,7 +1910,7 @@ async function sincronizarComportamentoPorPunicoes() {
 
 async function carregarPunicoes() {
   try {
-    punicoesListaCache = await window.CaveirinhaAPI.getPunicoes();
+    punicoesListaCache = await window.CaveirinhaAPI.getPunicoes(militarSelecionadoId);
   } catch (error) {
     console.error("Falha ao carregar punicoes:", error);
     punicoesListaCache = [];
@@ -2008,7 +2049,7 @@ function mencaoTatRegistro(registro) {
 
 async function carregarTat() {
   try {
-    tatListaCache = await window.CaveirinhaAPI.getTAT();
+    tatListaCache = await window.CaveirinhaAPI.getTAT(militarSelecionadoId);
   } catch (error) {
     console.error("Falha ao carregar TAT:", error);
     tatListaCache = [];
@@ -2125,13 +2166,15 @@ function reconstruirIndices() {
   indiceMilitares = organizacao.flatMap((grupo, abaIndex) =>
     grupo.militares.map((militar, militarIndex) => {
       const cardId = `${abaIndex}-${militarIndex}`;
+      const numeroBusca = isSdEv(militar) && militar.numero ? String(militar.numero) : "";
       cardIdToMilitarId.set(cardId, militar.id);
       return {
         ...militar,
         aba: grupo.aba,
         abaIndex,
         militarIndex,
-        cardId
+        cardId,
+        searchText: normalizarTextoBusca(`${militar.pg} ${militar.nomeGuerra} ${militar.funcao} ${numeroBusca}`)
       };
     })
   );
@@ -2279,7 +2322,7 @@ function setMenuAtivo(screen) {
 }
 
 function renderResultadosBusca(termo) {
-  const filtro = termo.trim().toLowerCase();
+  const filtro = normalizarTextoBusca(termo);
   searchResults.innerHTML = "";
 
   if (!filtro) {
@@ -2288,9 +2331,7 @@ function renderResultadosBusca(termo) {
   }
 
   const encontrados = indiceMilitares.filter((item) => {
-    const numeroBusca = isSdEv(item) && item.numero ? String(item.numero) : "";
-    const campoBusca = `${item.pg} ${item.nomeGuerra} ${item.funcao} ${numeroBusca}`.toLowerCase();
-    return campoBusca.includes(filtro);
+    return String(item.searchText || "").includes(filtro);
   });
 
   if (!encontrados.length) {
@@ -2328,6 +2369,17 @@ function renderResultadosBusca(termo) {
   });
 }
 
+function agendarRenderBusca() {
+  if (searchRenderHandle) {
+    window.clearTimeout(searchRenderHandle);
+  }
+
+  searchRenderHandle = window.setTimeout(() => {
+    searchRenderHandle = null;
+    renderResultadosBusca(searchInput.value);
+  }, SEARCH_DEBOUNCE_MS);
+}
+
 function abrirBusca() {
   searchPanel.classList.add("active");
   searchPanel.setAttribute("aria-hidden", "false");
@@ -2338,6 +2390,10 @@ function abrirBusca() {
 function fecharBusca() {
   searchPanel.classList.remove("active");
   searchPanel.setAttribute("aria-hidden", "true");
+  if (searchRenderHandle) {
+    window.clearTimeout(searchRenderHandle);
+    searchRenderHandle = null;
+  }
 }
 
 function atualizarResumoEfetivo() {
@@ -2860,7 +2916,7 @@ searchToggle.addEventListener("click", (event) => {
 });
 
 searchInput.addEventListener("input", () => {
-  renderResultadosBusca(searchInput.value);
+  agendarRenderBusca();
 });
 
 searchPanel.addEventListener("click", (event) => {

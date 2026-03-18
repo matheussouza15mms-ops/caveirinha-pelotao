@@ -517,7 +517,10 @@
         return clone(row);
       }
       case "getFO":
-        return clone(db.fatosObservados);
+        if (!payload.idMilitar) {
+          return clone(db.fatosObservados);
+        }
+        return clone(db.fatosObservados.filter((row) => row.idMilitar === payload.idMilitar));
       case "getControleSanitario":
         return clone(db.controleSanitario);
       case "createFO": {
@@ -698,7 +701,10 @@
         return clone(buildTafDashboard(payload.idMilitar, db.taf));
       }
       case "getTAT":
-        return clone(db.tat);
+        if (!payload.idMilitar) {
+          return clone(db.tat);
+        }
+        return clone(db.tat.filter((row) => row.idMilitar === payload.idMilitar));
       case "createTAT": {
         assertRequired(payload.idMilitar, "idMilitar");
         const mencao = normalizeTatMencao(payload.mencao || payload.classificacao || payload.resultado);

@@ -78,3 +78,9 @@ Separacao de responsabilidades sem framework:
 - `renderCards()`
 - `renderEfetivo()`
 - `setScreen()`
+
+## Otimizacoes Atuais
+- cache local por sessao para `usuario_config`, `quadro`, `efetivo` por data e detalhe do militar
+- busca local com debounce e texto pre-processado no indice
+- realtime com tentativa de atualizacao incremental antes de refetch completo
+- imagens de cabecalho e foto da ficha com reaproveitamento de URL resolvida para reduzir chamadas ao Storage

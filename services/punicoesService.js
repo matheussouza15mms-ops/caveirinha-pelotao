@@ -45,13 +45,20 @@
     return row;
   }
 
-  async function getPunicoes() {
+  async function getPunicoes(idMilitar) {
     try {
-      const { data, error } = await getClient()
+      let query = getClient()
         .from(TABLE_NAME)
         .select(PUNICOES_SELECT)
         .order("data_inicio", { ascending: false })
         .order("created_at", { ascending: false });
+
+      const idFiltro = String(idMilitar || "").trim();
+      if (idFiltro) {
+        query = query.eq("id", idFiltro);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;

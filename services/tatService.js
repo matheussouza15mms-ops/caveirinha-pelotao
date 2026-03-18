@@ -64,13 +64,20 @@
     return row;
   }
 
-  async function getTAT() {
+  async function getTAT(idMilitar) {
     try {
-      const { data, error } = await getClient()
+      let query = getClient()
         .from(TABLE_NAME)
         .select(TAT_SELECT)
         .order("data", { ascending: false })
         .order("created_at", { ascending: false });
+
+      const idFiltro = String(idMilitar || "").trim();
+      if (idFiltro) {
+        query = query.eq("id", idFiltro);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
