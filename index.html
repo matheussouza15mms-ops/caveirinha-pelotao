@@ -90,6 +90,13 @@
       </aside>
 
       <section id="quadroScreen" class="screen active">
+        <div class="screen-toolbar">
+          <div class="screen-toolbar-copy">
+            <strong>Quadro Organizacional</strong>
+            <span>Atualize manualmente quando houver mudanca no Supabase.</span>
+          </div>
+          <button id="quadroRefreshBtn" type="button" class="fo-new-btn">Atualizar quadro</button>
+        </div>
         <div class="quadro-layout">
           <div class="tabs-vertical" id="tabsContainer"></div>
           <div class="cards-area" id="cardsArea"></div>
@@ -118,6 +125,7 @@
         <div class="efetivo-toolbar">
           <label class="efetivo-date-label" for="efetivoDataInput">Data do efetivo</label>
           <input id="efetivoDataInput" type="date" />
+          <button id="efetivoRefreshBtn" type="button" class="fo-new-btn">Atualizar efetivo</button>
         </div>
 
         <div class="efetivo-table-wrap">

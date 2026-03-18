@@ -480,6 +480,32 @@ body[data-color-scheme="red"] {
   display: block;
 }
 
+.screen-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.screen-toolbar-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.screen-toolbar-copy strong {
+  color: #183857;
+}
+
+.screen-toolbar-copy span {
+  color: #5d7893;
+  font-size: 0.9rem;
+}
+
 .quadro-layout {
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -768,6 +794,7 @@ body[data-color-scheme="red"] {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
   margin-bottom: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1917,6 +1944,7 @@ body[data-theme="dark"] .config-about-item {
   }
 
   .controle-panel-head,
+  .screen-toolbar,
   .ficha-medica-status-bar {
     align-items: flex-start;
     flex-direction: column;

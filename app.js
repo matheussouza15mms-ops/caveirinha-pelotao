@@ -15,6 +15,7 @@ const configScreen = document.getElementById("configScreen");
 const fichaScreen = document.getElementById("fichaScreen");
 const tabsContainer = document.getElementById("tabsContainer");
 const cardsArea = document.getElementById("cardsArea");
+const quadroRefreshBtn = document.getElementById("quadroRefreshBtn");
 const backToQuadro = document.getElementById("backToQuadro");
 const searchToggle = document.getElementById("searchToggle");
 const searchPanel = document.getElementById("searchPanel");
@@ -27,6 +28,7 @@ const kpiDestinos = document.getElementById("kpiDestinos");
 const kpiBaixados = document.getElementById("kpiBaixados");
 const efetivoTabsContainer = document.getElementById("efetivoTabsContainer");
 const efetivoDataInput = document.getElementById("efetivoDataInput");
+const efetivoRefreshBtn = document.getElementById("efetivoRefreshBtn");
 const efetivoTableBody = document.getElementById("efetivoTableBody");
 const controleKpiDispensados = document.getElementById("controleKpiDispensados");
 const controleKpiBaixados = document.getElementById("controleKpiBaixados");
@@ -188,10 +190,12 @@ const DEFAULT_HEADER_SUBTITLE = "PELOPES";
 const APP_SETTINGS_STORAGE_KEY = "caveirinha_app_settings";
 const APP_CACHE_PREFIX = "caveirinha_cache_v1";
 const CACHE_TTL_USUARIO_CONFIG_MS = 5 * 60 * 1000;
-const CACHE_TTL_QUADRO_MS = 5 * 60 * 1000;
+const CACHE_TTL_QUADRO_MS = 60 * 60 * 1000;
 const CACHE_TTL_EFETIVO_MS = 2 * 60 * 1000;
 const CACHE_TTL_MILITAR_DETALHE_MS = 10 * 60 * 1000;
 const CACHE_TTL_STORAGE_URL_MS = 55 * 60 * 1000;
+const ENABLE_QUADRO_REALTIME = false;
+const ENABLE_EFETIVO_REALTIME = false;
 const SEARCH_DEBOUNCE_MS = 120;
 const APP_VERSION = "1.5.0";
 const DEV_WHATSAPP_NUMBER = "5524981130508";
@@ -459,6 +463,19 @@ function limparCacheSessaoAtual() {
   } catch (error) {
     // no-op
   }
+}
+
+function definirBotaoCarregando(button, carregando, textoPadrao) {
+  if (!(button instanceof HTMLButtonElement)) {
+    return;
+  }
+
+  if (!button.dataset.defaultLabel) {
+    button.dataset.defaultLabel = textoPadrao || button.textContent || "Atualizar";
+  }
+
+  button.disabled = Boolean(carregando);
+  button.textContent = carregando ? "Atualizando..." : (button.dataset.defaultLabel || textoPadrao || "Atualizar");
 }
 
 async function obterUsuarioConfigComCache(options = {}) {
@@ -2857,6 +2874,10 @@ function agendarRecarregamentoRealtime(tipo) {
 }
 
 function inicializarSincronizacaoRealtime() {
+  if (!ENABLE_QUADRO_REALTIME && !ENABLE_EFETIVO_REALTIME) {
+    return;
+  }
+
   if (
     !window.CaveirinhaEfetivoService ||
     typeof window.CaveirinhaEfetivoService.subscribeRealtime !== "function"
@@ -2869,6 +2890,12 @@ function inicializarSincronizacaoRealtime() {
       return;
     }
     const tipo = evento?.origem === "quadro_organizacional" ? "quadro" : "efetivo";
+    if (tipo === "quadro" && !ENABLE_QUADRO_REALTIME) {
+      return;
+    }
+    if (tipo === "efetivo" && !ENABLE_EFETIVO_REALTIME) {
+      return;
+    }
     const aplicado = tipo === "quadro"
       ? aplicarEventoRealtimeQuadro(evento?.payload)
       : aplicarEventoRealtimeEfetivo(evento?.payload);
@@ -2974,6 +3001,28 @@ menuItems.forEach((item) => {
 if (controleRefreshBtn) {
   controleRefreshBtn.addEventListener("click", () => {
     void carregarControleSanitario({ force: true });
+  });
+}
+
+if (quadroRefreshBtn) {
+  quadroRefreshBtn.addEventListener("click", async () => {
+    definirBotaoCarregando(quadroRefreshBtn, true, "Atualizar quadro");
+    try {
+      await recarregarQuadroSincronizado();
+    } finally {
+      definirBotaoCarregando(quadroRefreshBtn, false, "Atualizar quadro");
+    }
+  });
+}
+
+if (efetivoRefreshBtn) {
+  efetivoRefreshBtn.addEventListener("click", async () => {
+    definirBotaoCarregando(efetivoRefreshBtn, true, "Atualizar efetivo");
+    try {
+      await carregarEfetivoDataSelecionada();
+    } finally {
+      definirBotaoCarregando(efetivoRefreshBtn, false, "Atualizar efetivo");
+    }
   });
 }
 
@@ -3716,13 +3765,13 @@ async function inicializarApp() {
   renderEfetivoTabs();
   renderEfetivo();
 
-  try {
-    const militares = await obterMilitaresComCache({ force: true });
-    organizacao = construirOrganizacao(militares);
-    reconstruirIndices();
-  } catch (error) {
-    console.error("Falha ao carregar quadro organizacional na inicializacao:", error);
-    if (!Array.isArray(militaresCache) || !militaresCache.length) {
+  if (!Array.isArray(militaresCache) || !militaresCache.length) {
+    try {
+      const militares = await obterMilitaresComCache({ force: true });
+      organizacao = construirOrganizacao(militares);
+      reconstruirIndices();
+    } catch (error) {
+      console.error("Falha ao carregar quadro organizacional na inicializacao:", error);
       organizacao = [];
       indiceMilitares = [];
     }

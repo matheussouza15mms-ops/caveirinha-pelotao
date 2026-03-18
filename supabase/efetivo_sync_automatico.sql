@@ -83,6 +83,14 @@ begin
   where coalesce(btrim(q.id), '') <> ''
   on conflict (id) do update
     set data_referencia = excluded.data_referencia,
+        em_forma = case
+          when public.efetivo.data_referencia is distinct from excluded.data_referencia then false
+          else public.efetivo.em_forma
+        end,
+        situacao = case
+          when public.efetivo.data_referencia is distinct from excluded.data_referencia then ''::text
+          else public.efetivo.situacao
+        end,
         pelotao = excluded.pelotao,
         updated_at = now();
 end;
