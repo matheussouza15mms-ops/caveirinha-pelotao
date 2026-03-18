@@ -1,5 +1,15 @@
 (function bootstrapUserConfigService(globalScope) {
   const TABLE_NAME = "usuario_config";
+  const USER_CONFIG_SELECT = [
+    "user_id",
+    "nome_usuario",
+    "imagem_cabecalho",
+    "tema",
+    "pelotao",
+    "nome_pelotao",
+    "nivel_acesso",
+    "ativo"
+  ].join(",");
 
   function getClient() {
     const client = globalScope.CaveirinhaSupabase?.client;
@@ -40,7 +50,7 @@
 
       const { data, error } = await getClient()
         .from(TABLE_NAME)
-        .select("*")
+        .select(USER_CONFIG_SELECT)
         .eq("user_id", user.id)
         .maybeSingle();
 

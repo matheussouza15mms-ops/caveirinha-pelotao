@@ -1,5 +1,6 @@
 (function bootstrapPunicoesService(globalScope) {
   const TABLE_NAME = "punicoes";
+  const PUNICOES_SELECT = "id_punicao,id,fato,punicao,dias,data_inicio,data_fim,created_at,updated_at";
 
   function getClient() {
     const client = globalScope.CaveirinhaSupabase?.client;
@@ -48,7 +49,7 @@
     try {
       const { data, error } = await getClient()
         .from(TABLE_NAME)
-        .select("id_punicao,id,fato,punicao,dias,data_inicio,data_fim,created_at,updated_at")
+        .select(PUNICOES_SELECT)
         .order("data_inicio", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -70,7 +71,7 @@
         row.id_punicao = `pun-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       }
 
-      const { data, error } = await getClient().from(TABLE_NAME).insert(row).select("*").single();
+      const { data, error } = await getClient().from(TABLE_NAME).insert(row).select(PUNICOES_SELECT).single();
       if (error) {
         throw error;
       }
@@ -96,7 +97,7 @@
         .from(TABLE_NAME)
         .update(row)
         .eq("id_punicao", id)
-        .select("*")
+        .select(PUNICOES_SELECT)
         .single();
 
       if (error) {

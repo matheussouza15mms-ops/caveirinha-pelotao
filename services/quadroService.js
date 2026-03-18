@@ -13,6 +13,20 @@
     "celular",
     "updated_at"
   ].join(",");
+  const QUADRO_DETAIL_SELECT = [
+    QUADRO_LIST_SELECT,
+    "nome_completo",
+    "data_nascimento",
+    "identidade",
+    "data_praca",
+    "endereco",
+    "nome_pai",
+    "nome_mae",
+    "contato_emergencia",
+    "comportamento",
+    "habilidade",
+    "foto"
+  ].join(",");
   const PELOTAO_BUCKET_MAP = {
     "1 pel": "imagens-1pel",
     "2 pel": "imagens-2pel",
@@ -241,7 +255,7 @@
 
   async function getMilitarById(id) {
     try {
-      const { data, error } = await getClient().from(TABLE_NAME).select("*").eq("id", id).single();
+      const { data, error } = await getClient().from(TABLE_NAME).select(QUADRO_DETAIL_SELECT).eq("id", id).single();
       if (error) {
         throw error;
       }
@@ -255,7 +269,11 @@
   async function addMilitar(data) {
     try {
       const payload = militarToRow(data, { partial: false });
-      const { data: inserted, error } = await getClient().from(TABLE_NAME).insert(payload).select("*").single();
+      const { data: inserted, error } = await getClient()
+        .from(TABLE_NAME)
+        .insert(payload)
+        .select(QUADRO_DETAIL_SELECT)
+        .single();
       if (error) {
         throw error;
       }
@@ -273,7 +291,7 @@
         .from(TABLE_NAME)
         .update(payload)
         .eq("id", id)
-        .select("*")
+        .select(QUADRO_DETAIL_SELECT)
         .single();
 
       if (error) {

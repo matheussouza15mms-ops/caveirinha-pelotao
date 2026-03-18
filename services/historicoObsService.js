@@ -1,5 +1,6 @@
 (function bootstrapHistoricoObsService(globalScope) {
   const TABLE_NAME = "historico_obs";
+  const HISTORICO_SELECT = "id_historico,id,texto,autor,data,created_at,updated_at";
 
   function getClient() {
     const client = globalScope.CaveirinhaSupabase?.client;
@@ -44,7 +45,7 @@
     try {
       let query = getClient()
         .from(TABLE_NAME)
-        .select("id_historico,id,texto,autor,data,created_at,updated_at")
+        .select(HISTORICO_SELECT)
         .order("data", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -72,7 +73,7 @@
         row.id_historico = `hist-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       }
 
-      const { data, error } = await getClient().from(TABLE_NAME).insert(row).select("*").single();
+      const { data, error } = await getClient().from(TABLE_NAME).insert(row).select(HISTORICO_SELECT).single();
       if (error) {
         throw error;
       }
@@ -98,7 +99,7 @@
         .from(TABLE_NAME)
         .update(row)
         .eq("id_historico", id)
-        .select("*")
+        .select(HISTORICO_SELECT)
         .single();
 
       if (error) {

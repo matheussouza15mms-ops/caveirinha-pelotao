@@ -1,5 +1,6 @@
 (function bootstrapFatosObservadosService(globalScope) {
   const TABLE_NAME = "fatos_observados";
+  const FO_SELECT = "id_fo,id,data,tipo,descricao,autor,created_at,updated_at";
 
   function getClient() {
     const client = globalScope.CaveirinhaSupabase?.client;
@@ -46,7 +47,7 @@
     try {
       const { data, error } = await getClient()
         .from(TABLE_NAME)
-        .select("id_fo,id,data,tipo,descricao,autor,created_at,updated_at")
+        .select(FO_SELECT)
         .order("data", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -68,7 +69,7 @@
         row.id_fo = `fo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       }
 
-      const { data, error } = await getClient().from(TABLE_NAME).insert(row).select("*").single();
+      const { data, error } = await getClient().from(TABLE_NAME).insert(row).select(FO_SELECT).single();
       if (error) {
         throw error;
       }
@@ -94,7 +95,7 @@
         .from(TABLE_NAME)
         .update(row)
         .eq("id_fo", id)
-        .select("*")
+        .select(FO_SELECT)
         .single();
 
       if (error) {

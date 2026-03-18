@@ -484,6 +484,165 @@ async function obterEfetivoComCache(dataReferencia, options = {}) {
   return efetivo;
 }
 
+function dataEfetivoSelecionada() {
+  return efetivoDataInput?.value || hojeISODate();
+}
+
+function snapshotEfetivoAtual() {
+  return Array.from(efetivoState.entries())
+    .map(([cardId, estado]) => {
+      const idMilitar = cardIdToMilitarId.get(cardId);
+      if (!idMilitar) {
+        return null;
+      }
+      return {
+        idMilitar,
+        emForma: Boolean(estado?.emForma),
+        situacao: estado?.emForma ? "em_forma" : normalizarSituacaoEfetivo(estado?.situacao),
+        dataAtualizacao: estado?.dataAtualizacao || ""
+      };
+    })
+    .filter(Boolean);
+}
+
+function atualizarCacheQuadroLista(militares) {
+  salvarCacheLocal(cacheKeyQuadro(), Array.isArray(militares) ? militares : []);
+}
+
+function atualizarCacheEfetivoLista(dataReferencia, efetivo) {
+  salvarCacheLocal(cacheKeyEfetivo(dataReferencia), Array.isArray(efetivo) ? efetivo : []);
+}
+
+function militarResumoFromQuadroRow(row) {
+  if (!row?.id) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    pg: row.pg || "",
+    numero: row.numero === null || row.numero === undefined ? "" : row.numero,
+    nomeGuerra: row.nome_guerra || "",
+    funcao: row.funcao || "",
+    aba: normalizarLabelFracao(row.fracao || ""),
+    fracao: normalizarLabelFracao(row.fracao || ""),
+    pelotao: row.pelotao || "",
+    celular: row.celular || "",
+    foto: DEFAULT_MILITAR_FOTO,
+    lastUpdate: row.updated_at || row.last_update || ""
+  };
+}
+
+function efetivoFromRealtimeRow(row) {
+  if (!row?.id) {
+    return null;
+  }
+
+  const emForma = Boolean(row.em_forma) || row.situacao === "em_forma";
+  const dataReferencia = String(row.data_referencia || "").trim();
+  return {
+    idMilitar: row.id,
+    emForma,
+    situacao: emForma ? "em_forma" : normalizarSituacaoEfetivo(row.situacao),
+    dataAtualizacao: dataReferencia ? `${dataReferencia}T00:00:00.000Z` : ""
+  };
+}
+
+function renderizarEstadoPrincipal() {
+  renderTabs();
+  renderCards();
+  renderEfetivoTabs();
+  renderEfetivo();
+}
+
+function aplicarEventoRealtimeQuadro(payload) {
+  const tipoEvento = String(payload?.eventType || "").toUpperCase();
+  const origem = tipoEvento === "DELETE" ? payload?.old : payload?.new;
+  const militarAtualizado = militarResumoFromQuadroRow(origem);
+  if (!militarAtualizado) {
+    return false;
+  }
+
+  const militaresBase =
+    lerCacheLocal(cacheKeyQuadro(), CACHE_TTL_QUADRO_MS) ||
+    indiceMilitares.map((militar) => ({
+      id: militar.id,
+      pg: militar.pg,
+      numero: militar.numero,
+      nomeGuerra: militar.nomeGuerra,
+      funcao: militar.funcao,
+      aba: militar.fracao,
+      fracao: militar.fracao,
+      pelotao: militar.pelotao,
+      celular: militar.celular,
+      foto: militar.foto || DEFAULT_MILITAR_FOTO,
+      lastUpdate: militar.lastUpdate
+    }));
+
+  const militares = Array.isArray(militaresBase) ? [...militaresBase] : [];
+  const indiceExistente = militares.findIndex((militar) => militar.id === militarAtualizado.id);
+
+  if (tipoEvento === "DELETE") {
+    if (indiceExistente < 0) {
+      return false;
+    }
+    militares.splice(indiceExistente, 1);
+  } else if (indiceExistente >= 0) {
+    militares[indiceExistente] = {
+      ...militares[indiceExistente],
+      ...militarAtualizado
+    };
+  } else {
+    militares.push(militarAtualizado);
+  }
+
+  const snapshotEfetivo = snapshotEfetivoAtual();
+  organizacao = construirOrganizacao(militares);
+  reconstruirIndices();
+  sincronizarEfetivoState(snapshotEfetivo, dataEfetivoSelecionada());
+  atualizarCacheQuadroLista(militares);
+  renderizarEstadoPrincipal();
+  return true;
+}
+
+function aplicarEventoRealtimeEfetivo(payload) {
+  const tipoEvento = String(payload?.eventType || "").toUpperCase();
+  const origem = tipoEvento === "DELETE" ? payload?.old : payload?.new;
+  const registro = efetivoFromRealtimeRow(origem);
+  const dataReferencia = String(origem?.data_referencia || "").trim();
+  if (!registro || !dataReferencia) {
+    return false;
+  }
+
+  const cacheAtual = lerCacheLocal(cacheKeyEfetivo(dataReferencia), CACHE_TTL_EFETIVO_MS);
+  const efetivoBase = Array.isArray(cacheAtual)
+    ? cacheAtual
+    : (dataReferencia === dataEfetivoSelecionada() ? snapshotEfetivoAtual() : []);
+  const efetivoAtual = Array.isArray(efetivoBase) ? [...efetivoBase] : [];
+  const indiceExistente = efetivoAtual.findIndex((item) => item.idMilitar === registro.idMilitar);
+
+  if (tipoEvento === "DELETE") {
+    if (indiceExistente >= 0) {
+      efetivoAtual.splice(indiceExistente, 1);
+    }
+  } else if (indiceExistente >= 0) {
+    efetivoAtual[indiceExistente] = registro;
+  } else {
+    efetivoAtual.push(registro);
+  }
+
+  atualizarCacheEfetivoLista(dataReferencia, efetivoAtual);
+
+  if (dataReferencia !== dataEfetivoSelecionada()) {
+    return true;
+  }
+
+  sincronizarEfetivoState(efetivoAtual, dataReferencia);
+  renderEfetivoTabs();
+  renderEfetivo();
+  return true;
+}
+
 function salvarAppSettings() {
   try {
     localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify(appSettings));
@@ -2565,7 +2724,13 @@ function inicializarSincronizacaoRealtime() {
       return;
     }
     const tipo = evento?.origem === "quadro_organizacional" ? "quadro" : "efetivo";
-    agendarRecarregamentoRealtime(tipo);
+    const aplicado = tipo === "quadro"
+      ? aplicarEventoRealtimeQuadro(evento?.payload)
+      : aplicarEventoRealtimeEfetivo(evento?.payload);
+
+    if (!aplicado) {
+      agendarRecarregamentoRealtime(tipo);
+    }
   });
 }
 
