@@ -2625,6 +2625,25 @@ async function carregarControleSanitario(options = {}) {
   renderControleSanitario();
 }
 
+async function obterRegistrosControleSanitarioPorMilitar(idMilitar, options = {}) {
+  const safeId = String(idMilitar || "").trim();
+  if (!safeId) {
+    return [];
+  }
+
+  const force = Boolean(options.force);
+  if (!force && controleSanitarioListaCache.length) {
+    return controleSanitarioListaCache.filter((item) => item.idMilitar === safeId);
+  }
+
+  try {
+    return await window.CaveirinhaAPI.getControleSanitario(safeId);
+  } catch (error) {
+    console.error("Falha ao carregar controle sanitario por militar:", error);
+    return [];
+  }
+}
+
 function abrirFichaMedicaModal() {
   fichaMedicaModal.classList.add("active");
   fichaMedicaModal.setAttribute("aria-hidden", "false");
@@ -2641,12 +2660,7 @@ async function abrirFichaMedica(idMilitar = militarSelecionadoId) {
     return;
   }
 
-  if (!controleSanitarioListaCache.length) {
-    await carregarControleSanitario({ force: true });
-  }
-
-  const registros = controleSanitarioListaCache
-    .filter((item) => item.idMilitar === safeId)
+  const registros = (await obterRegistrosControleSanitarioPorMilitar(safeId))
     .filter((item) => usuarioPodeVerRegistroControle(item, militarPorId(safeId)))
     .sort(compararRegistrosControle);
 

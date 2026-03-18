@@ -35,9 +35,9 @@
     };
   }
 
-  async function getControleSanitario() {
+  async function getControleSanitario(idMilitar) {
     try {
-      const { data, error } = await getClient()
+      let query = getClient()
         .from(TABLE_NAME)
         .select([
           "id_controle_sanitario",
@@ -64,6 +64,13 @@
         ].join(","))
         .order("data_visita", { ascending: false })
         .order("created_at", { ascending: false });
+
+      const idFiltro = String(idMilitar || "").trim();
+      if (idFiltro) {
+        query = query.eq("id", idFiltro);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;

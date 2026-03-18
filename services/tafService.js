@@ -80,32 +80,42 @@
     };
   }
 
-  async function getRowsSchemaA() {
-    const { data, error } = await getClient()
+  async function getRowsSchemaA(idMilitar) {
+    let query = getClient()
       .from(TABLE_NAME)
       .select("id,id_militar,data,tipo_teste,resultado,observacao,created_at,updated_at");
+    const idFiltro = String(idMilitar || "").trim();
+    if (idFiltro) {
+      query = query.eq("id_militar", idFiltro);
+    }
+    const { data, error } = await query;
     if (error) {
       throw error;
     }
     return (data || []).map(mapRowSchemaA);
   }
 
-  async function getRowsSchemaB() {
-    const { data, error } = await getClient()
+  async function getRowsSchemaB(idMilitar) {
+    let query = getClient()
       .from(TABLE_NAME)
       .select("taf_id,id,data,tipo_teste,resultado,observacao,created_at,updated_at");
+    const idFiltro = String(idMilitar || "").trim();
+    if (idFiltro) {
+      query = query.eq("id", idFiltro);
+    }
+    const { data, error } = await query;
     if (error) {
       throw error;
     }
     return (data || []).map(mapRowSchemaB);
   }
 
-  async function getTAF() {
+  async function getTAF(idMilitar) {
     try {
-      return await getRowsSchemaA();
+      return await getRowsSchemaA(idMilitar);
     } catch (errorA) {
       try {
-        return await getRowsSchemaB();
+        return await getRowsSchemaB(idMilitar);
       } catch (errorB) {
         console.error("Erro ao carregar TAF no Supabase:", errorA, errorB);
         throw errorB;
@@ -115,7 +125,7 @@
 
   async function getTAFDashboard(idMilitar) {
     try {
-      const rows = await getTAF();
+      const rows = await getTAF(idMilitar);
       return buildDashboardFromRows(idMilitar, rows);
     } catch (error) {
       console.error("Erro ao montar dashboard TAF no Supabase:", error);

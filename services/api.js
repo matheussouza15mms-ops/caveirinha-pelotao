@@ -245,18 +245,18 @@
     return apiRequest("deletePunicao", { id });
   }
 
-  function getTAF() {
+  function getTAF(idMilitar) {
     if (hasSupabaseTaf()) {
-      return globalScope.CaveirinhaTafService.getTAF();
+      return globalScope.CaveirinhaTafService.getTAF(idMilitar);
     }
-    return apiRequest("getTAF");
+    return apiRequest("getTAF", { idMilitar });
   }
 
-  function getControleSanitario() {
+  function getControleSanitario(idMilitar) {
     if (hasSupabaseControleSanitario()) {
-      return globalScope.CaveirinhaControleSanitarioService.getControleSanitario();
+      return globalScope.CaveirinhaControleSanitarioService.getControleSanitario(idMilitar);
     }
-    return apiRequest("getControleSanitario");
+    return apiRequest("getControleSanitario", { idMilitar });
   }
 
   function createTAF(payload) {

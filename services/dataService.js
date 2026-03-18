@@ -522,7 +522,10 @@
         }
         return clone(db.fatosObservados.filter((row) => row.idMilitar === payload.idMilitar));
       case "getControleSanitario":
-        return clone(db.controleSanitario);
+        if (!payload.idMilitar) {
+          return clone(db.controleSanitario);
+        }
+        return clone(db.controleSanitario.filter((row) => row.idMilitar === payload.idMilitar));
       case "createFO": {
         assertRequired(payload.idMilitar, "idMilitar");
         const record = {

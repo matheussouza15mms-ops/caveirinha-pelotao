@@ -52,6 +52,7 @@ Ja concluido:
 - cache curto para URLs de imagens no Storage.
 - remocao de verificacoes `HEAD` desnecessarias no fluxo de imagens.
 - filtros por `idMilitar` em telas secundarias para evitar leitura de colecoes inteiras no Supabase.
+- dashboard TAF e ficha medica do controle sanitario ajustados para leitura direcionada por militar quando aplicavel.
 
 Em andamento:
 
