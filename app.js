@@ -169,6 +169,10 @@ let ultimoScrollY = window.scrollY || 0;
 let efetivoPelotaoAtivo = "__todos__";
 let realtimeRefreshHandle = null;
 let searchRenderHandle = null;
+let lastTabsRenderKey = "";
+let lastCardsRenderKey = "";
+let lastEfetivoTabsRenderKey = "";
+let lastEfetivoRenderKey = "";
 
 const opcoesSituacao = ["ferias", "dispensado", "missao", "servico", "s_sv", "atrasado", "outros", "falta", "baixado"];
 const efetivoState = new Map();
@@ -2211,6 +2215,55 @@ function sincronizarEfetivoState(efetivoRegistros, dataSelecionada) {
   efetivoDataInput.value = dataInputFromIso(primeiraData ? primeiraData.dataAtualizacao : "") || dataPadrao || hojeISODate();
 }
 
+function tabsRenderKey() {
+  return JSON.stringify({
+    abaAtiva,
+    grupos: organizacao.map((grupo) => grupo.aba)
+  });
+}
+
+function cardsRenderKey() {
+  const grupoAtivo = organizacao[abaAtiva];
+  return JSON.stringify({
+    abaAtiva,
+    aba: grupoAtivo?.aba || "",
+    militares: (grupoAtivo?.militares || []).map((militar) => [
+      militar.id,
+      militar.pg,
+      militar.numero,
+      militar.nomeGuerra,
+      militar.funcao
+    ])
+  });
+}
+
+function efetivoTabsRenderKey() {
+  return JSON.stringify({
+    comando: usuarioEhComando(),
+    ativo: efetivoPelotaoAtivo,
+    pelotoes: Array.from(
+      new Set(indiceMilitares.map((militar) => normalizarLabelPelotao(militar.pelotao)))
+    ).sort((a, b) => a.localeCompare(b, "pt-BR"))
+  });
+}
+
+function efetivoRenderKey() {
+  return JSON.stringify({
+    ativo: efetivoPelotaoAtivo,
+    visiveis: militaresFiltradosEfetivo().map((militar) => {
+      const estado = efetivoState.get(militar.cardId);
+      return [
+        militar.cardId,
+        militar.pg,
+        militar.nomeGuerra,
+        militar.numero,
+        estado?.emForma || false,
+        estado?.situacao || ""
+      ];
+    })
+  });
+}
+
 function setScreen(screen) {
   quadroScreen.classList.remove("active");
   efetivoScreen.classList.remove("active");
@@ -2254,6 +2307,11 @@ function setScreen(screen) {
 }
 
 function renderTabs() {
+  const renderKey = tabsRenderKey();
+  if (renderKey === lastTabsRenderKey) {
+    return;
+  }
+  lastTabsRenderKey = renderKey;
   tabsContainer.innerHTML = "";
 
   if (!organizacao.length) {
@@ -2280,6 +2338,11 @@ function renderTabs() {
 }
 
 function renderCards() {
+  const renderKey = cardsRenderKey();
+  if (renderKey === lastCardsRenderKey) {
+    return;
+  }
+  lastCardsRenderKey = renderKey;
   cardsArea.innerHTML = "";
 
   if (!organizacao.length || !organizacao[abaAtiva]) {
@@ -2439,6 +2502,12 @@ function renderEfetivoTabs() {
     return;
   }
 
+  const renderKey = efetivoTabsRenderKey();
+  if (renderKey === lastEfetivoTabsRenderKey) {
+    return;
+  }
+  lastEfetivoTabsRenderKey = renderKey;
+
   if (!usuarioEhComando()) {
     efetivoTabsContainer.classList.remove("active");
     efetivoTabsContainer.innerHTML = "";
@@ -2519,6 +2588,12 @@ function atualizarLinhaEfetivo(cardId) {
 }
 
 function renderEfetivo() {
+  const renderKey = efetivoRenderKey();
+  if (renderKey === lastEfetivoRenderKey) {
+    atualizarResumoEfetivo();
+    return;
+  }
+  lastEfetivoRenderKey = renderKey;
   efetivoTableBody.innerHTML = "";
   const militaresVisiveis = militaresFiltradosEfetivo();
 
